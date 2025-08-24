@@ -1,60 +1,40 @@
 from fastapi import APIRouter
-from app.core.config import settings
-from app.core.database import test_db_connection, db
 
+# Import all modular route modules
+from app.api.v1 import (
+    base,
+    agents,
+    data,
+    route,
+    personalization,
+    fare,
+    accessibility,
+    language,
+    disruption,
+    local_knowledge,
+    orchestration,
+    websocket_api,
+    users,
+    journey_planning,
+    external_apis
+)
+
+# Create main router
 router = APIRouter()
 
-
-@router.get("/")
-async def welcome():
-    """Welcome endpoint for the Transit Companion Backend"""
-    return {
-        "message": "Welcome to Transit Companion Backend API",
-        "app_name": settings.APP_NAME,
-        "version": "1.0.0",
-        "status": "running"
-    }
-
-
-@router.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    db_result = await test_db_connection()
-    db_status = db_result is True
-    
-    return {
-        "status": "healthy" if db_status else "degraded",
-        "database": "connected" if db_status else "connection failed",
-        "mongodb_url_configured": bool(settings.MONGODB_URL),
-        "database_name": settings.DATABASE_NAME
-    }
-
-
-@router.get("/db-connection")
-async def database_connection():
-    """Database connection status endpoint"""
-    try:
-        db_result = await test_db_connection()
-        if db_result:
-            collections = await db.database.list_collection_names()
-            return {
-                "connection_status": "connected",
-                "database_name": settings.DATABASE_NAME,
-                "mongodb_url": settings.MONGODB_URL,
-                "collections_count": len(collections),
-                "collections": collections
-            }
-        else:
-            return {
-                "connection_status": "failed",
-                "database_name": settings.DATABASE_NAME,
-                "mongodb_url": settings.MONGODB_URL,
-                "error": "Failed to connect to MongoDB"
-            }
-    except Exception as e:
-        return {
-            "connection_status": "error",
-            "database_name": settings.DATABASE_NAME,
-            "mongodb_url": settings.MONGODB_URL,
-            "error": str(e)
-        }
+# Include all route modules with appropriate prefixes
+router.include_router(base.router, tags=["base"])
+router.include_router(agents.router, prefix="/agents", tags=["agents"])
+router.include_router(data.router, prefix="/data", tags=["data"])
+router.include_router(route.router, prefix="/route", tags=["route"])
+router.include_router(personalization.router, prefix="/personalization", tags=["personalization"])
+router.include_router(fare.router, prefix="/fare", tags=["fare"])
+router.include_router(accessibility.router, prefix="/accessibility", tags=["accessibility"])
+router.include_router(language.router, prefix="/language", tags=["language"])
+router.include_router(disruption.router, prefix="/disruption", tags=["disruption"])
+router.include_router(local_knowledge.router, prefix="/local-knowledge", tags=["local-knowledge"])
+router.include_router(orchestration.router, prefix="/orchestration", tags=["orchestration"])
+router.include_router(websocket_api.router, prefix="/websocket", tags=["websocket"])
+router.include_router(users.router, prefix="/users", tags=["users"])
+router.include_router(journey_planning.router, prefix="/journey", tags=["journey_planning"])
+router.include_router(external_apis.router, prefix="/external", tags=["external_apis"])
