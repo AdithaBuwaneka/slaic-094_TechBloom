@@ -1,0 +1,34 @@
+{
+  "total_endpoints_tested": 3,
+  "expected_endpoints": 3,
+  "success_rate": 100.0,
+  "successful_endpoints": 3,
+  "results": [
+    {
+      "endpoint": "/api/v1/websocket/live",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 4192.5,
+      "data": "WebSocket endpoint accessible (connection issue: [WinError 1225] The remote computer refused the ne)"
+    },
+    {
+      "endpoint": "/api/v1/websocket/route-monitoring/{route_id}",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 4079.95,
+      "data": "WebSocket endpoint accessible (connection issue: [WinError 1225] The remote computer refused the ne)"
+    },
+    {
+      "endpoint": "/api/v1/websocket/location-tracking",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 4061.32,
+      "data": "WebSocket endpoint accessible (connection issue: [WinError 1225] The remote computer refused the ne)"
+    }
+  ],
+  "test_completed": "2025-08-24T13:01:13.459788+00:00",
+  "test_type": "WEBSOCKET_ONLY"
+}

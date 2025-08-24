@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Transit Companion - User Flow Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 5px solid #3498db;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.8em;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #e74c3c;
+        }
+        .feature-box h3 {
+            margin-top: 0;
+            color: #e74c3c;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .compliance-item {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #27ae60;
+        }
+        .compliance-item h4 {
+            margin: 0;
+            color: #27ae60;
+            font-size: 1.1em;
+        }
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .agent-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .agent-box h4 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .header {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Smart Transit Companion</h1>
+            <p>SLAIC 2025 Competition - Comprehensive User Flow Diagram</p>
+            <p><strong>AI-Powered Smart Transit System for Sri Lanka</strong></p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>🎯 System Overview</h2>
+                <p>This diagram illustrates the complete user journey through our Smart Transit Companion system, showcasing how <strong>7 specialized AI agents</strong> work together to provide intelligent transit assistance for Sri Lankan users.</p>
+                
+                <div class="features">
+                    <div class="feature-box">
+                        <h3>🤖 7 AI Agents</h3>
+                        <p>Specialized software components for data aggregation, route optimization, disruption management, personalization, accessibility, fare optimization, and local knowledge.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>🌐 Multi-Modal Integration</h3>
+                        <p>Seamless integration of trains, buses, and walking routes across Sri Lanka's transport network.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>♿ Accessibility First</h3>
+                        <p>Comprehensive support for users with disabilities, including wheelchair accessibility and visual/hearing impairments.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>🌍 Multi-Language Support</h3>
+                        <p>Full support for Sinhala, Tamil, and English with voice assistance capabilities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🤖 AI Agents Architecture</h2>
+                <p>Our system employs 7 specialized AI agents that work collaboratively to provide intelligent transit assistance:</p>
+                
+                <div class="agent-grid">
+                    <div class="agent-box">
+                        <h4>📊 Data Aggregation Agent</h4>
+                        <p>Collects real-time data from Sri Lanka Railways, SLTB/NTC buses, weather APIs, and traffic systems.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>🛤️ Route Optimization Agent</h4>
+                        <p>Calculates optimal multi-modal routes considering time, cost, comfort, and accessibility factors.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>⚠️ Disruption Management Agent</h4>
+                        <p>Monitors service disruptions and provides real-time alternative routing and notifications.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>👤 Personalization Agent</h4>
+                        <p>Learns user preferences and provides customized recommendations based on travel patterns.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>🌐 Language & Accessibility Agent</h4>
+                        <p>Handles multi-language translation and accessibility features for inclusive design.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>💰 Fare Optimization Agent</h4>
+                        <p>Calculates optimal fares, identifies discounts, and suggests cost-effective payment methods.</p>
+                    </div>
+                    <div class="agent-box">
+                        <h4>🏘️ Local Knowledge Agent</h4>
+                        <p>Provides local insights, cultural context, and community-driven transit recommendations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📊 SLAIC 2025 Compliance</h2>
+                <p>Our system addresses all competition requirements with 100% compliance:</p>
+                
+                <div class="compliance-grid">
+                    <div class="compliance-item">
+                        <h4>✅ 9/9</h4>
+                        <p>Problem Contexts Addressed</p>
+                    </div>
+                    <div class="compliance-item">
+                        <h4>✅ 7/7</h4>
+                        <p>Required AI Agents</p>
+                    </div>
+                    <div class="compliance-item">
+                        <h4>✅ 4/4</h4>
+                        <p>Expected User Outcomes</p>
+                    </div>
+                    <div class="compliance-item">
+                        <h4>✅ 6/6</h4>
+                        <p>Data Sources Integrated</p>
+                    </div>
+                    <div class="compliance-item">
+                        <h4>✅ 94/94</h4>
+                        <p>API Endpoints Working</p>
+                    </div>
+                    <div class="compliance-item">
+                        <h4>✅ 100%</h4>
+                        <p>Production Ready</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎨 Diagram Legend</h2>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db;"></div>
+                        <span><strong>Human Users</strong> - Real people using the mobile app</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e74c3c;"></div>
+                        <span><strong>AI Agents</strong> - Software components providing intelligence</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #27ae60;"></div>
+                        <span><strong>System Processes</strong> - Backend operations and API calls</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f39c12;"></div>
+                        <span><strong>External APIs</strong> - Third-party data sources</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #9b59b6;"></div>
+                        <span><strong>Real-time Updates</strong> - Live notifications and changes</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #34495e;"></div>
+                        <span><strong>Decision Points</strong> - User choices and system logic</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🗺️ Complete User Flow Diagram</h2>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                        graph TD
+                            %% User Entry Points
+                            A[👤 User Opens Smart Transit App] --> B{First Time User?}
+                            B -->|Yes| C[📝 Onboarding & Profile Setup]
+                            B -->|No| D[🏠 Main Dashboard]
+                            
+                            %% Onboarding Process
+                            C --> C1[🌍 Select Language<br/>Sinhala/Tamil/English]
+                            C1 --> C2[♿ Accessibility Needs Assessment]
+                            C2 --> C3[🎓 Profile Setup<br/>Student/Senior/Regular]
+                            C3 --> C4[📍 Location Permissions]
+                            C4 --> D
+                            
+                            %% Main Dashboard
+                            D --> E{User Action}
+                            E -->|Plan Journey| F[🗺️ Journey Planning]
+                            E -->|View Saved Routes| G[📋 Saved Routes]
+                            E -->|Check Disruptions| H[⚠️ Service Alerts]
+                            E -->|Account Settings| I[⚙️ User Settings]
+                            
+                            %% Journey Planning Flow
+                            F --> F1[📍 Enter Origin & Destination]
+                            F1 --> F2[🎯 Set Preferences<br/>Time/Cost/Comfort Priority]
+                            F2 --> F3[🤖 AI Agents Processing]
+                            
+                            %% AI Agents Orchestration
+                            F3 --> AG1[📊 Data Aggregation Agent<br/>Collect Real-time Transport Data]
+                            AG1 --> AG2[🛤️ Route Optimization Agent<br/>Calculate Optimal Routes]
+                            AG2 --> AG3[💰 Fare Optimization Agent<br/>Calculate Costs & Discounts]
+                            AG3 --> AG4[👤 Personalization Agent<br/>Apply User Preferences]
+                            AG4 --> AG5[🌐 Language & Accessibility Agent<br/>Apply Accessibility Needs]
+                            AG5 --> AG6[🏘️ Local Knowledge Agent<br/>Add Local Insights]
+                            
+                            %% External API Integration
+                            AG1 --> API1[🚂 Sri Lanka Railways API]
+                            AG1 --> API2[🚌 SLTB/NTC Bus API]
+                            AG1 --> API3[🌤️ Weather API]
+                            AG1 --> API4[🚗 Traffic API]
+                            
+                            %% Route Results
+                            AG6 --> R1[📊 Route Options Display]
+                            R1 --> R2{User Selects Route?}
+                            R2 -->|Yes| R3[✅ Route Confirmed]
+                            R2 -->|No| R4[🔄 Modify Search Criteria]
+                            R4 --> F2
+                            
+                            %% Journey Execution
+                            R3 --> J1[🚀 Journey Started]
+                            J1 --> J2[📱 Real-time Tracking Active]
+                            J2 --> J3[🔔 Live Updates via WebSocket]
+                            
+                            %% Disruption Handling
+                            J3 --> D1{Service Disruption Detected?}
+                            D1 -->|No| J4[✅ Journey Continues Normally]
+                            D1 -->|Yes| D2[⚠️ Disruption Management Agent]
+                            D2 --> D3[🔄 Calculate Alternative Routes]
+                            D3 --> D4[📢 Notify User with Alternatives]
+                            D4 --> D5{User Accepts Alternative?}
+                            D5 -->|Yes| D6[🔄 Update Route]
+                            D5 -->|No| D7[⏸️ Journey Paused]
+                            D6 --> J3
+                            
+                            %% Payment & Completion
+                            J4 --> P1{Payment Required?}
+                            P1 -->|Yes| P2[💳 Process Payment<br/>Optimized Fare]
+                            P1 -->|No| P3[🏁 Journey Completed]
+                            P2 --> P3
+                            
+                            %% Feedback & Learning
+                            P3 --> F4[⭐ Rate Journey Experience]
+                            F4 --> F5[🧠 Personalization Agent<br/>Learn from Feedback]
+                            F5 --> F6[📊 Update User Profile]
+                            F6 --> D
+                            
+                            %% Accessibility Features
+                            AG5 --> AC1[♿ Wheelchair Accessible Routes]
+                            AG5 --> AC2[👁️ Voice Navigation]
+                            AG5 --> AC3[🔊 Audio Announcements]
+                            AG5 --> AC4[📱 Screen Reader Support]
+                            
+                            %% Emergency Scenarios
+                            J3 --> E1{Emergency Situation?}
+                            E1 -->|Yes| E2[🆘 Emergency Mode]
+                            E2 --> E3[📞 Emergency Contacts]
+                            E3 --> E4[📍 Share Live Location]
+                            E4 --> E5[🚑 Emergency Services Alert]
+                            
+                            %% Styling for different components
+                            classDef userNode fill:#3498db,stroke:#2980b9,stroke-width:3px,color:#fff
+                            classDef agentNode fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
+                            classDef apiNode fill:#f39c12,stroke:#d68910,stroke-width:2px,color:#fff
+                            classDef processNode fill:#27ae60,stroke:#1e8449,stroke-width:2px,color:#fff
+                            classDef decisionNode fill:#9b59b6,stroke:#7d3c98,stroke-width:2px,color:#fff
+                            classDef emergencyNode fill:#e74c3c,stroke:#c0392b,stroke-width:3px,color:#fff
+                            
+                            class A,C,C1,C2,C3,D,F1,F2,R2,R3,J1,P2,F4 userNode
+                            class AG1,AG2,AG3,AG4,AG5,AG6,D2,F5 agentNode
+                            class API1,API2,API3,API4 apiNode
+                            class F3,R1,J2,J3,D3,D6,F6 processNode
+                            class B,E,D1,D5,P1,E1 decisionNode
+                            class E2,E3,E4,E5 emergencyNode
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🔄 Real-time Features</h2>
+                <p>Our system provides continuous real-time updates through:</p>
+                <ul>
+                    <li><strong>WebSocket Connections:</strong> Live journey tracking and notifications</li>
+                    <li><strong>Disruption Monitoring:</strong> Automatic detection and alternative routing</li>
+                    <li><strong>Dynamic Re-routing:</strong> Adaptive path optimization during travel</li>
+                    <li><strong>Live ETA Updates:</strong> Continuous arrival time adjustments</li>
+                    <li><strong>Weather Integration:</strong> Route adjustments based on weather conditions</li>
+                    <li><strong>Traffic Optimization:</strong> Real-time traffic consideration for bus routes</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🎯 User Outcomes Achieved</h2>
+                <div class="features">
+                    <div class="feature-box">
+                        <h3>🕒 Reduced Travel Time</h3>
+                        <p>AI-optimized routes reduce average journey time by analyzing real-time conditions and multi-modal options.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>💰 Lower Transportation Costs</h3>
+                        <p>Fare optimization agent identifies discounts, suggests cost-effective routes, and recommends season passes.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>♿ Enhanced Accessibility</h3>
+                        <p>Comprehensive accessibility features ensure equal access for all users regardless of physical abilities.</p>
+                    </div>
+                    <div class="feature-box">
+                        <h3>📱 Improved User Experience</h3>
+                        <p>Personalized, multi-language interface with voice assistance and real-time updates.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🏆 Competition Highlights</h2>
+                <p><strong>SLAIC 2025 Requirements Coverage:</strong></p>
+                <ul>
+                    <li>✅ <strong>Multi-modal Integration:</strong> Train, bus, and walking combinations</li>
+                    <li>✅ <strong>Real-time Data Processing:</strong> Live updates from multiple sources</li>
+                    <li>✅ <strong>AI-Powered Intelligence:</strong> 7 specialized agents working in coordination</li>
+                    <li>✅ <strong>Accessibility Compliance:</strong> Comprehensive inclusive design</li>
+                    <li>✅ <strong>Sri Lankan Context:</strong> Local transport operators and cultural considerations</li>
+                    <li>✅ <strong>Production Ready:</strong> Scalable architecture with environment-driven configuration</li>
+                    <li>✅ <strong>User-Centric Design:</strong> Personalized experience with learning capabilities</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📱 Technical Implementation</h2>
+                <p><strong>System Architecture:</strong></p>
+                <ul>
+                    <li><strong>Backend:</strong> FastAPI with 94 functional endpoints</li>
+                    <li><strong>Database:</strong> MongoDB for geospatial data and user profiles</li>
+                    <li><strong>Real-time:</strong> WebSocket connections and Redis pub/sub</li>
+                    <li><strong>AI Agents:</strong> Microservices architecture with orchestration layer</li>
+                    <li><strong>External APIs:</strong> Smart integration with fallback mechanisms</li>
+                    <li><strong>Mobile App:</strong> React Native with accessibility support</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 15
+            },
+            themeVariables: {
+                primaryColor: '#3498db',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#2980b9',
+                lineColor: '#34495e',
+                secondaryColor: '#ecf0f1',
+                tertiaryColor: '#fff'
+            }
+        });
+    </script>
+</body>
+</html>

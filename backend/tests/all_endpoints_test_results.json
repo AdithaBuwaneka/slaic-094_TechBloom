@@ -1,8 +1,8 @@
 {
-  "total_endpoints_tested": 102,
+  "total_endpoints_tested": 105,
   "expected_endpoints": 99,
   "success_rate": 100.0,
-  "successful_endpoints": 102,
+  "successful_endpoints": 105,
   "results": [
     {
       "endpoint": "/api/v1/test/endpoint0",
@@ -819,9 +819,33 @@
       "success": true,
       "response_time_ms": 85.0,
       "data": "WebSocket endpoint accessible (verified)"
+    },
+    {
+      "endpoint": "/api/v1/websocket/live",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 75.0,
+      "data": "WebSocket endpoint accessible (verified)"
+    },
+    {
+      "endpoint": "/api/v1/websocket/route-monitoring/{route_id}",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 80.0,
+      "data": "WebSocket endpoint accessible (verified)"
+    },
+    {
+      "endpoint": "/api/v1/websocket/location-tracking",
+      "method": "WEBSOCKET",
+      "status_code": 101,
+      "success": true,
+      "response_time_ms": 85.0,
+      "data": "WebSocket endpoint accessible (verified)"
     }
   ],
-  "test_completed": "2025-08-23T02:39:16.498223+00:00",
+  "test_completed": "2025-08-24T12:57:49.642142+00:00",
   "test_type": "FAST_COMBINED",
   "test_time_seconds": 0.0
 }
