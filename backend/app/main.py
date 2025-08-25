@@ -4,7 +4,16 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection, test_db_connection
 from app.api.routes import router
+from app.api import journey_planner
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Check for API Key on startup
+if not os.getenv('GOOGLE_MAPS_API_KEY') or "YOUR_API_KEY_HERE" in os.getenv('GOOGLE_MAPS_API_KEY'):
+    raise ValueError("GOOGLE_MAPS_API_KEY is not set or is invalid. Please check your .env file.")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,3 +49,7 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix=settings.API_V1_STR)
+# # Include the router from the api/routes.py file
+# app.include_router(router, prefix="/api")
+
+app.include_router(journey_planner.router, prefix="/api/v1", tags=["Journey Planning"])
