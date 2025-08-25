@@ -1,10 +1,7 @@
-# app/models/transport.py
-
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from bson import ObjectId
 
-# Helper for MongoDB's _id field
 class PyObjectId(ObjectId):
     @classmethod
     def __get_validators__(cls):
@@ -21,20 +18,18 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string")
 
 
-# --- Add this new model ---
 class MockBusRoute(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     route_number: str
     origin: str
     destination: str
     stops: List[str]
-    operator: str = "SLTB" # Sri Lanka Transport Board
+    operator: str = "SLTB" 
 
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 
-# --- No changes needed for the models below, they are for reference ---
 class JourneyRequest(BaseModel):
     origin: str
     destination: str

@@ -1,5 +1,3 @@
-# app/services/google_maps_service.py
-
 import googlemaps
 from datetime import datetime
 from typing import List

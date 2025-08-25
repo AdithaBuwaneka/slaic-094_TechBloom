@@ -1,5 +1,3 @@
-# app/agents/graph_state.py
-
 from typing import TypedDict, Optional, List
 from app.models.transport import RouteOption
 
