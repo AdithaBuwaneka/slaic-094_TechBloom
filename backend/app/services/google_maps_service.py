@@ -60,7 +60,8 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
                         "departure_stop": td['departure_stop']['name'],
                         "line_name": td['line']['name'] if 'name' in td['line'] else td['line'].get('short_name', 'N/A'),
                         "vehicle_type": td['line']['vehicle']['name'],
-                        "num_stops": td['num_stops']
+                        "num_stops": td['num_stops'],
+                        "departure_time": td.get('departure_time', {}).get('text') if 'departure_time' in td else None
                     }
                 steps.append(step_data)
 

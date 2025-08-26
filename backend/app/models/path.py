@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from enum import Enum
 from datetime import datetime
+from zoneinfo import ZoneInfo  # Add this import
 
 # An enum for the user to express a preference
 class TransitMode(str, Enum):
@@ -16,17 +17,33 @@ class TravelMode(str, Enum):
     BICYCLING = "bicycling"
     THREE_WHEELER = "three_wheeler" 
 
+# Function to get current Sri Lanka time
+def get_current_sl_time():
+    return datetime.now(ZoneInfo("Asia/Colombo"))
+
 class PathRequest(BaseModel):
     start: str
     end: str
     mode: TravelMode = TravelMode.DRIVING
     departure_time: datetime = Field(
-        default_factory=datetime.now,
-        description="Departure time in ISO 8601 format. Defaults to the current time if not provided.",
-        example="2025-08-25T16:30:00"
+        default_factory=get_current_sl_time,
+        description="Departure time in ISO 8601 format. Defaults to the current time in Sri Lanka timezone if not provided."
     )
-
     transit_mode_preference: Optional[TransitMode] = None
+    
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "start": "Colombo",
+                    "end": "Kandy",
+                    "mode": "driving",
+                    "departure_time": get_current_sl_time().isoformat(),
+                    "transit_mode_preference": "bus"
+                }
+            ]
+        }
+    }
 
 class TransitDetails(BaseModel):
     """Model for transit-specific information."""
@@ -35,6 +52,7 @@ class TransitDetails(BaseModel):
     line_name: str
     vehicle_type: str # e.g., Bus, Train
     num_stops: int
+    departure_time: Optional[str] = None
 
 class RouteStep(BaseModel):
     """Represents a single step in the directions. Now more flexible."""
