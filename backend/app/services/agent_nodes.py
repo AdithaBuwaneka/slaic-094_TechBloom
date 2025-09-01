@@ -305,34 +305,45 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
     print("Gathering local knowledge about the route")
     
     try:
+        # Create a copy of the state to avoid conflicts
+        state_copy = state.model_copy(deep=True)
+        
         # Search for information about the route area
-        route_query = f"transportation {state.source} to {state.destination} local tips"
+        route_query = f"transportation {state_copy.source} to {state_copy.destination} local tips"
         search_result = serper_tool._run(route_query)
         
+        local_insights = {}
         if search_result["status"] == "success":
-            state.local_insights["route_info"] = search_result["general_info"]
-            state.local_insights["traffic_info"] = search_result["traffic_info"]
+            local_insights["route_info"] = search_result["general_info"]
+            local_insights["traffic_info"] = search_result["traffic_info"]
         
         # Search for POIs and attractions along the route
-        poi_query = f"attractions points of interest between {state.source} {state.destination}"
+        poi_query = f"attractions points of interest between {state_copy.source} {state_copy.destination}"
         poi_result = serper_tool._run(poi_query)
         
+        poi_information = []
         if poi_result["status"] == "success":
-            state.poi_information.append({
+            poi_information.append({
                 "type": "attractions",
                 "data": poi_result["general_info"]
             })
         
         # Search for current conditions and events
-        conditions_query = f"current conditions events {state.source} {state.destination} today"
+        conditions_query = f"current conditions events {state_copy.source} {state_copy.destination} today"
         conditions_result = serper_tool._run(conditions_query)
         
+        route_context_data = []
         if conditions_result["status"] == "success":
-            state.route_context_data.append({
+            route_context_data.append({
                 "type": "current_conditions",
                 "data": conditions_result["general_info"],
                 "timestamp": datetime.now().isoformat()
             })
+        
+        # Update the original state with results
+        state.local_insights = local_insights
+        state.poi_information = poi_information
+        state.route_context_data = route_context_data
         
         state.current_step = "local_knowledge_completed"
         state.agents_completed.append("local_knowledge_agent")

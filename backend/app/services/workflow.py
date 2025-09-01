@@ -44,14 +44,10 @@ def create_travel_agent_workflow():
     # Standard route processing (direct to optimization)
     workflow.add_edge("standard_route", "route_optimization")
     
-    # Multi-agent transit processing (parallel execution)
+    # Multi-agent transit processing (sequential execution to avoid conflicts)
     workflow.add_edge("transit_route_aggregation", "fare_calculation")
-    workflow.add_edge("transit_route_aggregation", "user_preference_analysis")
-    workflow.add_edge("transit_route_aggregation", "local_knowledge_agent")
-    
-    # All parallel agents feed into optimization
-    workflow.add_edge("fare_calculation", "route_optimization")
-    workflow.add_edge("user_preference_analysis", "route_optimization")
+    workflow.add_edge("fare_calculation", "user_preference_analysis")
+    workflow.add_edge("user_preference_analysis", "local_knowledge_agent")
     workflow.add_edge("local_knowledge_agent", "route_optimization")
     
     # Optimization leads to disruption monitoring

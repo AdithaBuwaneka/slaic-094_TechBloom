@@ -27,11 +27,19 @@ class LangfuseService:
                 print("⚠️  Langfuse not configured. Tracing will be disabled.")
                 return
             
-            # Initialize Langfuse client with more lenient timeouts
+            # Initialize Langfuse client with optimized settings to prevent timeout issues
             Langfuse(
                 public_key=settings.LANGFUSE_PUBLIC_KEY,
                 secret_key=settings.LANGFUSE_SECRET_KEY,
-                host=settings.LANGFUSE_HOST
+                host=settings.LANGFUSE_HOST,
+                # Increase timeout to prevent immediate failures
+                timeout=30,
+                # Disable automatic tracing to prevent OpenTelemetry timeouts
+                tracing_enabled=False,
+                # Use longer flush intervals to batch operations
+                flush_interval=10.0,
+                # Set environment for better organization
+                environment="development"
             )
             
             # Get the configured client instance
@@ -40,7 +48,7 @@ class LangfuseService:
             # Initialize the Langfuse handler for LangChain
             self.handler = CallbackHandler()
             
-            print("✅ Langfuse initialized successfully")
+            print("✅ Langfuse initialized successfully with optimized settings")
             
         except Exception as e:
             print(f"❌ Failed to initialize Langfuse: {e}")
@@ -142,7 +150,7 @@ class LangfuseService:
         
         try:
             # Try to flush with a reasonable timeout
-            print("�� Flushing events to Langfuse...")
+            print("🔄 Flushing events to Langfuse...")
             
             # Use a simple timeout approach that works cross-platform
             import threading
