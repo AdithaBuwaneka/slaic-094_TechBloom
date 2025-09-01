@@ -12,8 +12,17 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-here"
     GOOGLE_MAPS_API_KEY: str = ""
     GROQ_API_KEY: str = ""
-    GOOGLE_API_KEY: str 
-
+    GOOGLE_API_KEY: str = ""
+    
+    # External API Configuration
+    USE_MOCK_DATA: str = "true"
+    RAILWAYS_API_KEY: str = ""
+    RAILWAYS_API_URL: str = ""
+    SLTB_API_KEY: str = ""
+    SLTB_API_URL: str = ""
+    WEATHER_API_KEY: str = ""
+    WEATHER_API_URL: str = ""
+    GOOGLE_MAPS_API_URL: str = ""
     
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
     

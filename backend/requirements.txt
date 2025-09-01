@@ -52,4 +52,14 @@ xxhash==3.5.0
 zstandard==0.24.0
 langchain
 langgraph
-langchain-google-genai 
+langchain-google-genai
+# Authentication & Security
+PyJWT==2.9.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.10
+email-validator==2.2.0
+# Mobile & Push Notifications  
+pyfcm==1.5.4
+# Additional utilities
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.1 

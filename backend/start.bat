@@ -1,3 +1,0 @@
-@echo off
-echo Starting Aegis Backend...
-python run.py
