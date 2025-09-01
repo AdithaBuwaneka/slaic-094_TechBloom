@@ -12,6 +12,8 @@ A FastAPI backend application with MongoDB database integration for the Transit 
 - CORS middleware enabled for any frontend URL
 - Environment-based configuration with .env support
 - Production-ready with uvicorn ASGI server
+- **🆕 Langfuse Integration**: AI agent tracing, observability, and performance monitoring
+- **🆕 Multi-Agent System**: Intelligent travel planning with specialized AI agents
 
 ## Project Structure
 
@@ -25,6 +27,14 @@ BACKEND/
 │   │   ├── config.py          # Configuration settings
 │   │   ├── database.py        # Database connection
 │   │   └── __init__.py
+│   ├── services/
+│   │   ├── workflow.py        # Multi-agent workflow orchestration
+│   │   ├── agent_nodes.py     # Individual AI agent implementations
+│   │   ├── tool_functions.py  # External API integrations
+│   │   ├── langfuse_service.py # Observability and tracing service
+│   │   └── main_runner.py     # Main execution entry point
+│   ├── models/
+│   │   └── travel_schema.py   # Data models for travel planning
 │   ├── main.py                # FastAPI app initialization
 │   └── __init__.py
 ├── .env.example               # Environment variables template
@@ -32,6 +42,7 @@ BACKEND/
 ├── requirements.txt          # Python dependencies
 ├── run.py                    # Development server runner
 ├── start.bat                 # Windows startup script
+├── LANGFUSE_SETUP.md         # Langfuse integration guide
 └── README.md                 # This file
 ```
 
@@ -41,6 +52,7 @@ BACKEND/
 
 - Python 3.8+
 - MongoDB database
+- **Optional**: Langfuse account for AI agent observability
 
 ### Installation
 
@@ -81,6 +93,15 @@ BACKEND/
    DATABASE_NAME=transit_companion_db
    SECRET_KEY=your-secret-key-here-change-in-production
    BACKEND_CORS_ORIGINS=["*"]
+   
+   # AI Services
+   GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+   SERPER_API_KEY=your_serper_api_key
+   
+   # Langfuse Observability (Optional)
+   LANGFUSE_PUBLIC_KEY=your_langfuse_public_key
+   LANGFUSE_SECRET_KEY=your_langfuse_secret_key
+   LANGFUSE_HOST=https://cloud.langfuse.com
    ```
    
    **Important**: Make sure MongoDB is running and accessible at the specified URL.
