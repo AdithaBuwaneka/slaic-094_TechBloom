@@ -68,6 +68,7 @@ def create_travel_agent_workflow():
         compiled_workflow = compiled_workflow.with_config({
             "callbacks": [langfuse_service.get_handler()]
         })
+        print("✅ Langfuse callbacks integrated into workflow")
     
     return compiled_workflow
 
@@ -119,6 +120,7 @@ def run_travel_agent(source: str, destination: str, mode: str,
                     "processing_time": (datetime.now() - initial_state.processing_start_time).total_seconds()
                 }
             )
+            trace.end()
         
         # Return the final response
         return {
@@ -139,6 +141,7 @@ def run_travel_agent(source: str, destination: str, mode: str,
                     "processing_time": (datetime.now() - initial_state.processing_start_time).total_seconds()
                 }
             )
+            trace.end()
         
         return {
             "status": "error",

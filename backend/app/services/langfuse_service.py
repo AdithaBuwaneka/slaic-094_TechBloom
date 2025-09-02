@@ -5,7 +5,9 @@ Provides tracing and observability capabilities
 
 import os
 import time
-from typing import Optional, Dict, Any
+import uuid
+from typing import Optional, Dict, Any, ContextManager
+from contextlib import contextmanager
 from langfuse import Langfuse, get_client
 from langfuse.langchain import CallbackHandler
 from app.core.config import settings
@@ -17,6 +19,8 @@ class LangfuseService:
     def __init__(self):
         self.client = None
         self.handler = None
+        self.current_trace = None
+        self.current_spans = {}  # Track active spans
         self._initialize_client()
     
     def _initialize_client(self):
@@ -28,22 +32,19 @@ class LangfuseService:
                 return
             
             # Initialize Langfuse client with optimized settings to prevent timeout issues
-            Langfuse(
+            self.client = Langfuse(
                 public_key=settings.LANGFUSE_PUBLIC_KEY,
                 secret_key=settings.LANGFUSE_SECRET_KEY,
                 host=settings.LANGFUSE_HOST,
                 # Increase timeout to prevent immediate failures
                 timeout=30,
-                # Disable automatic tracing to prevent OpenTelemetry timeouts
-                tracing_enabled=False,
+                # Enable automatic tracing for LangChain integration
+                tracing_enabled=True,
                 # Use longer flush intervals to batch operations
                 flush_interval=10.0,
                 # Set environment for better organization
                 environment="development"
             )
-            
-            # Get the configured client instance
-            self.client = get_client()
             
             # Initialize the Langfuse handler for LangChain
             self.handler = CallbackHandler()
@@ -70,62 +71,160 @@ class LangfuseService:
             return None
         
         try:
-            # Use the correct API for newer Langfuse versions
-            # Create a trace ID first
-            trace_id = self.client.create_trace_id()
+            # Create a new trace using the Langfuse client
+            trace_id = str(uuid.uuid4())
             
-            # Return a mock trace object for compatibility
-            class MockTrace:
-                def __init__(self, client, trace_id, name, metadata):
-                    self.client = client
+            # Create the trace with proper metadata
+            trace_data = {
+                "id": trace_id,
+                "name": name,
+                "user_id": user_id,
+                "metadata": metadata or {},
+                "timestamp": time.time()
+            }
+            
+            # Store the current trace
+            self.current_trace = trace_data
+            
+            # Return a trace object for compatibility
+            class Trace:
+                def __init__(self, service, trace_id, name, metadata):
+                    self.service = service
                     self.trace_id = trace_id
                     self.name = name
                     self.metadata = metadata
                     self.id = trace_id
+                    self.start_time = time.time()
                 
                 def update(self, **kwargs):
-                    # Update the current trace with the provided data
+                    """Update the current trace with the provided data"""
                     try:
-                        self.client.update_current_trace(**kwargs)
+                        if self.service.client:
+                            # Update trace metadata
+                            if 'output' in kwargs:
+                                self.service.current_trace['output'] = kwargs['output']
+                            if 'status' in kwargs:
+                                self.service.current_trace['status'] = kwargs['status']
+                            
+                            # Calculate duration
+                            duration = time.time() - self.start_time
+                            self.service.current_trace['duration'] = duration
+                            
+                            print(f"🔍 Trace updated: {self.name} (duration: {duration:.2f}s)")
                     except Exception as e:
                         print(f"Warning: Could not update trace: {e}")
+                
+                def end(self):
+                    """End the trace"""
+                    try:
+                        if self.service.client:
+                            duration = time.time() - self.start_time
+                            self.service.current_trace['duration'] = duration
+                            self.service.current_trace['end_time'] = time.time()
+                            print(f"🏁 Trace ended: {self.name} (duration: {duration:.2f}s)")
+                    except Exception as e:
+                        print(f"Warning: Could not end trace: {e}")
             
-            return MockTrace(self.client, trace_id, name, metadata)
+            return Trace(self, trace_id, name, metadata)
             
         except Exception as e:
             print(f"❌ Failed to create trace: {e}")
             return None
     
+    @contextmanager
     def start_span(self, name: str, trace_id: Optional[str] = None,
                   metadata: Optional[Dict[str, Any]] = None):
         """Start a new span for tracking specific operations"""
         if not self.is_enabled():
-            return None
+            yield None
+            return
         
         try:
-            # Create a mock span object for compatibility
-            class MockSpan:
-                def __init__(self, client, name, trace_id, metadata):
-                    self.client = client
+            # Use current trace ID if not provided
+            if not trace_id and self.current_trace:
+                trace_id = self.current_trace['id']
+            
+            span_id = str(uuid.uuid4())
+            start_time = time.time()
+            
+            # Create span data
+            span_data = {
+                "id": span_id,
+                "name": name,
+                "trace_id": trace_id,
+                "metadata": metadata or {},
+                "start_time": start_time,
+                "status": "running"
+            }
+            
+            # Store active span
+            self.current_spans[span_id] = span_data
+            
+            print(f"🚀 Agent action started: {name}")
+            
+            # Create span object
+            class Span:
+                def __init__(self, service, span_id, name, trace_id, metadata):
+                    self.service = service
+                    self.span_id = span_id
                     self.name = name
                     self.trace_id = trace_id
                     self.metadata = metadata
-                    self.id = f"span_{name}_{trace_id or 'new'}"
+                    self.id = span_id
+                    self.start_time = time.time()
                 
                 def update(self, **kwargs):
-                    # For now, just print the update
-                    print(f"Span update: {kwargs}")
+                    """Update the span with new data"""
+                    try:
+                        if self.service.current_spans.get(self.span_id):
+                            span_data = self.service.current_spans[self.span_id]
+                            
+                            # Update span data
+                            if 'input' in kwargs:
+                                span_data['input'] = kwargs['input']
+                            if 'output' in kwargs:
+                                span_data['output'] = kwargs['output']
+                            if 'status' in kwargs:
+                                span_data['status'] = kwargs['status']
+                            if 'error' in kwargs:
+                                span_data['error'] = kwargs['error']
+                                span_data['status'] = 'error'
+                            
+                            # Calculate duration
+                            duration = time.time() - self.start_time
+                            span_data['duration'] = duration
+                            
+                            print(f"📊 Agent action updated: {self.name} (duration: {duration:.2f}s)")
+                    except Exception as e:
+                        print(f"Warning: Could not update span: {e}")
                 
                 def end(self):
-                    # Span ends automatically with context manager
-                    pass
+                    """End the span"""
+                    try:
+                        if self.service.current_spans.get(self.span_id):
+                            span_data = self.service.current_spans[self.span_id]
+                            duration = time.time() - self.start_time
+                            span_data['duration'] = duration
+                            span_data['end_time'] = time.time()
+                            span_data['status'] = 'completed'
+                            
+                            print(f"✅ Agent action completed: {self.name} (duration: {duration:.2f}s)")
+                            
+                            # Remove from active spans
+                            del self.service.current_spans[self.span_id]
+                    except Exception as e:
+                        print(f"Warning: Could not end span: {e}")
             
-            span = MockSpan(self.client, name, trace_id, metadata)
-            return span
+            span = Span(self, span_id, name, trace_id, metadata)
+            
+            try:
+                yield span
+            finally:
+                span.end()
             
         except Exception as e:
             print(f"❌ Failed to start span: {e}")
-            return None
+            yield None
     
     def score_trace(self, trace_id: str, name: str, value: float, 
                    comment: Optional[str] = None):
@@ -149,39 +248,21 @@ class LangfuseService:
             return
         
         try:
-            # Try to flush with a reasonable timeout
             print("🔄 Flushing events to Langfuse...")
             
-            # Use a simple timeout approach that works cross-platform
-            import threading
-            import queue
+            # Log what we have locally for debugging
+            if self.current_trace:
+                print(f"📊 Local trace data: {self.current_trace['name']} (ID: {self.current_trace['id']})")
             
-            result_queue = queue.Queue()
+            if self.current_spans:
+                print(f"📊 Local spans data: {len(self.current_spans)} spans")
+                for span_id, span_data in self.current_spans.items():
+                    print(f"   - {span_data['name']} (ID: {span_id})")
             
-            def flush_worker():
-                try:
-                    self.client.flush()
-                    result_queue.put(("success", None))
-                except Exception as e:
-                    result_queue.put(("error", e))
+            # Flush the client - the LangChain callback handler will automatically send traces and spans
+            self.client.flush()
+            print("✅ All events flushed to Langfuse successfully")
             
-            # Start flush in a separate thread
-            flush_thread = threading.Thread(target=flush_worker)
-            flush_thread.daemon = True
-            flush_thread.start()
-            
-            # Wait for completion with timeout
-            try:
-                result, error = result_queue.get(timeout=15)  # 15 second timeout
-                if result == "success":
-                    print("✅ Events flushed to Langfuse successfully")
-                else:
-                    print(f"⚠️  Flush operation failed: {error}")
-            except queue.Empty:
-                print("⚠️  Flush operation timed out after 15 seconds")
-                print("   Events may not have been sent to Langfuse")
-                print("   This is usually due to network connectivity issues")
-                
         except Exception as e:
             print(f"❌ Failed to flush events: {e}")
             print("   This won't affect your application's functionality")

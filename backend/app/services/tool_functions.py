@@ -21,7 +21,8 @@ class GoogleMapsAPITool(BaseTool):
     description: str = "Get route information from Google Maps API"
     
     def _run(self, origin: str, destination: str, mode: str = "driving", 
-             alternatives: bool = True, departure_time: Optional[datetime] = None) -> Dict:
+             alternatives: bool = True, departure_time: Optional[datetime] = None,
+             transit_mode_preference: Optional[str] = None) -> Dict:
         """
         Get routes from Google Maps
         """
@@ -34,13 +35,19 @@ class GoogleMapsAPITool(BaseTool):
         
         try:
             if mode == "transit":
-                result = gmaps.directions(
-                    origin=origin,
-                    destination=destination,
-                    mode="transit",
-                    alternatives=alternatives,
-                    departure_time=departure_time or datetime.now()
-                )
+                # Build the directions request parameters
+                directions_params = {
+                    "origin": origin,
+                    "destination": destination,
+                    "mode": "transit",
+                    "alternatives": alternatives,
+                    "departure_time": departure_time or datetime.now()
+                }
+                
+                # Add transit mode preference if specified
+                if transit_mode_preference:
+                    directions_params["transit_mode"] = transit_mode_preference
+                result = gmaps.directions(**directions_params)
             else:
                 result = gmaps.directions(
                     origin=origin,
@@ -219,10 +226,10 @@ class FareDatabaseTool(BaseTool):
             db = self._client['transit_companion_db']
             transit_fares_collection = db['transit_fares']
             
-            # Create query parameters for exact match
+            # Create query parameters for exact match (case-insensitive)
             query_params = {
-                "origin": source,
-                "destination": destination,
+                "origin": {"$regex": f"^{source}$", "$options": "i"},
+                "destination": {"$regex": f"^{destination}$", "$options": "i"},
                 "mode": mode,
                 "is_active": True
             }
@@ -448,6 +455,133 @@ class FareDatabaseTool(BaseTool):
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+    
+    def get_step_fare(self, step: Dict) -> Dict:
+        """
+        Calculate fare for a single transit step using departure_stop, arrival_stop, line_name
+        """
+        if not self._client:
+            return {
+                "status": "error",
+                "error": "MongoDB connection not available",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        try:
+            # Get the database and collection
+            db = self._client['transit_companion_db']
+            transit_fares_collection = db['transit_fares']
+            
+            # Extract step details
+            transit_details = step.get("transit_details", {})
+            
+            # Handle departure/arrival stops - they might be objects with 'name' property
+            departure_stop_obj = transit_details.get("departure_stop", {})
+            arrival_stop_obj = transit_details.get("arrival_stop", {})
+            
+            departure_stop = departure_stop_obj.get("name", "") if isinstance(departure_stop_obj, dict) else str(departure_stop_obj)
+            arrival_stop = arrival_stop_obj.get("name", "") if isinstance(arrival_stop_obj, dict) else str(arrival_stop_obj)
+            
+            line_name = transit_details.get("line_name", "")
+            vehicle_type = transit_details.get("vehicle_type", "").lower()
+            
+            # If vehicle_type is empty, try to infer from line or default to bus
+            if not vehicle_type:
+                if "bus" in line_name.lower():
+                    vehicle_type = "bus"
+                elif "train" in line_name.lower():
+                    vehicle_type = "train"
+                else:
+                    vehicle_type = "bus"  # Default to bus for transit steps
+            
+            distance = step.get("distance", {}).get("value", 0) / 1000  # Convert to km
+            
+            print(f"🔍 Looking up fare for step: {departure_stop} -> {arrival_stop}, line: {line_name}, mode: {vehicle_type}")
+            
+            # Build queries only with exact matches
+            queries_to_try = []
+            
+            # 1. Exact match with departure/arrival stops (only if both are non-empty)
+            if departure_stop and arrival_stop:
+                queries_to_try.append({
+                    "departure_stop": {"$regex": f"^{departure_stop}$", "$options": "i"},
+                    "arrival_stop": {"$regex": f"^{arrival_stop}$", "$options": "i"},
+                    "mode": vehicle_type,
+                    "is_active": True
+                })
+            
+            # 2. Exact match with line name (only if line_name is non-empty)
+            if line_name:
+                queries_to_try.append({
+                    "line_name": {"$regex": f"^{line_name}$", "$options": "i"},
+                    "mode": vehicle_type,
+                    "is_active": True
+                })
+            
+            # 3. Try origin/destination match (for routes without departure/arrival stops)
+            if departure_stop and arrival_stop:
+                queries_to_try.append({
+                    "origin": {"$regex": f"^{departure_stop}$", "$options": "i"},
+                    "destination": {"$regex": f"^{arrival_stop}$", "$options": "i"},
+                    "mode": vehicle_type,
+                    "is_active": True
+                })
+            
+            fare_record = None
+            if queries_to_try:
+                for query in queries_to_try:
+                    fare_record = transit_fares_collection.find_one(query)
+                    if fare_record:
+                        print(f"✅ Found fare record with query: {query}")
+                        break
+            else:
+                print("⚠️ No valid query parameters available, skipping database lookup")
+            
+            if fare_record:
+                # Convert ObjectId to string for JSON serialization
+                fare_record['_id'] = str(fare_record['_id'])
+                
+                return {
+                    "status": "success",
+                    "fare": {
+                        "base_fare": fare_record.get('base_fare', 0),
+                        "source": "database"
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # If no database record found, calculate distance-based fare
+            print(f"📏 No database record found, calculating distance-based fare for {vehicle_type}")
+            
+            if vehicle_type == "bus":
+                # Bus fare: 15 LKR base + 2 LKR per km
+                calculated_fare = 15 + (distance * 2)
+            elif vehicle_type == "train":
+                # Train fare: 25 LKR base + 1.5 LKR per km
+                calculated_fare = 25 + (distance * 1.5)
+            elif vehicle_type == "tuk_tuk":
+                # Tuk-tuk fare: 50 LKR base + 8 LKR per km
+                calculated_fare = 50 + (distance * 8)
+            else:
+                # Default fare: 20 LKR base + 3 LKR per km
+                calculated_fare = 20 + (distance * 3)
+            
+            return {
+                "status": "success",
+                "fare": {
+                    "base_fare": round(calculated_fare, 2),
+                    "source": "distance_based"
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in FareDatabaseTool.get_step_fare: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
 
 class UserPreferenceTool(BaseTool):
     name: str = "user_preference"
@@ -582,8 +716,8 @@ class DisruptionDatabaseTool(BaseTool):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._client = MongoClient(os.getenv('MONGODB_CONNECTION_STRING'))
-        self._db = self._client['travel_system']
-        self._disruptions_collection = self._db['disruptions']
+        self._db = self._client['transit_companion_db']
+        self._disruptions_collection = self._db['transit_disruptions']
     
     def _run(self, action: str = "get", route_area: Optional[str] = None, 
              active_only: bool = True, disruption_data: Optional[Dict] = None) -> Dict:

@@ -4,6 +4,7 @@ from app.models.travel_schema import TravelState
 from app.services.tool_functions import *
 from app.services.analysis_tools import *
 from app.services.llm_summarizer import LLMSummarizerService
+from app.services.langfuse_service import langfuse_service
 import json
 from datetime import datetime, timedelta
 
@@ -31,24 +32,50 @@ def input_processing_node(state: TravelState) -> TravelState:
     """
     print(f"Processing input for {state.mode} travel from {state.source} to {state.destination}")
     
-    try:
-        # Get user preferences
-        pref_result = preference_tool.get_preferences(state.user_id)
-        if pref_result["status"] == "success":
-            state.current_user_preferences = pref_result["preferences"]
-        
-        # Set processing step
-        state.current_step = "input_processed"
-        state.agents_completed.append("input_processing")
-        
-        return state
-    except Exception as e:
-        state.errors.append({
-            "node": "input_processing",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        })
-        return state
+    # Start Langfuse span for this agent action
+    with langfuse_service.start_span(
+        name="input_processing_agent",
+        metadata={
+            "agent_type": "input_processing",
+            "source": state.source,
+            "destination": state.destination,
+            "mode": state.mode,
+            "user_id": state.user_id
+        }
+    ) as span:
+        try:
+            # Get user preferences
+            pref_result = preference_tool.get_preferences(state.user_id)
+            if pref_result["status"] == "success":
+                state.current_user_preferences = pref_result["preferences"]
+                span.update(
+                    input={"user_id": state.user_id},
+                    output={"preferences_loaded": True, "preferences": pref_result["preferences"]}
+                )
+            else:
+                span.update(
+                    input={"user_id": state.user_id},
+                    output={"preferences_loaded": False, "error": pref_result.get("error")}
+                )
+            
+            # Set processing step
+            state.current_step = "input_processed"
+            state.agents_completed.append("input_processing")
+            
+            span.update(status="completed")
+            return state
+            
+        except Exception as e:
+            span.update(
+                status="error",
+                error=str(e)
+            )
+            state.errors.append({
+                "node": "input_processing",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
+            return state
 
 def mode_router_node(state: TravelState) -> TravelState:
     """
@@ -67,77 +94,111 @@ def standard_route_node(state: TravelState) -> TravelState:
     """
     print(f"Getting standard routes for {state.mode}")
     
-    try:
-        # Get routes from Google Maps
-        route_result = google_maps_tool._run(
-            origin=state.source,
-            destination=state.destination,
-            mode=state.mode if state.mode != "uber" else "driving",
-            alternatives=True,
-            departure_time=state.departure_time
-        )
-        
-        print(f"Google Maps API result: {route_result['status']}")
-        
-        if route_result["status"] == "success":
-            routes = route_result["routes"]
-            print(f"Number of routes returned: {len(routes) if routes else 0}")
+    # Start Langfuse span for this agent action
+    with langfuse_service.start_span(
+        name="standard_route_agent",
+        metadata={
+            "agent_type": "standard_route",
+            "source": state.source,
+            "destination": state.destination,
+            "mode": state.mode,
+            "user_id": state.user_id
+        }
+    ) as span:
+        try:
+            # Get routes from Google Maps
+            route_result = google_maps_tool._run(
+                origin=state.source,
+                destination=state.destination,
+                mode=state.mode if state.mode != "uber" else "driving",
+                alternatives=True,
+                departure_time=state.departure_time
+            )
             
-            # Process primary route
-            if routes:
-                primary_route = routes[0]
-                print(f"Processing primary route: {primary_route.get('summary', 'No summary')}")
+            print(f"Google Maps API result: {route_result['status']}")
+            
+            span.update(
+                input={
+                    "origin": state.source,
+                    "destination": state.destination,
+                    "mode": state.mode,
+                    "departure_time": state.departure_time.isoformat() if state.departure_time else None
+                },
+                output={"google_maps_result": route_result}
+            )
+            
+            if route_result["status"] == "success":
+                routes = route_result["routes"]
+                print(f"Number of routes returned: {len(routes) if routes else 0}")
                 
-                state.primary_routes.append({
-                    "route_id": f"primary_{state.mode}",
-                    "duration": primary_route["legs"][0]["duration"]["value"] // 60,
-                    "distance": primary_route["legs"][0]["distance"]["value"] / 1000,
-                    "steps": primary_route["legs"][0]["steps"],
-                    "polyline": primary_route["overview_polyline"]["points"],
-                    "fare_estimate": None,
-                    "transit_modes": [],
-                    "transfers": 0,
-                    "walking_distance": 0.0,
-                    "category": "standard",
-                    "mode_details": {"mode": state.mode}
-                })
-                
-                print(f"Added primary route: {state.primary_routes[-1]['route_id']}")
-                
-                # Process supplementary routes
-                for i, route in enumerate(routes[1:], 1):
-                    state.supplementary_routes.append({
-                        "route_id": f"alt_{state.mode}_{i}",
-                        "duration": route["legs"][0]["duration"]["value"] // 60,
-                        "distance": route["legs"][0]["distance"]["value"] / 1000,
-                        "steps": route["legs"][0]["steps"],
-                        "polyline": route["overview_polyline"]["points"],
+                # Process primary route
+                if routes:
+                    primary_route = routes[0]
+                    print(f"Processing primary route: {primary_route.get('summary', 'No summary')}")
+                    
+                    state.primary_routes.append({
+                        "route_id": f"primary_{state.mode}",
+                        "duration": primary_route["legs"][0]["duration"]["value"] // 60,
+                        "distance": primary_route["legs"][0]["distance"]["value"] / 1000,
+                        "steps": primary_route["legs"][0]["steps"],
+                        "polyline": primary_route["overview_polyline"]["points"],
                         "fare_estimate": None,
                         "transit_modes": [],
                         "transfers": 0,
                         "walking_distance": 0.0,
-                        "category": "alternative",
+                        "category": "standard",
                         "mode_details": {"mode": state.mode}
                     })
+                    
+                    print(f"Added primary route: {state.primary_routes[-1]['route_id']}")
+                    
+                    # Process supplementary routes
+                    for i, route in enumerate(routes[1:], 1):
+                        state.supplementary_routes.append({
+                            "route_id": f"alt_{state.mode}_{i}",
+                            "duration": route["legs"][0]["duration"]["value"] // 60,
+                            "distance": route["legs"][0]["distance"]["value"] / 1000,
+                            "steps": route["legs"][0]["steps"],
+                            "polyline": route["overview_polyline"]["points"],
+                            "fare_estimate": None,
+                            "transit_modes": [],
+                            "transfers": 0,
+                            "walking_distance": 0.0,
+                            "category": "alternative",
+                            "mode_details": {"mode": state.mode}
+                        })
+                else:
+                    print("No routes returned from Google Maps API")
             else:
-                print("No routes returned from Google Maps API")
-        else:
-            print(f"Google Maps API failed: {route_result.get('error', 'Unknown error')}")
+                print(f"Google Maps API failed: {route_result.get('error', 'Unknown error')}")
+            
+            print(f"Total routes in state: {len(state.primary_routes) + len(state.supplementary_routes)}")
+            
+            state.current_step = "standard_routes_completed"
+            state.agents_completed.append("standard_route")
+            
+            span.update(
+                status="completed",
+                output={
+                    "routes_found": len(state.primary_routes) + len(state.supplementary_routes),
+                    "primary_routes": len(state.primary_routes),
+                    "supplementary_routes": len(state.supplementary_routes)
+                }
+            )
+            
+        except Exception as e:
+            print(f"Error in standard_route_node: {str(e)}")
+            span.update(
+                status="error",
+                error=str(e)
+            )
+            state.errors.append({
+                "node": "standard_route",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
         
-        print(f"Total routes in state: {len(state.primary_routes) + len(state.supplementary_routes)}")
-        
-        state.current_step = "standard_routes_completed"
-        state.agents_completed.append("standard_route")
-        
-    except Exception as e:
-        print(f"Error in standard_route_node: {str(e)}")
-        state.errors.append({
-            "node": "standard_route",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        })
-    
-    return state
+        return state
 
 def transit_route_aggregation_node(state: TravelState) -> TravelState:
     """
@@ -152,7 +213,8 @@ def transit_route_aggregation_node(state: TravelState) -> TravelState:
             destination=state.destination,
             mode="transit",
             alternatives=True,
-            departure_time=state.departure_time
+            departure_time=state.departure_time,
+            transit_mode_preference=state.preferred_transit
         )
         
         if route_result["status"] == "success":
@@ -217,40 +279,39 @@ def fare_calculation_node(state: TravelState) -> TravelState:
         
         for route in state.transit_routes:
             route_fare = 0
+            step_fares = []
             
-            # Get base transit fares from database
-            for mode in route.get("transit_modes", []):
-                fare_result = fare_tool._run("transit", state.source, state.destination, mode)
-                if fare_result["status"] == "success" and fare_result["fares"]:
-                    # Use database fare if available
-                    mode_fare = fare_result["fares"][0].get("base_fare", 0)
-                    route_fare += mode_fare
-                    print(f"✅ Found database fare for {mode}: {mode_fare} LKR")
-                else:
-                    # Calculate distance-based fare if no database record
-                    distance = route.get("distance", 0)
-                    if mode == "bus":
-                        # Bus fare: 15 LKR base + 2 LKR per km
-                        mode_fare = 15 + (distance * 2)
-                    elif mode == "train":
-                        # Train fare: 25 LKR base + 1.5 LKR per km
-                        mode_fare = 25 + (distance * 1.5)
-                    elif mode == "tuk_tuk":
-                        # Tuk-tuk fare: 50 LKR base + 8 LKR per km
-                        mode_fare = 50 + (distance * 8)
-                    else:
-                        # Default fare: 20 LKR base + 3 LKR per km
-                        mode_fare = 20 + (distance * 3)
+            # Process each step in the route
+            for step in route.get("steps", []):
+                if step.get("travel_mode") == "TRANSIT":
+                    # Calculate fare for this transit step
+                    step_fare_result = fare_tool.get_step_fare(step)
                     
-                    route_fare += mode_fare
-                    print(f"📏 Calculated distance-based fare for {mode}: {mode_fare:.0f} LKR ({distance:.1f} km)")
+                    if step_fare_result["status"] == "success":
+                        step_fare = step_fare_result["fare"]
+                        step_fares.append(step_fare)
+                        route_fare += step_fare["base_fare"]
+                        
+                        # Add fare details to the step
+                        step["fare_details"] = step_fare
+                        
+                        print(f"🚌 Step fare: {step_fare['base_fare']} LKR ({step_fare['source']})")
+                    else:
+                        print(f"❌ Failed to calculate fare for step: {step_fare_result.get('error', 'Unknown error')}")
+                else:
+                    # Walking step - no fare
+                    step["fare_details"] = {
+                        "base_fare": 0,
+                        "vehicle_type": "walking",
+                        "source": "free"
+                    }
             
-            # Add transfer penalty
-            transfers = route.get("transfers", 0)
-            if transfers > 0:
-                transfer_penalty = transfers * 5  # 5 LKR per transfer
+            # Add transfer penalty if there are multiple transit steps
+            transit_steps = [s for s in route.get("steps", []) if s.get("travel_mode") == "TRANSIT"]
+            if len(transit_steps) > 1:
+                transfer_penalty = (len(transit_steps) - 1) * 5  # 5 LKR per transfer
                 route_fare += transfer_penalty
-                print(f"🔄 Added transfer penalty: {transfer_penalty} LKR for {transfers} transfers")
+                print(f"🔄 Added transfer penalty: {transfer_penalty} LKR for {len(transit_steps) - 1} transfers")
             
             # Check if last mile is needed
             route_end_distance = route.get("walking_distance", 0)
@@ -269,11 +330,12 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                         })
                         print(f"🚶 Added last mile cost: {best_last_mile['cost']} LKR")
             
-            # Store the calculated fare
+            # Store the calculated fare and step details
             route["fare_estimate"] = round(route_fare, 2)
+            route["step_fares"] = step_fares
             total_estimated_fare = max(total_estimated_fare, route_fare)
             
-            print(f"💰 Total fare for route {route.get('route_id')}: {route_fare:.0f} LKR")
+            print(f"💰 Total fare for route {route.get('route_id')}: {route_fare:.0f} LKR (from {len(step_fares)} transit steps)")
         
         # Also calculate fares for standard routes if they exist
         for route in state.primary_routes + state.supplementary_routes:
@@ -369,111 +431,154 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
     """
     print("Gathering local knowledge about the route")
     
-    try:
-        # Create a copy of the state to avoid conflicts
-        state_copy = state.model_copy(deep=True)
-        
-        # Comprehensive search for route information
-        search_queries = [
-            {
-                "query": f"transportation {state_copy.source} to {state_copy.destination} local tips routes",
-                "category": "route_info",
-                "description": "General route and transportation information"
-            },
-            {
-                "query": f"attractions points of interest landmarks between {state_copy.source} {state_copy.destination}",
-                "category": "poi_info",
-                "description": "Points of interest along the route"
-            },
-            {
-                "query": f"current traffic conditions roadworks {state_copy.source} {state_copy.destination} today",
-                "category": "traffic_info",
-                "description": "Current traffic and road conditions"
-            },
-            {
-                "query": f"weather conditions {state_copy.source} {state_copy.destination} current",
-                "category": "weather_info",
-                "description": "Current weather conditions"
-            },
-            {
-                "query": f"local events festivals {state_copy.source} {state_copy.destination} today this week",
-                "category": "events_info",
-                "description": "Local events and activities"
-            },
-            {
-                "query": f"public transport bus train schedule {state_copy.source} {state_copy.destination}",
-                "category": "transit_info",
-                "description": "Public transport information"
-            }
-        ]
-        
-        # Execute all searches
-        search_results = {}
-        for search_item in search_queries:
-            try:
-                result = serper_tool._run(search_item["query"])
-                if result["status"] == "success":
+    # Start Langfuse span for this agent action
+    with langfuse_service.start_span(
+        name="local_knowledge_agent",
+        metadata={
+            "agent_type": "local_knowledge",
+            "source": state.source,
+            "destination": state.destination,
+            "mode": state.mode,
+            "user_id": state.user_id
+        }
+    ) as span:
+        try:
+            # Create a copy of the state to avoid conflicts
+            state_copy = state.model_copy(deep=True)
+            
+            # Comprehensive search for route information
+            search_queries = [
+                {
+                    "query": f"transportation {state_copy.source} to {state_copy.destination} local tips routes",
+                    "category": "route_info",
+                    "description": "General route and transportation information"
+                },
+                {
+                    "query": f"attractions points of interest landmarks between {state_copy.source} {state_copy.destination}",
+                    "category": "poi_info",
+                    "description": "Points of interest along the route"
+                },
+                {
+                    "query": f"current traffic conditions roadworks {state_copy.source} {state_copy.destination} today",
+                    "category": "traffic_info",
+                    "description": "Current traffic and road conditions"
+                },
+                {
+                    "query": f"weather conditions {state_copy.source} {state_copy.destination} current",
+                    "category": "weather_info",
+                    "description": "Current weather conditions"
+                },
+                {
+                    "query": f"local events festivals {state_copy.source} {state_copy.destination} today this week",
+                    "category": "events_info",
+                    "description": "Local events and activities"
+                },
+                {
+                    "query": f"public transport bus train schedule {state_copy.source} {state_copy.destination}",
+                    "category": "transit_info",
+                    "description": "Public transport information"
+                }
+            ]
+            
+            span.update(
+                input={
+                    "search_queries": search_queries,
+                    "source": state.source,
+                    "destination": state.destination
+                }
+            )
+            
+            # Execute all searches
+            search_results = {}
+            successful_searches = 0
+            for search_item in search_queries:
+                try:
+                    result = serper_tool._run(search_item["query"])
+                    if result["status"] == "success":
+                        search_results[search_item["category"]] = {
+                            "query": search_item["query"],
+                            "description": search_item["description"],
+                            "data": result["general_info"],
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        successful_searches += 1
+                    else:
+                        print(f"Search failed for {search_item['category']}: {result.get('error', 'Unknown error')}")
+                        search_results[search_item["category"]] = {
+                            "query": search_item["query"],
+                            "description": search_item["description"],
+                            "error": result.get('error', 'Unknown error'),
+                            "timestamp": datetime.now().isoformat()
+                        }
+                except Exception as e:
+                    print(f"Exception during search for {search_item['category']}: {str(e)}")
                     search_results[search_item["category"]] = {
                         "query": search_item["query"],
                         "description": search_item["description"],
-                        "data": result["general_info"],
+                        "error": str(e),
                         "timestamp": datetime.now().isoformat()
                     }
-                else:
-                    print(f"Search failed for {search_item['category']}: {result.get('error', 'Unknown error')}")
-            except Exception as e:
-                print(f"Exception during search for {search_item['category']}: {str(e)}")
-                search_results[search_item["category"]] = {
-                    "query": search_item["query"],
-                    "description": search_item["description"],
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
+            
+            # Organize results into state fields
+            state.local_insights = {
+                "route_info": search_results.get("route_info", {}),
+                "traffic_info": search_results.get("traffic_info", {}),
+                "weather_info": search_results.get("weather_info", {}),
+                "events_info": search_results.get("events_info", {}),
+                "transit_info": search_results.get("transit_info", {})
+            }
+            
+            # POI information
+            poi_data = search_results.get("poi_info", {})
+            if poi_data and "data" in poi_data:
+                state.poi_information = [{
+                    "type": "attractions",
+                    "data": poi_data["data"],
+                    "query": poi_data["query"],
+                    "timestamp": poi_data["timestamp"]
+                }]
+            
+            # Route context data
+            state.route_context_data = []
+            for category, data in search_results.items():
+                if data and "data" in data and data["data"]:
+                    state.route_context_data.append({
+                        "type": category,
+                        "data": data["data"],
+                        "query": data["query"],
+                        "timestamp": data["timestamp"]
+                    })
+            
+            print(f"Local knowledge gathered: {successful_searches}/{len(search_queries)} searches successful")
+            
+            state.current_step = "local_knowledge_completed"
+            state.agents_completed.append("local_knowledge_agent")
+            
+            span.update(
+                status="completed",
+                output={
+                    "searches_executed": len(search_queries),
+                    "successful_searches": successful_searches,
+                    "search_results": search_results,
+                    "local_insights_categories": list(state.local_insights.keys()),
+                    "poi_information_count": len(state.poi_information) if state.poi_information else 0,
+                    "route_context_data_count": len(state.route_context_data)
                 }
+            )
+            
+        except Exception as e:
+            print(f"Error in local knowledge agent: {str(e)}")
+            span.update(
+                status="error",
+                error=str(e)
+            )
+            state.errors.append({
+                "node": "local_knowledge_agent",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
         
-        # Organize results into state fields
-        state.local_insights = {
-            "route_info": search_results.get("route_info", {}),
-            "traffic_info": search_results.get("traffic_info", {}),
-            "weather_info": search_results.get("weather_info", {}),
-            "events_info": search_results.get("events_info", {}),
-            "transit_info": search_results.get("transit_info", {})
-        }
-        
-        # POI information
-        poi_data = search_results.get("poi_info", {})
-        if poi_data and "data" in poi_data:
-            state.poi_information = [{
-                "type": "attractions",
-                "data": poi_data["data"],
-                "query": poi_data["query"],
-                "timestamp": poi_data["timestamp"]
-            }]
-        
-        # Route context data
-        state.route_context_data = []
-        for category, data in search_results.items():
-            if data and "data" in data and data["data"]:
-                state.route_context_data.append({
-                    "type": category,
-                    "data": data["data"],
-                    "query": data["query"],
-                    "timestamp": data["timestamp"]
-                })
-        
-        print(f"Local knowledge gathered: {len([r for r in search_results.values() if 'data' in r and r['data']])}/{len(search_queries)} searches successful")
-        
-        state.current_step = "local_knowledge_completed"
-        state.agents_completed.append("local_knowledge_agent")
-        
-    except Exception as e:
-        print(f"Error in local knowledge agent: {str(e)}")
-        state.errors.append({
-            "node": "local_knowledge_agent",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        })
-    
-    return state
+        return state
 
 def disruption_monitoring_node(state: TravelState) -> TravelState:
     """
@@ -774,6 +879,12 @@ def response_compilation_node(state: TravelState) -> TravelState:
                         formatted_route["recommendation_score"] = rec["score"]["total"]
                         formatted_route["score_breakdown"] = rec["breakdown"]
                         break
+                else:
+                    # If no recommendation score found, set default
+                    formatted_route["recommendation_score"] = 0.0
+            else:
+                # If no recommended routes, set default
+                formatted_route["recommendation_score"] = 0.0
             
             processed_routes.append(formatted_route)
             
@@ -938,6 +1049,10 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
                     "departure_time": transit_detail.get("departure_time", {}).get("text", "")
                 }
             
+            # Add fare details if available
+            if step.get("fare_details"):
+                formatted_step["fare_details"] = step["fare_details"]
+            
             formatted_steps.append(formatted_step)
         
         # Build the formatted route
@@ -958,6 +1073,7 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
             "walking_distance": route.get("walking_distance", 0),
             "polyline": route.get("polyline", ""),
             "mode_details": route.get("mode_details", {}),
+            "step_fares": route.get("step_fares", []),  # Add step-level fare breakdown
             "is_recommended": False  # Will be set later
         }
         
