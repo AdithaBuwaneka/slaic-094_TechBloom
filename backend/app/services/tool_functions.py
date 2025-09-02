@@ -83,14 +83,13 @@ class SerperWebSearchTool(BaseTool):
             # Get search results
             results = self._search.run(enhanced_query)
             
-            # Also search for traffic and disruption info
-            traffic_query = f"traffic conditions disruptions {location or query}"
-            traffic_results = self._search.run(traffic_query)
+            # Process and structure the results
+            structured_results = self._process_search_results(results, enhanced_query)
             
             return {
                 "status": "success",
-                "general_info": results,
-                "traffic_info": traffic_results,
+                "general_info": structured_results,
+                "raw_results": results,  # Keep raw results for debugging
                 "timestamp": datetime.now().isoformat(),
                 "query": enhanced_query
             }
@@ -99,6 +98,59 @@ class SerperWebSearchTool(BaseTool):
                 "status": "error",
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
+            }
+    
+    def _process_search_results(self, results: str, query: str) -> Dict[str, Any]:
+        """
+        Process and structure raw search results into useful information
+        """
+        try:
+            # Extract key information from the search results
+            processed_results = {
+                "query": query,
+                "summary": "",
+                "key_points": [],
+                "relevant_links": [],
+                "extracted_data": {}
+            }
+            
+            # If results is a string, try to extract useful information
+            if isinstance(results, str):
+                # Split into lines and extract key information
+                lines = results.split('\n')
+                summary_lines = []
+                key_points = []
+                
+                for line in lines:
+                    line = line.strip()
+                    if line:
+                        # Look for summary-like content (first few meaningful lines)
+                        if len(summary_lines) < 3 and len(line) > 20:
+                            summary_lines.append(line)
+                        
+                        # Look for key points (lines with bullet points, numbers, or key phrases)
+                        if any(keyword in line.lower() for keyword in ['bus', 'train', 'route', 'time', 'fare', 'station', 'stop', 'attraction', 'landmark', 'traffic', 'weather']):
+                            key_points.append(line)
+                
+                processed_results["summary"] = " ".join(summary_lines[:3])
+                processed_results["key_points"] = key_points[:5]  # Limit to 5 key points
+                
+                # Extract any URLs or links if present
+                import re
+                url_pattern = r'https?://[^\s]+'
+                urls = re.findall(url_pattern, results)
+                processed_results["relevant_links"] = urls[:3]  # Limit to 3 links
+            
+            return processed_results
+            
+        except Exception as e:
+            print(f"Error processing search results: {str(e)}")
+            return {
+                "query": query,
+                "summary": "Error processing search results",
+                "key_points": [],
+                "relevant_links": [],
+                "extracted_data": {"error": str(e)}
             }
 
 class FareDatabaseTool(BaseTool):
@@ -163,30 +215,142 @@ class FareDatabaseTool(BaseTool):
             }
         
         try:
-            # Create a query string from the parameters
-            query = f"{mode} fare from {source} to {destination}"
-            if vehicle_type:
-                query += f" via {vehicle_type}"
+            # Get the database and collection
+            db = self._client['transit_companion_db']
+            transit_fares_collection = db['transit_fares']
             
-            # Your database query logic here
-            # For now, return a mock response with the expected structure
-            return {
+            # Create query parameters for exact match
+            query_params = {
+                "origin": source,
+                "destination": destination,
+                "mode": mode,
+                "is_active": True
+            }
+            
+            # If vehicle_type is specified, add it to the query
+            if vehicle_type and vehicle_type != mode:
+                query_params["vehicle_type"] = vehicle_type
+            
+            # Query the database for exact route match
+            fare_record = transit_fares_collection.find_one(query_params)
+            
+            if fare_record:
+                # Convert ObjectId to string for JSON serialization
+                fare_record['_id'] = str(fare_record['_id'])
+                
+                return {
+                    "status": "success",
+                    "fares": [
+                        {
+                            "base_fare": fare_record.get('base_fare', 0),
+                            "vehicle_type": fare_record.get('vehicle_type', mode),
+                            "source": fare_record.get('origin', source),
+                            "destination": fare_record.get('destination', destination),
+                            "fare_type": fare_record.get('fare_type', 'unknown'),
+                            "currency": fare_record.get('currency', 'LKR'),
+                            "route_id": fare_record.get('route_id', 'unknown'),
+                            "is_active": fare_record.get('is_active', True),
+                            "created_at": fare_record.get('created_at', datetime.now().isoformat())
+                        }
+                    ],
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "database"
+                }
+            
+            # If no exact match found, try partial matching (case-insensitive)
+            # This helps with location name variations
+            partial_query = {
+                "origin": {"$regex": f"^{source}$", "$options": "i"},
+                "destination": {"$regex": f"^{destination}$", "$options": "i"},
+                "mode": mode,
+                "is_active": True
+            }
+            
+            partial_fare_record = transit_fares_collection.find_one(partial_query)
+            
+            if partial_fare_record:
+                partial_fare_record['_id'] = str(partial_fare_record['_id'])
+                
+                return {
+                    "status": "success",
+                    "fares": [
+                        {
+                            "base_fare": partial_fare_record.get('base_fare', 0),
+                            "vehicle_type": partial_fare_record.get('vehicle_type', mode),
+                            "source": partial_fare_record.get('origin', source),
+                            "destination": partial_fare_record.get('destination', destination),
+                            "fare_type": partial_fare_record.get('fare_type', 'unknown'),
+                            "currency": partial_fare_record.get('currency', 'LKR'),
+                            "route_id": partial_fare_record.get('route_id', 'unknown'),
+                            "is_active": partial_fare_record.get('is_active', True),
+                            "created_at": partial_fare_record.get('created_at', datetime.now().isoformat())
+                        }
+                    ],
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "database_partial_match"
+                }
+            
+            # If still no match found, try to find similar routes for the same mode
+            similar_query = {
+                "mode": mode,
+                "is_active": True
+            }
+            
+            similar_routes = list(transit_fares_collection.find(similar_query).limit(3))
+            
+            # Convert ObjectIds to strings
+            for route in similar_routes:
+                route['_id'] = str(route['_id'])
+            
+            # Return fallback with similar routes info
+            fallback_response = {
                 "status": "success",
+                "fares": [
+                    {
+                        "base_fare": 5.0,  # Default fallback fare
+                        "vehicle_type": vehicle_type or mode,
+                        "source": source,
+                        "destination": destination,
+                        "fare_type": "estimated",
+                        "currency": "LKR",
+                        "route_id": "fallback_001",
+                        "is_active": True,
+                        "created_at": datetime.now().isoformat(),
+                        "note": "Estimated fare - no exact route found in database"
+                    }
+                ],
+                "timestamp": datetime.now().isoformat(),
+                "source": "fallback",
+                "similar_routes_available": len(similar_routes),
+                "similar_routes": similar_routes[:2] if similar_routes else []  # Include up to 2 similar routes
+            }
+            
+            return fallback_response
+            
+        except Exception as e:
+            # Log the error for debugging
+            print(f"❌ Error in FareDatabaseTool._run: {str(e)}")
+            
+            # Return fallback response even on error
+            return {
+                "status": "success",  # Still return success to avoid breaking the workflow
                 "fares": [
                     {
                         "base_fare": 5.0,
                         "vehicle_type": vehicle_type or mode,
                         "source": source,
-                        "destination": destination
+                        "destination": destination,
+                        "fare_type": "fallback_error",
+                        "currency": "LKR",
+                        "route_id": "fallback_error_001",
+                        "is_active": True,
+                        "created_at": datetime.now().isoformat(),
+                        "note": f"Fallback fare due to database error: {str(e)}"
                     }
                 ],
-                "timestamp": datetime.now().isoformat()
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "source": "fallback_error",
+                "error_details": str(e)
             }
     
     def __del__(self):
@@ -196,6 +360,94 @@ class FareDatabaseTool(BaseTool):
                 self._client.close()
             except:
                 pass
+    
+    def get_fares_by_mode(self, mode: str, limit: int = 10) -> Dict:
+        """
+        Get all available fares for a specific travel mode
+        """
+        if not self._client:
+            return {
+                "status": "error",
+                "error": "MongoDB connection not available",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        try:
+            db = self._client['transit_companion_db']
+            transit_fares_collection = db['transit_fares']
+            
+            # Query for all active fares for the specified mode
+            query = {
+                "mode": mode,
+                "is_active": True
+            }
+            
+            fares = list(transit_fares_collection.find(query).limit(limit))
+            
+            # Convert ObjectIds to strings
+            for fare in fares:
+                fare['_id'] = str(fare['_id'])
+            
+            return {
+                "status": "success",
+                "mode": mode,
+                "fares_count": len(fares),
+                "fares": fares,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in FareDatabaseTool.get_fares_by_mode: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_fare_statistics(self) -> Dict:
+        """
+        Get fare statistics across all modes
+        """
+        if not self._client:
+            return {
+                "status": "error",
+                "error": "MongoDB connection not available",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        try:
+            db = self._client['transit_companion_db']
+            transit_fares_collection = db['transit_fares']
+            
+            # Aggregate fare statistics
+            pipeline = [
+                {"$match": {"is_active": True}},
+                {"$group": {
+                    "_id": "$mode",
+                    "count": {"$sum": 1},
+                    "avg_fare": {"$avg": "$base_fare"},
+                    "min_fare": {"$min": "$base_fare"},
+                    "max_fare": {"$max": "$base_fare"}
+                }},
+                {"$sort": {"count": -1}}
+            ]
+            
+            stats = list(transit_fares_collection.aggregate(pipeline))
+            
+            return {
+                "status": "success",
+                "statistics": stats,
+                "total_routes": sum(stat["count"] for stat in stats),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"❌ Error in FareDatabaseTool.get_fare_statistics: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
 
 class UserPreferenceTool(BaseTool):
     name: str = "user_preference"

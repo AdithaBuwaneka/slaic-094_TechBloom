@@ -68,6 +68,7 @@ class TravelState(BaseModel):
     poi_information: List[Dict] = []
     local_insights: Dict[str, Any] = {}
     weather_data: Dict[str, Any] = {}
+    search_summary: Optional[Dict[str, Any]] = None
     
     # Disruption Data
     current_disruptions: List[DisruptionInfo] = []

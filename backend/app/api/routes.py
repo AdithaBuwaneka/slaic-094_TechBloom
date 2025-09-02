@@ -6,6 +6,8 @@ from app.services import google_maps_service
 from datetime import datetime
 import time
 
+# Import the new travel routes
+from app.api.v1.travel_routes import router as travel_router
 
 router = APIRouter()
 
@@ -97,3 +99,6 @@ async def get_shortest_path(request: PathRequest):
         raise HTTPException(status_code=404, detail=error)
     
     return result
+
+# Include the travel routes
+router.include_router(travel_router, prefix="/travel", tags=["Travel Agent Workflow"])

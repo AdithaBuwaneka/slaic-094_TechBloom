@@ -4,6 +4,7 @@ from app.models.travel_schema import TravelState
 from app.services.agent_nodes import *
 from app.services.langfuse_service import langfuse_service
 from datetime import datetime
+from typing import Dict
 
 def create_travel_agent_workflow():
     """
