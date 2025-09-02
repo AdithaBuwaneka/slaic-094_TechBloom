@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: __DEV__ ? 'http://192.168.8.116:8000' : 'https://api.smarttransit.lk',
+  BASE_URL: __DEV__ ? 'http://10.0.2.2:8000' : 'https://api.smarttransit.lk',
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/api/v1/auth/login',
