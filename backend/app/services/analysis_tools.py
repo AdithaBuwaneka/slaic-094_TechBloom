@@ -90,6 +90,16 @@ class RouteComparisonTool(BaseTool):
             "reliability": reliability_score
         }
         
+        # Debug: Check if all required keys exist in weights
+        missing_keys = [criterion for criterion in breakdown if criterion not in weights]
+        if missing_keys:
+            print(f"⚠️  Missing weight keys: {missing_keys}")
+            print(f"Available weight keys: {list(weights.keys())}")
+            # Use default weights for missing keys
+            default_weights = {"time": 0.3, "cost": 0.25, "comfort": 0.2, "convenience": 0.15, "reliability": 0.1}
+            for key in missing_keys:
+                weights[key] = default_weights.get(key, 0.1)
+        
         total_score = sum(breakdown[criterion] * weights[criterion] 
                          for criterion in breakdown)
         
@@ -216,7 +226,7 @@ class LastMileOptimizerTool(BaseTool):
         options = []
         
         # Walking option
-        if distance <= preferences.get("max_walking_distance", 1.5):
+        if distance <= getattr(preferences, "max_walking_distance", 1.5):
             walk_time = distance * 12  
             options.append({
                 "mode": "walking",
@@ -256,7 +266,7 @@ class LastMileOptimizerTool(BaseTool):
     def _rank_last_mile_options(self, options: List[Dict], 
                                preferences: Dict) -> List[Dict]:
         """Rank last mile options based on preferences"""
-        time_weight = preferences.get("time_vs_cost_weight", 0.5)
+        time_weight = getattr(preferences, "time_vs_cost_weight", 0.5)
         cost_weight = 1 - time_weight
         
         for option in options:
@@ -353,7 +363,7 @@ class PreferenceLearningTool(BaseTool):
         
         # Update time vs cost weight
         time_tendency = patterns.get("time_vs_cost_tendency", 0)
-        current_weight = updated_prefs.get("time_vs_cost_weight", 0.5)
+        current_weight = getattr(updated_prefs, "time_vs_cost_weight", 0.5)
         new_weight = current_weight + (time_tendency * learning_rate)
         updated_prefs["time_vs_cost_weight"] = max(0, min(1, new_weight))
         
@@ -361,8 +371,10 @@ class PreferenceLearningTool(BaseTool):
         preferred_modes = patterns.get("preferred_modes", {})
         if preferred_modes:
             most_used = max(preferred_modes.items(), key=lambda x: x[1])
-            if most_used[0] not in updated_prefs.get("preferred_transit_modes", []):
-                updated_prefs.setdefault("preferred_transit_modes", []).append(most_used[0])
+            if most_used[0] not in getattr(updated_prefs, "preferred_transit_modes", []):
+                if not hasattr(updated_prefs, "preferred_transit_modes"):
+                    updated_prefs["preferred_transit_modes"] = []
+                updated_prefs["preferred_transit_modes"].append(most_used[0])
         
         return updated_prefs
     

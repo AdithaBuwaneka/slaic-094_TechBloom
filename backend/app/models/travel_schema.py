@@ -61,7 +61,7 @@ class TravelState(BaseModel):
     # User Preferences
     current_user_preferences: Optional[UserPreferences] = None
     updated_user_preferences: Optional[UserPreferences] = None
-    preference_weight_factors: Dict[str, float] = {}
+    preference_weight_factors: Dict[str, Any] = {}
     
     # Local Knowledge
     route_context_data: List[Dict] = []

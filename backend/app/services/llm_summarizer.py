@@ -203,9 +203,9 @@ You are a helpful local travel guide. Generate destination insights and local ti
 DESTINATION CONTEXT: {search_context.get('summary', 'No additional context')}
 
 USER PREFERENCES:
-- Preferred modes: {user_preferences.get('preferred_transit_modes', ['any'])}
-- Budget preference: {user_preferences.get('budget_preference', 'medium')}
-- Max walking distance: {user_preferences.get('max_walking_distance', 1.0)} km
+- Preferred modes: {getattr(user_preferences, 'preferred_transit_modes', ['any'])}
+- Budget preference: {getattr(user_preferences, 'budget_preference', 'medium')}
+- Max walking distance: {getattr(user_preferences, 'max_walking_distance', 1.0)} km
 
 INSTRUCTIONS:
 1. Focus on DESTINATION INSIGHTS, not route planning

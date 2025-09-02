@@ -617,12 +617,69 @@ class UserPreferenceTool(BaseTool):
     def get_preferences(self, user_id: str) -> Dict:
         """Get user preferences"""
         try:
-            preferences = self.preferences_collection.find_one({"user_id": user_id})
-            if preferences:
-                preferences['_id'] = str(preferences['_id'])
+            # Find all preference records for this user
+            preference_records = list(self._preferences_collection.find({"user_id": user_id}))
+            
+            if preference_records:
+                # Aggregate preferences into a single structure
+                aggregated_prefs = {
+                    "user_id": user_id,
+                    "preferred_transit_modes": ["bus", "train"],  # Default
+                    "max_walking_distance": 1.0,  # Default
+                    "budget_preference": "medium",  # Default
+                    "time_vs_cost_weight": 0.5,  # Default
+                    "comfort_preference": 0.7,  # Default
+                    "accessibility_needs": [],
+                    "avoid_preferences": [],
+                    "last_updated": datetime.now()
+                }
+                
+                # Process each preference record
+                for record in preference_records:
+                    pref_type = record.get("preference_type")
+                    weight = record.get("weight", 1.0)
+                    value = record.get("value", {})
+                    
+                    if pref_type == "time":
+                        # Handle time preferences
+                        if "max_duration" in value:
+                            # Convert max_duration to time_vs_cost_weight
+                            max_duration = value["max_duration"]
+                            if max_duration <= 60:
+                                aggregated_prefs["time_vs_cost_weight"] = 0.8  # High time priority
+                            elif max_duration <= 120:
+                                aggregated_prefs["time_vs_cost_weight"] = 0.6  # Medium time priority
+                            else:
+                                aggregated_prefs["time_vs_cost_weight"] = 0.4  # Low time priority
+                    
+                    elif pref_type == "cost":
+                        # Handle cost preferences
+                        if "budget_range" in value:
+                            budget_range = value["budget_range"]
+                            if budget_range == "low":
+                                aggregated_prefs["budget_preference"] = "low"
+                            elif budget_range == "high":
+                                aggregated_prefs["budget_preference"] = "high"
+                    
+                    elif pref_type == "comfort":
+                        # Handle comfort preferences
+                        if "comfort_level" in value:
+                            comfort_level = value["comfort_level"]
+                            aggregated_prefs["comfort_preference"] = comfort_level
+                    
+                    elif pref_type == "walking":
+                        # Handle walking preferences
+                        if "max_distance" in value:
+                            aggregated_prefs["max_walking_distance"] = value["max_distance"]
+                    
+                    elif pref_type == "modes":
+                        # Handle transit mode preferences
+                        if "preferred_modes" in value:
+                            aggregated_prefs["preferred_transit_modes"] = value["preferred_modes"]
+                
                 return {
                     "status": "success",
-                    "preferences": preferences,
+                    "preferences": aggregated_prefs,
                     "timestamp": datetime.now().isoformat()
                 }
             else:
@@ -656,10 +713,10 @@ class UserPreferenceTool(BaseTool):
         """Update user preferences based on current selection"""
         try:
             # Log current selection to history
-            self.history_collection.insert_one({
+            self._history_collection.insert_one({
                 "user_id": user_id,
                 "selection": current_selection,
-                "timestamp": datetime.now()
+                "timestamp": datetime.now() 
             })
             
             # Update preferences with learning algorithm

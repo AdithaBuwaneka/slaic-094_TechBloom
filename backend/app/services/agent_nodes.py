@@ -47,7 +47,10 @@ def input_processing_node(state: TravelState) -> TravelState:
             # Get user preferences
             pref_result = preference_tool.get_preferences(state.user_id)
             if pref_result["status"] == "success":
-                state.current_user_preferences = pref_result["preferences"]
+                # Convert dictionary to UserPreferences model
+                from app.models.travel_schema import UserPreferences
+                pref_dict = pref_result["preferences"]
+                state.current_user_preferences = UserPreferences(**pref_dict)
                 span.update(
                     input={"user_id": state.user_id},
                     output={"preferences_loaded": True, "preferences": pref_result["preferences"]}
@@ -304,7 +307,7 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                     
                     # Check if user prefers time over cost and walking distance > 0.5km
                     user_prefs = state.current_user_preferences
-                    time_preference = user_prefs.get("time_vs_cost_weight", 0.5) if user_prefs else 0.5
+                    time_preference = getattr(user_prefs, "time_vs_cost_weight", 0.5) if user_prefs else 0.5
                     prefers_time_over_cost = time_preference > 0.5
                     
                     if walking_distance_km > 0.5 and prefers_time_over_cost:
@@ -411,12 +414,15 @@ def user_preference_analysis_node(state: TravelState) -> TravelState:
         preferences = state.current_user_preferences
         
         # Set weight factors based on user preferences
+        time_vs_cost_weight = getattr(preferences, "time_vs_cost_weight", 0.5)
+        comfort_preference = getattr(preferences, "comfort_preference", 0.7)
+        
         state.preference_weight_factors = {
-            "time_priority": preferences.get("time_vs_cost_weight", 0.5),
-            "cost_priority": 1 - preferences.get("time_vs_cost_weight", 0.5),
-            "comfort_priority": preferences.get("comfort_preference", 0.7),
-            "walking_tolerance": preferences.get("max_walking_distance", 1.0),
-            "preferred_modes": preferences.get("preferred_transit_modes", ["bus", "train"])
+            "time": time_vs_cost_weight * 0.6,  # Convert to 0-1 scale
+            "cost": (1 - time_vs_cost_weight) * 0.5,  # Convert to 0-1 scale
+            "comfort": comfort_preference * 0.3,  # Convert to 0-1 scale
+            "convenience": 0.15,
+            "reliability": 0.1
         }
         
         # Filter routes based on strict preferences
@@ -785,6 +791,9 @@ def route_optimization_node(state: TravelState) -> TravelState:
                     "preferred_transit_modes": ["bus", "train"]
                 }
                 print("⚠️  No user preferences found, using defaults")
+            else:
+                # Convert Pydantic model to dictionary
+                user_prefs = user_prefs.dict() if hasattr(user_prefs, 'dict') else user_prefs
             
             # Ensure weights exist
             weights = state.preference_weight_factors
