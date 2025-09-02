@@ -434,21 +434,26 @@ async def get_active_disruptions():
     Get all currently active disruptions.
     """
     try:
-        disruptions = await db.database.disruptions.find(
-            {"status": "active"}
+        disruptions = await db.database.transit_disruptions.find(
+            {"is_resolved": False}
         ).sort("reported_at", -1).limit(50).to_list(length=50)
         
         return {
             "active_disruptions_count": len(disruptions),
             "disruptions": [
                 {
-                    "disruption_id": str(d["_id"]),
-                    "location": d["location"],
-                    "type": d["disruption_type"],
-                    "severity": d["severity"],
-                    "description": d["description"],
-                    "reported_at": d["reported_at"],
-                    "affected_routes": d["affected_routes"]
+                    "disruption_id": d.get("disruption_id", str(d["_id"])),
+                    "route_id": d.get("route_id"),
+                    "disruption_type": d.get("disruption_type"),
+                    "severity": d.get("severity"),
+                    "description": d.get("description"),
+                    "affected_stops": d.get("affected_stops", []),
+                    "estimated_duration": d.get("estimated_duration"),
+                    "alternative_routes": d.get("alternative_routes", []),
+                    "reported_by": d.get("reported_by"),
+                    "reported_at": d.get("reported_at"),
+                    "is_resolved": d.get("is_resolved", False),
+                    "location": d.get("location", {})
                 }
                 for d in disruptions
             ]
