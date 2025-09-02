@@ -85,6 +85,11 @@ def standard_route_node(state: TravelState) -> TravelState:
                     "distance": primary_route["legs"][0]["distance"]["value"] / 1000,
                     "steps": primary_route["legs"][0]["steps"],
                     "polyline": primary_route["overview_polyline"]["points"],
+                    "fare_estimate": None,
+                    "transit_modes": [],
+                    "transfers": 0,
+                    "walking_distance": 0.0,
+                    "category": "standard",
                     "mode_details": {"mode": state.mode}
                 })
                 
@@ -98,9 +103,13 @@ def standard_route_node(state: TravelState) -> TravelState:
                         "distance": route["legs"][0]["distance"]["value"] / 1000,
                         "steps": route["legs"][0]["steps"],
                         "polyline": route["overview_polyline"]["points"],
+                        "fare_estimate": None,
+                        "transit_modes": [],
+                        "transfers": 0,
+                        "walking_distance": 0.0,
+                        "category": "alternative",
                         "mode_details": {"mode": state.mode}
                     })
-                    print(f"Added supplementary route: {state.supplementary_routes[-1]['route_id']}")
             else:
                 print("No routes returned from Google Maps API")
         else:
@@ -164,9 +173,11 @@ def transit_route_aggregation_node(state: TravelState) -> TravelState:
                     "distance": route["legs"][0]["distance"]["value"] / 1000,
                     "steps": route["legs"][0]["steps"],
                     "polyline": route["overview_polyline"]["points"],
+                    "fare_estimate": None,
                     "transit_modes": transit_modes,
                     "transfers": max(0, transfers - 1),
                     "walking_distance": walking_distance,
+                    "category": "transit",
                     "mode_details": {
                         "modes": transit_modes,
                         "transfers": transfers,
@@ -521,10 +532,35 @@ def route_optimization_node(state: TravelState) -> TravelState:
             
             # Use route comparison tool
             print("\n⚖️  Calling route comparison tool...")
+            
+            # Create default user preferences if none exist
+            user_prefs = state.current_user_preferences
+            if user_prefs is None:
+                user_prefs = {
+                    "budget_preference": "medium",
+                    "time_vs_cost_weight": 0.5,
+                    "comfort_preference": 0.7,
+                    "max_walking_distance": 1.0,
+                    "preferred_transit_modes": ["bus", "train"]
+                }
+                print("⚠️  No user preferences found, using defaults")
+            
+            # Ensure weights exist
+            weights = state.preference_weight_factors
+            if not weights:
+                weights = {
+                    "time": 0.3,
+                    "cost": 0.25,
+                    "comfort": 0.2,
+                    "convenience": 0.15,
+                    "reliability": 0.1
+                }
+                print("⚠️  No preference weights found, using defaults")
+            
             comparison_result = route_comparison_tool._run(
                 routes=all_routes,
-                user_preferences=state.current_user_preferences,
-                weights=state.preference_weight_factors
+                user_preferences=user_prefs,
+                weights=weights
             )
             
             print(f"📈 Route comparison result: {comparison_result['status']}")

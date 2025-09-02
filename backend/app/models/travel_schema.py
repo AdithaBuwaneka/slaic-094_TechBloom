@@ -2,6 +2,7 @@ from typing import List, Dict, Optional, Any, Union
 from pydantic import BaseModel, Field
 from datetime import datetime
 
+
 class RouteInfo(BaseModel):
     route_id: str
     duration: int  # minutes
@@ -10,6 +11,11 @@ class RouteInfo(BaseModel):
     polyline: str
     fare_estimate: Optional[float] = None
     mode_details: Dict[str, Any] = {}
+    # Add missing fields:
+    transit_modes: Optional[List[str]] = []
+    transfers: Optional[int] = 0
+    walking_distance: Optional[float] = 0.0
+    category: Optional[str] = "unknown"
 
 class DisruptionInfo(BaseModel):
     disruption_id: str
@@ -43,9 +49,9 @@ class TravelState(BaseModel):
     departure_time: Optional[datetime] = None
     
     # Route Data
-    primary_routes: List[RouteInfo] = []
-    supplementary_routes: List[RouteInfo] = []
-    transit_routes: List[RouteInfo] = []
+    primary_routes: List[Dict[str, Any]] = []
+    supplementary_routes: List[Dict[str, Any]] = []
+    transit_routes: List[Dict[str, Any]] = []
     
     # Fare Information
     fare_data: Dict[str, Any] = {}
@@ -65,7 +71,7 @@ class TravelState(BaseModel):
     
     # Disruption Data
     current_disruptions: List[DisruptionInfo] = []
-    alternative_routes_due_disruptions: List[RouteInfo] = []
+    alternative_routes_due_disruptions: List[Dict[str, Any]] = []
     real_time_updates: List[Dict] = []
     
     # Final Output

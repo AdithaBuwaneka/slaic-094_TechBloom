@@ -151,9 +151,9 @@ class FareDatabaseTool(BaseTool):
                     print("❌ All MongoDB connection attempts failed. Fare database tool will be disabled.")
                     self._client = None
     
-    def _run(self, query: str) -> Dict:
+    def _run(self, mode: str, source: str, destination: str, vehicle_type: str = None) -> Dict:
         """
-        Query fare information from database
+        Query fare information from database for a specific route
         """
         if not self._client:
             return {
@@ -163,11 +163,23 @@ class FareDatabaseTool(BaseTool):
             }
         
         try:
+            # Create a query string from the parameters
+            query = f"{mode} fare from {source} to {destination}"
+            if vehicle_type:
+                query += f" via {vehicle_type}"
+            
             # Your database query logic here
-            # For now, return a mock response
+            # For now, return a mock response with the expected structure
             return {
                 "status": "success",
-                "data": f"Mock fare data for query: {query}",
+                "fares": [
+                    {
+                        "base_fare": 5.0,
+                        "vehicle_type": vehicle_type or mode,
+                        "source": source,
+                        "destination": destination
+                    }
+                ],
                 "timestamp": datetime.now().isoformat()
             }
         except Exception as e:

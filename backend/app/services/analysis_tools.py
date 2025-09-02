@@ -217,7 +217,7 @@ class LastMileOptimizerTool(BaseTool):
         
         # Walking option
         if distance <= preferences.get("max_walking_distance", 1.5):
-            walk_time = distance * 12  # ~12 minutes per km
+            walk_time = distance * 12  
             options.append({
                 "mode": "walking",
                 "duration": walk_time,
