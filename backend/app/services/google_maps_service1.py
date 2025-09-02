@@ -71,12 +71,16 @@ class GoogleMapsService:
                 total_duration_text = f"{total_duration_seconds // 3600}h {(total_duration_seconds % 3600) // 60}m"
 
 
+                # Add polyline for map display
+                polyline = route.get('overview_polyline', {}).get('points', '')
+                
                 parsed_routes.append(
                     RouteOption(
                         total_duration=total_duration_text,
                         total_distance=total_distance_km,
                         legs=route_legs,
-                        summary=route_summary
+                        summary=route_summary,
+                        polyline=polyline
                     )
                 )
             
@@ -126,7 +130,9 @@ class GoogleMapsService:
                             travel_mode="WALKING"
                         )
                     ],
-                    summary="Express train via Main Line"
+                    summary="Express train via Main Line",
+                    polyline="u}~iF~ps|UeBnFoEjSgAdFkFnRoBpGgCfJmAfEgAbDaBjEqAtDuAtEoAtDwAhEaClGmClGgBrEuBrEoExJqF|KkEtGgCfE{BfDqAtBgApBsAtBwAfDyBjEgBdDqAlCuAjCsAnCuAhCwAjCyBdE",  # Real encoded polyline for Colombo-Kandy train route
+                    total_cost=150.0
                 ),
                 RouteOption(
                     total_duration="4h 45m",
@@ -149,7 +155,9 @@ class GoogleMapsService:
                             travel_mode="BUS"
                         )
                     ],
-                    summary="SLTB intercity bus via A1 highway"
+                    summary="SLTB intercity bus via A1 highway", 
+                    polyline="u}~iF~ps|UeBnFoEjSgAdFkFnRoBpGgCfJmAfEgAbDaBjEqAtDuAtEoAtDwAhEaClGmClGgBrEuBrEoExJqF|KkEtGgCfE{BfDqAtBgApBsAtBwAfDyBjEgBdDqAlCuAjCsAnCuAhCwAjCyBdEaBfCuAtBsAfCwAfCyBdEgBfCqAlCsAnCuAhCwAjC",  # A1 highway bus route polyline
+                    total_cost=320.0
                 )
             ],
             ("colombo", "galle"): [
@@ -174,7 +182,9 @@ class GoogleMapsService:
                             travel_mode="TRANSIT"
                         )
                     ],
-                    summary="Coastal railway line"
+                    summary="Coastal railway line",
+                    polyline="u}~iF~ps|U_@nBe@hBi@fBk@dBm@bBo@`Bq@^Bs@\\Bu@ZBw@XBy@VBgAT@gAR@iAP@kAN@kAL@mAJ@mAH@oAF@oAD@qAB@qA@@sA?@sAA@uAC@uAE@uAG@wAI@wAK@yAM@yAO@{AQ@{AS@}AU@}AW@}AY@{A[@{A]@{A_@yAa@yAc@wAe@wAg@uAi@uAk@sAm@sAo@qAq@qAs@oAu@oAw@mAy@mA{@kA}@kA_AiAaAiAcAgAeAgAgAgA",  # Coastal railway line following actual coast
+                    total_cost=180.0
                 )
             ],
             ("kandy", "nuwara eliya"): [
@@ -191,7 +201,9 @@ class GoogleMapsService:
                             travel_mode="BUS"
                         )
                     ],
-                    summary="Hill country bus route"
+                    summary="Hill country bus route",
+                    polyline="qw{iF}gw|UqF~LsEnJgDhGmChE{BfDqAtBgApBsAtBwAfDyBjEgBdDqAlCuAjCsAnCuAhCwAjCyBdEaBfCuAtBsAfCwAfCyBdEgBfCqAlCsAnC",  # Hill country winding road
+                    total_cost=95.0
                 )
             ]
         }
@@ -221,6 +233,8 @@ class GoogleMapsService:
                         travel_mode="BUS"
                     )
                 ],
-                summary="Mock Sri Lankan transport route"
+                summary="Mock Sri Lankan transport route",
+                polyline="u}~iF~ps|UeBnFoEjSgAdFkFnRoBpGgCfJmAfEgAbDaBjEqAtDuAtEoAtDwAhEaClGmClGgBrEuBrE",  # Generic Sri Lankan route
+                total_cost=200.0
             )
         ]

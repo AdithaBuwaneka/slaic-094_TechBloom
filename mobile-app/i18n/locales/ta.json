@@ -1,0 +1,195 @@
+{
+  "common": {
+    "loading": "ஏற்றப்படுகிறது...",
+    "error": "பிழை",
+    "retry": "மீண்டும் முயற்சிக்கவும்",
+    "cancel": "ரத்துசெய்",
+    "confirm": "உறுதிப்படுத்து",
+    "save": "சேமி",
+    "delete": "நீக்கு",
+    "edit": "திருத்து",
+    "back": "திரும்பு",
+    "next": "அடுத்தது",
+    "done": "முடிந்தது",
+    "ok": "சரி",
+    "yes": "ஆம்",
+    "no": "இல்லை",
+    "search": "தேடு",
+    "select": "தேர்ந்தெடுக்கவும்"
+  },
+  
+  "auth": {
+    "welcome": "ஸ்மார்ட் போக்குவரத்துக்கு வருக",
+    "login": "உள்நுழைய",
+    "register": "பதிவுசெய்க",
+    "email": "மின்னஞ்சல் முகவரி",
+    "password": "கடவுச்சொல்",
+    "confirmPassword": "கடவுச்சொல்லை உறுதிப்படுத்து",
+    "fullName": "முழுபெயர்",
+    "phone": "தொலைபேசி எண்",
+    "forgotPassword": "கடவுச்சொல் மறந்துவிட்டதா?",
+    "dontHaveAccount": "கணக்கு இல்லையா?",
+    "alreadyHaveAccount": "ஏற்கனவே கணக்கு உள்ளதா?",
+    "signUp": "பதிவுசெய்க",
+    "signIn": "உள்நுழைய",
+    "logout": "வெளியேறு",
+    "profile": "சுயவிவரம்",
+    "preferences": "விருப்பங்கள்",
+    "invalidCredentials": "தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்",
+    "registrationSuccess": "பதிவு வெற்றிகரமானது!",
+    "loginSuccess": "மீண்டும் வருக!"
+  },
+
+  "navigation": {
+    "home": "முகப்பு",
+    "journey": "பயணம்",
+    "history": "வரலாறு", 
+    "favorites": "பிடித்தவை",
+    "map": "வரைபடம்",
+    "profile": "சுயவிவரம்",
+    "settings": "அமைப்புகள்"
+  },
+
+  "journey": {
+    "planJourney": "உங்கள் பயணத்தைத் திட்டமிடுங்கள்",
+    "from": "இருந்து",
+    "to": "வரை", 
+    "fromPlaceholder": "தொடக்க இடத்தை உள்ளிடவும்",
+    "toPlaceholder": "சேருமிடத்தை உள்ளிடவும்",
+    "useCurrentLocation": "தற்போதைய இடத்தைப் பயன்படுத்து",
+    "transportMode": "போக்குவரத்து முறை",
+    "departureTime": "புறப்பாடு நேரம்",
+    "now": "இப்போது",
+    "findRoutes": "வழிகளைக் கண்டறிய",
+    "noRoutesFound": "வழிகள் கிடைக்கவில்லை",
+    "routeOptions": "வழி விருப்பங்கள்",
+    "duration": "கால அளவு",
+    "distance": "தூரம்",
+    "cost": "செலவு",
+    "selectRoute": "வழியைத் தேர்ந்தெடுக்கவும்",
+    "addToFavorites": "பிடித்தவையில் சேர்க்கவும்",
+    "removedFromFavorites": "பிடித்தவையிலிருந்து நீக்கப்பட்டது",
+    "addedToFavorites": "பிடித்தவையில் சேர்க்கப்பட்டது",
+    "transportModes": {
+      "bus": "பேருந்து",
+      "train": "ரயில்", 
+      "tuk": "மூன்று சக்கர வண்டி",
+      "walk": "நடைபயணம்",
+      "any": "ஏதேனும்"
+    }
+  },
+
+  "ai": {
+    "aiAssistant": "AI பயண உதவியாளர்",
+    "analyzing": "உங்கள் பயணத்தை பகுப்பாய்வு செய்கிறது...",
+    "disruptions": "போக்குவரத்து மற்றும் தடைகள்",
+    "personalizedTips": "தனிப்பட்ட உதவிக்குறிப்புகள்",
+    "fareOptimization": "சிறந்த கட்டண விருப்பங்கள்",
+    "localInsights": "உள்ளூர் தகவல்கள்",
+    "noDisruptions": "தடைகள் எதுவும் இல்லை",
+    "heavyTraffic": "அதிக போக்குவரத்து எதிர்பார்க்கப்படுகிறது",
+    "lightTraffic": "குறைந்த போக்குவரத்து நிலைமைகள்",
+    "weatherImpact": "வானிலை பயணத்தை பாதிக்கலாம்",
+    "crowdLevels": "கூட்டம் நிலைகள்",
+    "low": "குறைவு",
+    "medium": "நடுத்தரம்", 
+    "high": "அதிகம்"
+  },
+
+  "location": {
+    "currentLocation": "தற்போதைய இடம்",
+    "locationPermission": "இடம் அனுமதி தேவை",
+    "locationPermissionMsg": "துல்லியமான திசைகளை வழங்க இந்த ஆப்புக்கு இட அணுகல் தேவை.",
+    "enableLocation": "இடத்தை செயல்படுத்து",
+    "locationDisabled": "இட சேவைகள் முடக்கப்பட்டுள்ளன",
+    "popularPlaces": "பிரபலமான இடங்கள்",
+    "recentSearches": "சமீபத்திய தேடல்கள்",
+    "nearbyStops": "அருகிலுள்ள நிறுத்தங்கள்"
+  },
+
+  "history": {
+    "journeyHistory": "பயண வரலாறு",
+    "noHistory": "பயண வரலாறு இல்லை",
+    "clearHistory": "வரலாற்றை அழி",
+    "today": "இன்று",
+    "yesterday": "நேற்று",
+    "thisWeek": "இந்த வாரம்",
+    "repeatJourney": "பயணத்தை மீண்டும் செய்",
+    "viewDetails": "விவரங்களைப் பார்"
+  },
+
+  "favorites": {
+    "favoriteJourneys": "பிடித்த பயணங்கள்",
+    "noFavorites": "பிடித்த பயணங்கள் இல்லை",
+    "home": "வீடு",
+    "work": "வேலை",
+    "addLabel": "லேபல் சேர்",
+    "removeFromFavorites": "பிடித்தவையிலிருந்து நீக்கு"
+  },
+
+  "profile": {
+    "personalInfo": "தனிப்பட்ட தகவல்கள்",
+    "travelPreferences": "பயண விருப்பங்கள்",
+    "accessibility": "அணுகல்தன்மை",
+    "notifications": "அறிவிப்புகள்",
+    "language": "மொழி",
+    "theme": "தீம்",
+    "about": "பற்றி",
+    "version": "பதிப்பு",
+    "preferredLanguage": "விருப்பமான மொழி",
+    "preferredTransport": "விருப்பமான போக்குவரத்து முறைகள்",
+    "accessibilityNeeds": "அணுகல்தன்மை தேவைகள்",
+    "wheelchair": "சக்கர நாற்காலி அணுகல்",
+    "visualImpairment": "பார்வை குறைபாடு ஆதரவு",
+    "hearingImpairment": "கேட்கும் குறைபாடு ஆதரவு",
+    "mobilityAssistance": "இயக்கம் உதவி",
+    "lightTheme": "வெளிச்சம்",
+    "darkTheme": "இருள்"
+  },
+
+  "settings": {
+    "appSettings": "ஆப் அமைப்புகள்",
+    "offlineMode": "ஆஃப்லைன் பயன்முறை",
+    "autoSync": "தானியங்கு ஒத்திசைவு",
+    "dataUsage": "தரவு பயன்பாடு",
+    "clearCache": "கேச் அழி",
+    "privacy": "தனியுரிமை கொள்கை",
+    "terms": "சேவை விதிமுறைகள்",
+    "support": "ஆதரவு",
+    "feedback": "கருத்து அனுப்பு",
+    "rateApp": "ஆப்பை மதிப்பிடு",
+    "shareApp": "ஆப்பைப் பகிர்"
+  },
+
+  "notifications": {
+    "journeyUpdates": "பயண புதுப்பிப்புகள்",
+    "disruptions": "தடை எச்சரிக்கைகள்",
+    "promotions": "விளம்பரங்கள் மற்றும் சலுகைகள்",
+    "pushNotifications": "புஷ் அறிவிப்புகள்",
+    "emailNotifications": "மின்னஞ்சல் அறிவிப்புகள்",
+    "smsNotifications": "SMS அறிவிப்புகள்"
+  },
+
+  "offline": {
+    "offlineMode": "ஆஃப்லைன் பயன்முறை",
+    "dataNotAvailable": "ஆஃப்லைனில் தரவு கிடைக்கவில்லை",
+    "connectForUpdates": "சமீபத்திய புதுப்பிப்புகளுக்கு இணையத்துடன் இணைக்கவும்",
+    "lastSynced": "கடைசியாக ஒத்திசைக்கப்பட்டது",
+    "syncNow": "இப்போது ஒத்திசைக்கவும்",
+    "offlineData": "ஆஃப்லைன் தரவு",
+    "downloadMaps": "வரைபடங்களை பதிவிறக்கு",
+    "downloadRoutes": "வழிகளை பதிவிறக்கு"
+  },
+
+  "errors": {
+    "networkError": "நெட்வொர்க் இணைப்பு பிழை",
+    "serverError": "சேவையக பிழை, மீண்டும் முயற்சிக்கவும்",
+    "locationError": "இடத்தைப் பெற முடியவில்லை",
+    "invalidInput": "தவறான உள்ளீடு வழங்கப்பட்டது",
+    "sessionExpired": "அமர்வு காலாவதியானது, மீண்டும் உள்நுழைக",
+    "permissionDenied": "அனுமதி மறுக்கப்பட்டது",
+    "unexpectedError": "எதிர்பாராத பிழை ஏற்பட்டது",
+    "noInternetConnection": "இணைய இணைப்பு இல்லை",
+    "tryAgainLater": "தயவுசெய்து பின்னர் மீண்டும் முயற்சிக்கவும்"
+  }
+}

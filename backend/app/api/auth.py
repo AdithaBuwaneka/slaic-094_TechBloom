@@ -7,6 +7,7 @@ import re
 from app.models.user import User, UserRegistration, UserLogin, TokenData, DeviceInfo, LocationUpdate
 from app.core.security import security
 from app.core.database import db
+from bson import ObjectId
 
 router = APIRouter()
 bearer_scheme = HTTPBearer()
@@ -25,13 +26,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
                 detail="Invalid authentication token"
             )
         
-        user_doc = await db.users_collection.find_one({"_id": user_id})
+        try:
+            user_doc = await db.users_collection.find_one({"_id": ObjectId(user_id)})
+        except Exception:
+            user_doc = None
         if user_doc is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found"
             )
         
+        # Convert ObjectId to string for Pydantic model
+        user_doc["_id"] = str(user_doc["_id"])
         return User(**user_doc)
     except Exception as e:
         raise HTTPException(
@@ -204,7 +210,10 @@ async def refresh_access_token(refresh_token: str):
         user_id = payload.get("sub")
         
         # Check if user still exists and is active
-        user_doc = await db.users_collection.find_one({"_id": user_id})
+        try:
+            user_doc = await db.users_collection.find_one({"_id": ObjectId(user_id)})
+        except Exception:
+            user_doc = None
         if not user_doc or user_doc.get("status") != "active":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -243,7 +252,7 @@ async def logout_user(current_user: User = Depends(get_current_user)):
         # In a production system, you'd maintain a blacklist of tokens
         # For now, we'll just clear the FCM token
         await db.users_collection.update_one(
-            {"_id": current_user.id},
+            {"_id": ObjectId(current_user.id)},
             {"$unset": {"fcm_token": ""}}
         )
         
@@ -277,7 +286,7 @@ async def update_current_user_profile(
         updates["updated_at"] = datetime.utcnow()
         
         await db.users_collection.update_one(
-            {"_id": current_user.id},
+            {"_id": ObjectId(current_user.id)},
             {"$set": updates}
         )
         
@@ -304,7 +313,7 @@ async def update_user_location(
         }
         
         await db.users_collection.update_one(
-            {"_id": current_user.id},
+            {"_id": ObjectId(current_user.id)},
             {"$set": {"last_location": location_data, "updated_at": datetime.utcnow()}}
         )
         

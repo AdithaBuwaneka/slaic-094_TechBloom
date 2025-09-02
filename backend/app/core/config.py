@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     
     MONGODB_URL: str = "mongodb://localhost:27017"
     DATABASE_NAME: str = "transit_companion_db"
-    SECRET_KEY: str = "your-secret-key-here"
+    SECRET_KEY: str = "dev-secret-key-for-testing-transit-companion-app-12345"
     GOOGLE_MAPS_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""

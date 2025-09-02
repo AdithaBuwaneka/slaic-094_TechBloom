@@ -172,3 +172,5 @@ class RouteOption(BaseModel):
     total_distance: str
     legs: List[JourneyLeg]
     summary: Optional[str] = None
+    polyline: Optional[str] = None
+    total_cost: Optional[float] = None

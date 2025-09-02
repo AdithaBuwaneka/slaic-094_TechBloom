@@ -1,0 +1,195 @@
+{
+  "common": {
+    "loading": "පූරණය වෙමින්...",
+    "error": "දෝෂයක්",
+    "retry": "නැවත උත්සාහ කරන්න",
+    "cancel": "අවලංගු කරන්න",
+    "confirm": "සනාථ කරන්න",
+    "save": "සුරකින්න",
+    "delete": "මකන්න",
+    "edit": "සංස්කරණය",
+    "back": "ආපසු",
+    "next": "ඊළඟ",
+    "done": "සම්පූර්ණයි",
+    "ok": "හරි",
+    "yes": "ඔව්",
+    "no": "නැහැ",
+    "search": "සොයන්න",
+    "select": "තෝරන්න"
+  },
+  
+  "auth": {
+    "welcome": "ස්මාර්ට් ප්‍රවාහන සේවාවට සාදරයෙන් පිළිගනිමු",
+    "login": "ප්‍රවේශ වන්න",
+    "register": "ලියාපදිංචි වන්න",
+    "email": "විද්‍යුත් තැපැල් ලිපිනය",
+    "password": "මුරපදය",
+    "confirmPassword": "මුරපදය තහවුරු කරන්න",
+    "fullName": "සම්පූර්ණ නම",
+    "phone": "දුරකථන අංකය",
+    "forgotPassword": "මුරපදය අමතකද?",
+    "dontHaveAccount": "ගිණුමක් නැද්ද?",
+    "alreadyHaveAccount": "දැනටමත් ගිණුමක් තිබේද?",
+    "signUp": "ලියාපදිංචි වන්න",
+    "signIn": "ප්‍රවේශ වන්න",
+    "logout": "ඉවත් වන්න",
+    "profile": "පැතිකඩ",
+    "preferences": "මනාප",
+    "invalidCredentials": "වලංගු නොවන විද්‍යුත් තැපෑල හෝ මුරපදය",
+    "registrationSuccess": "ලියාපදිංචිය සාර්ථකයි!",
+    "loginSuccess": "නැවත සාදරයෙන් පිළිගනිමු!"
+  },
+
+  "navigation": {
+    "home": "මුල් පිටුව",
+    "journey": "ගමන",
+    "history": "ඉතිහාසය", 
+    "favorites": "ප්‍රියතම",
+    "map": "සිතියම",
+    "profile": "පැතිකඩ",
+    "settings": "සැකසීම්"
+  },
+
+  "journey": {
+    "planJourney": "ඔබේ ගමන සැලසුම් කරන්න",
+    "from": "සිට",
+    "to": "දක්වා", 
+    "fromPlaceholder": "ආරම්භක ස්ථානය ඇතුළත් කරන්න",
+    "toPlaceholder": "ගමනාන්තය ඇතුළත් කරන්න",
+    "useCurrentLocation": "වර්තමාන ස්ථානය භාවිතා කරන්න",
+    "transportMode": "ප්‍රවාහන ක්‍රමය",
+    "departureTime": "පිටත්වන වේලාව",
+    "now": "දැන්",
+    "findRoutes": "මාර්ග සොයන්න",
+    "noRoutesFound": "මාර්ග හමු නොවිණි",
+    "routeOptions": "මාර්ග විකල්ප",
+    "duration": "කාලය",
+    "distance": "දුර",
+    "cost": "පිරිවැය",
+    "selectRoute": "මාර්ගය තෝරන්න",
+    "addToFavorites": "ප්‍රියතමයන්ට එක් කරන්න",
+    "removedFromFavorites": "ප්‍රියතමයන්ගෙන් ඉවත් කරන ලදි",
+    "addedToFavorites": "ප්‍රියතමයන්ට එක් කරන ලදි",
+    "transportModes": {
+      "bus": "බස්",
+      "train": "දුම්රිය", 
+      "tuk": "තුන් රෝදය",
+      "walk": "ගමන් කිරීම",
+      "any": "ඕනෑම"
+    }
+  },
+
+  "ai": {
+    "aiAssistant": "AI ගමන් සහායක",
+    "analyzing": "ඔබේ ගමන විශ්ලේෂණය කරමින්...",
+    "disruptions": "ගමනාගමන හා බාධක",
+    "personalizedTips": "පුද්ගලික උපදෙස්",
+    "fareOptimization": "හොඳම ගාස්තු විකල්ප",
+    "localInsights": "ප්‍රාදේශීය තොරතුරු",
+    "noDisruptions": "බාධක වාර්තා වී නැත",
+    "heavyTraffic": "අධික ගමනාගමනය අපේක්ෂිතයි",
+    "lightTraffic": "අල්ප ගමනාගමන තත්ත්වයන්",
+    "weatherImpact": "කාලගුණය ගමනට බලපායි",
+    "crowdLevels": "ජන තදාකාරිත්වය",
+    "low": "අඩු",
+    "medium": "මධ්‍යම", 
+    "high": "ඉහළ"
+  },
+
+  "location": {
+    "currentLocation": "වර්තමාන ස්ථානය",
+    "locationPermission": "ස්ථාන අවසර අවශ්‍යයි",
+    "locationPermissionMsg": "නිවැරදි දිශාව සැපයීම සඳහා මෙම යෙදුමට ස්ථාන ප්‍රවේශය අවශ්‍යයි.",
+    "enableLocation": "ස්ථානය සක්‍රිය කරන්න",
+    "locationDisabled": "ස්ථාන සේවාවන් අබල කර ඇත",
+    "popularPlaces": "ජනප්‍රිය ස්ථාන",
+    "recentSearches": "මෑත සෙවීම්",
+    "nearbyStops": "ආසන්න නැවතුම්"
+  },
+
+  "history": {
+    "journeyHistory": "ගමන් ඉතිහාසය",
+    "noHistory": "ගමන් ඉතිහාසය හමු නොවිණි",
+    "clearHistory": "ඉතිහාසය පිරිසිදු කරන්න",
+    "today": "අද",
+    "yesterday": "ඊයේ",
+    "thisWeek": "මෙම සතිය",
+    "repeatJourney": "ගමන නැවත කරන්න",
+    "viewDetails": "විස්තර බලන්න"
+  },
+
+  "favorites": {
+    "favoriteJourneys": "ප්‍රියතම ගමන්",
+    "noFavorites": "ප්‍රියතම ගමන් නැත",
+    "home": "නිවස",
+    "work": "කාර්යාලය",
+    "addLabel": "ලේබලයක් එක් කරන්න",
+    "removeFromFavorites": "ප්‍රියතමයන්ගෙන් ඉවත් කරන්න"
+  },
+
+  "profile": {
+    "personalInfo": "පුද්ගලික තොරතුරු",
+    "travelPreferences": "ගමන් මනාප",
+    "accessibility": "ප්‍රවේශ්‍යතාව",
+    "notifications": "දැනුම්දීම්",
+    "language": "භාෂාව",
+    "theme": "තේමාව",
+    "about": "ගැන",
+    "version": "සංස්කරණය",
+    "preferredLanguage": "වරණීය භාෂාව",
+    "preferredTransport": "වරණීය ප්‍රවාහන ක්‍රම",
+    "accessibilityNeeds": "ප්‍රවේශ්‍යතා අවශ්‍යතා",
+    "wheelchair": "රෝද පුටු ප්‍රවේශය",
+    "visualImpairment": "දෘශ්‍ය ආබාධිත සහාය",
+    "hearingImpairment": "ශ්‍රවණ ආබාධිත සහාය",
+    "mobilityAssistance": "චලනය සහාය",
+    "lightTheme": "එළිය",
+    "darkTheme": "අඳුරු"
+  },
+
+  "settings": {
+    "appSettings": "යෙදුම් සැකසීම්",
+    "offlineMode": "නොබැඳි ආකාරය",
+    "autoSync": "ස්වයංක්‍රිය සමමුහුර්ත කිරීම",
+    "dataUsage": "දත්ත භාවිතය",
+    "clearCache": "කැෂය පිරිසිදු කරන්න",
+    "privacy": "පුද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "terms": "සේවා කොන්දේසි",
+    "support": "සහාය",
+    "feedback": "ප්‍රතිපෝෂණ යවන්න",
+    "rateApp": "යෙදුම ඇගයීම",
+    "shareApp": "යෙදුම බෙදාගන්න"
+  },
+
+  "notifications": {
+    "journeyUpdates": "ගමන් යාවත්කාලීන",
+    "disruptions": "බාධක ඇඟවීම්",
+    "promotions": "ප්‍රවර්ධන සහ දීමනා",
+    "pushNotifications": "තල්ලු දැනුම්දීම්",
+    "emailNotifications": "විද්‍යුත් තැපැල් දැනුම්දීම්",
+    "smsNotifications": "SMS දැනුම්දීම්"
+  },
+
+  "offline": {
+    "offlineMode": "නොබැඳි ආකාරය",
+    "dataNotAvailable": "නොබැඳිව දත්ත ලබා ගත නොහැක",
+    "connectForUpdates": "නවතම යාවත්කාලීන සඳහා අන්තර්ජාලයට සම්බන්ධ වන්න",
+    "lastSynced": "අවසන් සමමුහුර්තය",
+    "syncNow": "දැන් සමමුහුර්ත කරන්න",
+    "offlineData": "නොබැඳි දත්ත",
+    "downloadMaps": "සිතියම් බාගන්න",
+    "downloadRoutes": "මාර්ග බාගන්න"
+  },
+
+  "errors": {
+    "networkError": "ජාල සම්බන්ධතා දෝෂයක්",
+    "serverError": "සේවාදායක දෝෂයක්, කරුණාකර නැවත උත්සාහ කරන්න",
+    "locationError": "ස්ථානය ලබා ගත නොහැක",
+    "invalidInput": "වලංගු නොවන ආදානයක්",
+    "sessionExpired": "සැසිය කල් ඉකුත් වී ඇත, කරුණාකර නැවත ප්‍රවේශ වන්න",
+    "permissionDenied": "අවසරය ප්‍රතික්ෂේප කරන ලදි",
+    "unexpectedError": "අනපේක්ෂිත දෝෂයක් සිදු වී ඇත",
+    "noInternetConnection": "අන්තර්ජාල සම්බන්ධතාවක් නොමැත",
+    "tryAgainLater": "කරුණාකර පසුව නැවත උත්සාහ කරන්න"
+  }
+}

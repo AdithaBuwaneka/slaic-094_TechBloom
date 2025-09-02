@@ -1,0 +1,195 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "select": "Select"
+  },
+  
+  "auth": {
+    "welcome": "Welcome to Smart Transit",
+    "login": "Login",
+    "register": "Register",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "forgotPassword": "Forgot Password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "logout": "Logout",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "invalidCredentials": "Invalid email or password",
+    "registrationSuccess": "Registration successful!",
+    "loginSuccess": "Welcome back!"
+  },
+
+  "navigation": {
+    "home": "Home",
+    "journey": "Journey",
+    "history": "History", 
+    "favorites": "Favorites",
+    "map": "Map",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+
+  "journey": {
+    "planJourney": "Plan Your Journey",
+    "from": "From",
+    "to": "To", 
+    "fromPlaceholder": "Enter starting location",
+    "toPlaceholder": "Enter destination",
+    "useCurrentLocation": "Use Current Location",
+    "transportMode": "Transport Mode",
+    "departureTime": "Departure Time",
+    "now": "Now",
+    "findRoutes": "Find Routes",
+    "noRoutesFound": "No routes found",
+    "routeOptions": "Route Options",
+    "duration": "Duration",
+    "distance": "Distance",
+    "cost": "Cost",
+    "selectRoute": "Select Route",
+    "addToFavorites": "Add to Favorites",
+    "removedFromFavorites": "Removed from Favorites",
+    "addedToFavorites": "Added to Favorites",
+    "transportModes": {
+      "bus": "Bus",
+      "train": "Train", 
+      "tuk": "Three Wheeler",
+      "walk": "Walking",
+      "any": "Any"
+    }
+  },
+
+  "ai": {
+    "aiAssistant": "AI Travel Assistant",
+    "analyzing": "Analyzing your journey...",
+    "disruptions": "Traffic & Disruptions",
+    "personalizedTips": "Personalized Tips",
+    "fareOptimization": "Best Fare Options",
+    "localInsights": "Local Insights",
+    "noDisruptions": "No disruptions reported",
+    "heavyTraffic": "Heavy traffic expected",
+    "lightTraffic": "Light traffic conditions",
+    "weatherImpact": "Weather may affect travel",
+    "crowdLevels": "Crowd Levels",
+    "low": "Low",
+    "medium": "Medium", 
+    "high": "High"
+  },
+
+  "location": {
+    "currentLocation": "Current Location",
+    "locationPermission": "Location Permission Required",
+    "locationPermissionMsg": "This app needs location access to provide accurate directions.",
+    "enableLocation": "Enable Location",
+    "locationDisabled": "Location services are disabled",
+    "popularPlaces": "Popular Places",
+    "recentSearches": "Recent Searches",
+    "nearbyStops": "Nearby Stops"
+  },
+
+  "history": {
+    "journeyHistory": "Journey History",
+    "noHistory": "No journey history found",
+    "clearHistory": "Clear History",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "repeatJourney": "Repeat Journey",
+    "viewDetails": "View Details"
+  },
+
+  "favorites": {
+    "favoriteJourneys": "Favorite Journeys",
+    "noFavorites": "No favorite journeys yet",
+    "home": "Home",
+    "work": "Work",
+    "addLabel": "Add Label",
+    "removeFromFavorites": "Remove from Favorites"
+  },
+
+  "profile": {
+    "personalInfo": "Personal Information",
+    "travelPreferences": "Travel Preferences",
+    "accessibility": "Accessibility",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "about": "About",
+    "version": "Version",
+    "preferredLanguage": "Preferred Language",
+    "preferredTransport": "Preferred Transport Modes",
+    "accessibilityNeeds": "Accessibility Requirements",
+    "wheelchair": "Wheelchair Access",
+    "visualImpairment": "Visual Impairment Support",
+    "hearingImpairment": "Hearing Impairment Support",
+    "mobilityAssistance": "Mobility Assistance",
+    "lightTheme": "Light",
+    "darkTheme": "Dark"
+  },
+
+  "settings": {
+    "appSettings": "App Settings",
+    "offlineMode": "Offline Mode",
+    "autoSync": "Auto Sync",
+    "dataUsage": "Data Usage",
+    "clearCache": "Clear Cache",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "support": "Support",
+    "feedback": "Send Feedback",
+    "rateApp": "Rate App",
+    "shareApp": "Share App"
+  },
+
+  "notifications": {
+    "journeyUpdates": "Journey Updates",
+    "disruptions": "Disruption Alerts",
+    "promotions": "Promotions & Offers",
+    "pushNotifications": "Push Notifications",
+    "emailNotifications": "Email Notifications",
+    "smsNotifications": "SMS Notifications"
+  },
+
+  "offline": {
+    "offlineMode": "Offline Mode",
+    "dataNotAvailable": "Data not available offline",
+    "connectForUpdates": "Connect to internet for latest updates",
+    "lastSynced": "Last synced",
+    "syncNow": "Sync Now",
+    "offlineData": "Offline Data",
+    "downloadMaps": "Download Maps",
+    "downloadRoutes": "Download Routes"
+  },
+
+  "errors": {
+    "networkError": "Network connection error",
+    "serverError": "Server error, please try again",
+    "locationError": "Unable to get location",
+    "invalidInput": "Invalid input provided",
+    "sessionExpired": "Session expired, please login again",
+    "permissionDenied": "Permission denied",
+    "unexpectedError": "An unexpected error occurred",
+    "noInternetConnection": "No internet connection",
+    "tryAgainLater": "Please try again later"
+  }
+}
