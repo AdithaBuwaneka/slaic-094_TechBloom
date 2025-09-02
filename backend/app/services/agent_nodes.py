@@ -299,12 +299,41 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                     else:
                         print(f"❌ Failed to calculate fare for step: {step_fare_result.get('error', 'Unknown error')}")
                 else:
-                    # Walking step - no fare
-                    step["fare_details"] = {
-                        "base_fare": 0,
-                        "vehicle_type": "walking",
-                        "source": "free"
-                    }
+                    # Walking step - check if we should offer Uber alternative
+                    walking_distance_km = step.get("distance", {}).get("value", 0) / 1000
+                    
+                    # Check if user prefers time over cost and walking distance > 0.5km
+                    user_prefs = state.current_user_preferences
+                    time_preference = user_prefs.get("time_vs_cost_weight", 0.5) if user_prefs else 0.5
+                    prefers_time_over_cost = time_preference > 0.5
+                    
+                    if walking_distance_km > 0.5 and prefers_time_over_cost:
+                        # Calculate Uber alternative
+                        uber_duration = max(5, walking_distance_km * 3)  # 3 min per km + 5 min wait
+                        uber_cost = max(50, walking_distance_km * 25)  # Minimum 50 LKR or 25 LKR per km
+                        
+                        # Add Uber alternative to the step
+                        step["fare_details"] = {
+                            "base_fare": 0,
+                            "vehicle_type": "walking",
+                            "source": "free",
+                            "uber_alternative": {
+                                "available": True,
+                                "duration_minutes": int(uber_duration),
+                                "cost_lkr": int(uber_cost),
+                                "distance_km": round(walking_distance_km, 2),
+                                "reason": "Long walking distance with time preference"
+                            }
+                        }
+                        
+                        print(f"🚶 Walking step: {walking_distance_km:.2f}km - Uber alternative: {int(uber_duration)}min, {int(uber_cost)} LKR")
+                    else:
+                        # Regular walking step - no fare
+                        step["fare_details"] = {
+                            "base_fare": 0,
+                            "vehicle_type": "walking",
+                            "source": "free"
+                        }
             
             # Add transfer penalty if there are multiple transit steps
             transit_steps = [s for s in route.get("steps", []) if s.get("travel_mode") == "TRANSIT"]
@@ -1052,6 +1081,10 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
             # Add fare details if available
             if step.get("fare_details"):
                 formatted_step["fare_details"] = step["fare_details"]
+                
+                # Add Uber alternative if available
+                if step["fare_details"].get("uber_alternative"):
+                    formatted_step["uber_alternative"] = step["fare_details"]["uber_alternative"]
             
             formatted_steps.append(formatted_step)
         
