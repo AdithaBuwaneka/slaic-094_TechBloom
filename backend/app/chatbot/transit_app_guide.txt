@@ -1,0 +1,250 @@
+# Smart Transit Companion - User Guide
+
+## What is Smart Transit Companion?
+
+Smart Transit Companion is an AI-powered mobile application designed to revolutionize public transportation in Sri Lanka. It's your personal travel assistant that helps you navigate buses, trains, tuk-tuks, and other transport modes efficiently and seamlessly.
+
+## Key Features 
+
+Multi-Modal Journey Planning,Real-Time Updates,Personalized Travel Recommendations,Multi-Language Support ,Fare Optimization are the main features of the app.
+
+### Multi-Modal Journey Planning
+The app plans complete journeys using multiple transport modes. Whether you need to take a bus, then a train, and finally a tuk-tuk to reach your destination, our AI agents will create the optimal route for you.
+
+### Real-Time Updates
+Get live information about bus and train schedules, delays, cancellations, and route changes. Never wait at a bus stop wondering if your bus is coming.
+
+### Personalized Travel Recommendations
+The app learns your preferences for travel modes, timings, budget constraints, and accessibility needs to provide customized route suggestions.
+
+### Multi-Language Support
+Available in Sinhala, Tamil, and English with voice assistance capabilities for easy interaction in your preferred language.
+
+### Fare Optimization
+Find the cheapest travel combinations, including information about passes, discounts, and special offers to save money on your journeys.
+
+## How Our AI Agents Work
+
+### Data Aggregation Agent
+Continuously collects real-time transport data from official APIs, operator websites, and crowdsourced information to keep you informed.
+
+### Route Optimization Agent
+Calculates the fastest, cheapest, or most convenient routes based on your preferences, considering travel time, wait time, and costs.
+
+### Disruption Management Agent
+Monitors transport services for delays, strikes, or route changes and automatically suggests alternative routes when disruptions occur.
+
+### Personalization Agent
+Learns from your travel patterns and preferences to provide increasingly accurate and personalized recommendations.
+
+### Language & Accessibility Agent
+Ensures the app is accessible to everyone, including differently-abled users, with voice commands, screen reader support, and visual adaptations.
+
+### Local Knowledge Agent
+Incorporates community-contributed information, especially valuable for rural and suburban areas where official data might be limited.
+
+## Getting Started
+
+### First-Time Setup
+1. Download the Smart Transit Companion app
+2. Select your preferred language (Sinhala, Tamil, or English)
+3. Set up your profile with accessibility preferences if needed
+4. Grant location permissions for accurate route planning
+5. Add your frequently visited places (home, work, etc.)
+
+### Planning Your First Journey
+1. Open the app and tap "Plan Journey"
+2. Enter your starting point and destination
+3. Choose your travel preferences (fastest, cheapest, most comfortable)
+4. Select preferred transport modes or let AI choose for you
+5. Review the suggested routes and select your preferred option
+6. Start your journey with step-by-step guidance
+
+## Core Functionalities
+
+### Journey Planning
+Ask questions like "How do I get from Colombo Fort to Kandy?" or "What's the cheapest way to travel to Galle?" The app understands natural language queries.
+
+### Real-Time Tracking
+Track your bus or train in real-time, get alerts about delays, and receive notifications when it's time to board or transfer.
+
+### Fare Calculator
+Get accurate fare information for different transport combinations and find the most cost-effective options.
+
+### Accessibility Features
+- Voice commands and audio feedback
+- High contrast mode for visual impairments
+- Screen reader compatibility
+- Simplified interface options
+
+### Offline Capabilities
+Access saved routes and basic information even without internet connectivity, useful for rural travel.
+
+## Using the Chat Assistant
+
+### Natural Language Queries
+You can ask questions in plain language such as:
+- "When is the next bus to Kandy?"
+- "What's the fastest way to get to the airport?"
+- "Are there any delays on the Colombo-Galle train line?"
+- "How much does it cost to travel from Negombo to Colombo?"
+
+### Travel Commands
+- "Plan route to [destination]"
+- "Find buses near me"
+- "Check train schedules"
+- "Show fare prices to [location]"
+- "Alert me about delays"
+
+## Special Features
+
+### Tourist Mode
+Designed specifically for visitors to Sri Lanka, providing extra context about landmarks, cultural sites, and tourist-friendly transport options.
+
+### Emergency Assistance
+Quick access to emergency contacts and alternative transport options when regular services are disrupted.
+
+### Community Features
+Report delays, overcrowding, or service issues to help other users and improve the system's accuracy.
+
+### Budget Tracking
+Track your monthly transport spending and get suggestions for cost-effective travel passes.
+
+## Supported Transport Modes
+
+### Buses
+- Inter-provincial buses
+- City buses
+- Private buses
+- Express services
+
+### Trains
+- Main line services
+- Coastal line
+- Puttalam line
+- Other railway lines
+
+### Alternative Transport
+- Tuk-tuks and three-wheelers
+- Taxi services
+- Walking routes
+- Cycling paths (where available)
+
+## Coverage Areas
+
+### Urban Areas
+Comprehensive coverage in Colombo, Kandy, Galle, and other major cities with real-time data and frequent updates.
+
+### Suburban and Rural Areas
+Extended coverage through community contributions and local knowledge integration for areas with limited official data.
+
+### Tourist Destinations
+Special focus on routes to and from popular tourist attractions, airports, and hotels.
+
+## App Settings and Customization
+
+### Personal Preferences
+- Preferred transport modes
+- Maximum walking distance
+- Budget constraints
+- Accessibility requirements
+- Language settings
+
+### Notification Settings
+- Delay alerts
+- Departure reminders
+- Route suggestions
+- Fare deals and offers
+
+### Privacy Controls
+- Location sharing preferences
+- Data usage settings
+- Profile visibility options
+
+## Troubleshooting Common Issues
+
+### Route Not Found
+If the app can't find a route, try:
+- Checking if your destination address is correct
+- Using nearby landmarks as reference points
+- Updating the app to get latest route data
+
+### Inaccurate Information
+Report incorrect information through the feedback feature to help improve the system for everyone.
+
+### App Performance Issues
+- Ensure you have a stable internet connection
+- Clear the app cache if experiencing slowdowns
+- Update to the latest version for optimal performance
+
+## Tips for Best Experience
+
+### For Daily Commuters
+- Set up home and work locations for quick planning
+- Enable push notifications for your regular routes
+- Use favorites to save frequently used journeys
+
+### For Tourists
+- Enable tourist mode for additional context and tips
+- Download offline maps for areas you'll visit
+- Set language preferences before traveling
+
+### For Rural Travelers
+- Contribute local transport information to help other users
+- Use offline features when connectivity is limited
+- Check community updates for the most current information
+
+## Safety and Security
+
+### Personal Safety
+- Share your journey with trusted contacts
+- Use well-lit and populated transport stops
+- Keep emergency contacts easily accessible
+
+### Data Security
+- Your location data is encrypted and secured
+- Personal preferences are stored locally when possible
+- Report any security concerns through the app
+
+## Getting Help and Support
+
+### In-App Support
+Use the chat assistant for immediate help with:
+- How to use specific features
+- Transport information queries
+- Technical issues
+- General travel advice
+
+### Community Support
+Connect with other users to share travel tips and get local insights about transport conditions.
+
+### Feedback and Improvements
+Your feedback helps improve the app. Report issues, suggest features, or share success stories through the feedback system.
+
+## Future Updates and Features
+
+The Smart Transit Companion continuously evolves with new features, expanded coverage, and improved AI capabilities. Regular updates include:
+- New route coverage
+- Enhanced prediction accuracy
+- Additional language support
+- Improved accessibility features
+- Integration with new transport services
+
+## Benefits of Using Smart Transit Companion
+
+### Time Savings
+Reduce travel time by up to 30% through optimized route planning and real-time updates.
+
+### Cost Reduction
+Save money by finding the most economical travel combinations and taking advantage of special offers.
+
+### Stress Reduction
+Eliminate uncertainty about transport schedules and routes with reliable, real-time information.
+
+### Improved Accessibility
+Make public transport accessible to everyone, regardless of language, physical abilities, or familiarity with the local transport system.
+
+### Environmental Impact
+Encourage public transport usage, contributing to reduced traffic congestion and environmental sustainability.
+
+This comprehensive guide ensures that users can effectively utilize all features of the Smart Transit Companion app while understanding how the AI agents work together to provide the best possible travel experience in Sri Lanka.

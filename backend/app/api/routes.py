@@ -8,6 +8,7 @@ import time
 
 # Import the new travel routes
 from app.api.v1.travel_routes import router as travel_router
+from app.api.v1.chatbot_routes import router as chatbot_router
 
 router = APIRouter()
 
@@ -102,3 +103,6 @@ async def get_shortest_path(request: PathRequest):
 
 # Include the travel routes
 router.include_router(travel_router, prefix="/travel", tags=["Travel Agent Workflow"])
+
+# Include the chatbot routes  
+router.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
