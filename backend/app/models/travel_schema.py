@@ -74,6 +74,7 @@ class TravelState(BaseModel):
     current_disruptions: List[DisruptionInfo] = []
     alternative_routes_due_disruptions: List[Dict[str, Any]] = []
     real_time_updates: List[Dict] = []
+    ai_disruption_analysis: Optional[Dict[str, Any]] = None
     
     # Final Output
     recommended_routes: List[Dict] = []

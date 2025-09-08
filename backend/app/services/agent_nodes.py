@@ -4,6 +4,7 @@ from app.models.travel_schema import TravelState
 from app.services.tool_functions import *
 from app.services.analysis_tools import *
 from app.services.llm_summarizer import LLMSummarizerService
+from app.services.intelligent_disruption_service import IntelligentDisruptionService
 from app.services.langfuse_service import langfuse_service
 import json
 from datetime import datetime, timedelta
@@ -25,6 +26,14 @@ try:
 except Exception as e:
     print(f"⚠️  LLM Summarizer Service initialization failed: {str(e)}")
     llm_summarizer = None
+
+# Initialize Intelligent Disruption Service
+try:
+    intelligent_disruption_service = IntelligentDisruptionService()
+    print("✅ Intelligent Disruption Service initialized successfully")
+except Exception as e:
+    print(f"⚠️  Intelligent Disruption Service initialization failed: {str(e)}")
+    intelligent_disruption_service = None
 
 def input_processing_node(state: TravelState) -> TravelState:
     """
@@ -617,42 +626,209 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
 
 def disruption_monitoring_node(state: TravelState) -> TravelState:
     """
-    Monitor for disruptions and provide alternative routes
+    Intelligent disruption monitoring.
+    Analyzes disruptions and recommends best alternative routes based on user preferences,
+    cost, duration, and other factors.
     """
-    print("Monitoring for disruptions along selected routes")
+    print("🤖 Intelligent disruption monitoring with Gemini 2.0 Flash")
     
-    try:
-        route_areas = []
-        
-        # Collect route areas for disruption checking
-        all_routes = state.primary_routes + state.supplementary_routes + state.transit_routes
-        for route in all_routes:
-            # Extract area information from route (simplified)
-            route_area = f"{state.source}-{state.destination}"
-            route_areas.append(route_area)
-        
-        # Check for disruptions
-        for area in set(route_areas):  # Remove duplicates
-            disruption_result = disruption_tool.get_disruptions(area)
+    # Start Langfuse span for this agent action
+    with langfuse_service.start_span(
+        name="intelligent_disruption_monitoring",
+        metadata={
+            "agent_type": "intelligent_disruption_monitoring",
+            "source": state.source,
+            "destination": state.destination,
+            "mode": state.mode,
+            "user_id": state.user_id,
+            "llm_model": "gemini-2.0-flash"
+        }
+    ) as span:
+        try:
+            # Step 1: Check for disruptions in the route areas
+            route_areas = []
+            all_routes = state.primary_routes + state.supplementary_routes + state.transit_routes
             
-            if disruption_result["status"] == "success":
-                disruptions = disruption_result["disruptions"]
-                for disruption in disruptions:
-                    state.current_disruptions.append({
-                        "disruption_id": disruption["disruption_id"],
-                        "location": disruption["location"],
-                        "type": disruption["type"],
-                        "severity": disruption["severity"],
-                        "description": disruption["description"],
-                        "timestamp": disruption["timestamp"]
-                    })
+            # Collect route areas for disruption checking
+            for route in all_routes:
+                route_area = f"{state.source}-{state.destination}"
+                route_areas.append(route_area)
+            
+            # Check for disruptions
+            active_disruptions = []
+            for area in set(route_areas):  # Remove duplicates
+                disruption_result = disruption_tool.get_disruptions(area)
+                
+                if disruption_result["status"] == "success":
+                    disruptions = disruption_result["disruptions"]
+                    for disruption in disruptions:
+                        disruption_info = {
+                            "disruption_id": disruption["disruption_id"],
+                            "location": disruption["location"],
+                            "type": disruption["type"],
+                            "severity": disruption["severity"],
+                            "description": disruption["description"],
+                            "timestamp": disruption["timestamp"]
+                        }
+                        active_disruptions.append(disruption_info)
+                        state.current_disruptions.append(disruption_info)
+            
+            print(f"🔍 Found {len(active_disruptions)} active disruptions")
+            
+            # Step 2: Use AI to analyze disruptions and recommend routes
+            if intelligent_disruption_service and (active_disruptions or state.transit_routes):
+                print("Using Gemini 2.0 Flash for intelligent route analysis...")
+                
+                # Prepare available routes for analysis
+                available_routes = []
+                
+                # Include transit routes (primary focus for disruption analysis)
+                for route in state.transit_routes:
+                    available_routes.append(route)
+                
+                # Include primary and supplementary routes as alternatives
+                for route in state.primary_routes + state.supplementary_routes:
+                    available_routes.append(route)
+                
+                # Get user preferences
+                user_prefs = state.current_user_preferences
+                
+                # Use AI to analyze and recommend
+                ai_analysis_result = intelligent_disruption_service.analyze_disruption_and_recommend_routes(
+                    disruptions=active_disruptions,
+                    available_routes=available_routes,
+                    user_preferences=user_prefs,
+                    source=state.source,
+                    destination=state.destination
+                )
+                
+                span.update(
+                    input={
+                        "disruptions_count": len(active_disruptions),
+                        "available_routes_count": len(available_routes),
+                        "user_preferences_available": user_prefs is not None,
+                        "source": state.source,
+                        "destination": state.destination
+                    },
+                    output={"ai_analysis_result": ai_analysis_result}
+                )
+                
+                if ai_analysis_result["status"] == "success":
+                    print(f"✅ AI analysis completed with {ai_analysis_result['confidence_score']}% confidence")
+                    
+                    # Process AI recommendations
+                    ai_recommendations = ai_analysis_result.get("recommended_routes", [])
+                    disruption_analysis = ai_analysis_result.get("disruption_analysis", {})
+                    
+                    # Store AI analysis results in state
+                    state.ai_disruption_analysis = {
+                        "analysis_timestamp": ai_analysis_result["timestamp"],
+                        "model_used": ai_analysis_result["model_used"],
+                        "confidence_score": ai_analysis_result["confidence_score"],
+                        "disruption_impact": disruption_analysis,
+                        "recommendations": ai_recommendations,
+                        "reasoning": ai_analysis_result.get("reasoning", ""),
+                        "summary": intelligent_disruption_service.get_route_recommendation_summary(ai_analysis_result)
+                    }
+                    
+                    # Generate alternative routes based on AI recommendations
+                    if ai_recommendations:
+                        print(f"🎯 Processing {len(ai_recommendations)} AI recommendations...")
+                        
+                        # Get the top recommended routes that aren't already in our main routes
+                        for i, recommendation in enumerate(ai_recommendations[:3]):  # Top 3 recommendations
+                            route_id = recommendation["route_id"]
+                            
+                            # Find the corresponding route in available routes
+                            recommended_route = None
+                            for route in available_routes:
+                                if route.get("route_id") == route_id:
+                                    recommended_route = route
+                                    break
+                            
+                            if recommended_route:
+                                # Create enhanced alternative route with AI insights
+                                enhanced_route = {
+                                    "route_id": f"ai_recommended_{i}",
+                                    "duration": recommended_route.get("duration", 0),
+                                    "distance": recommended_route.get("distance", 0),
+                                    "steps": recommended_route.get("steps", []),
+                                    "polyline": recommended_route.get("polyline", ""),
+                                    "fare_estimate": recommended_route.get("fare_estimate", 0),
+                                    "transit_modes": recommended_route.get("transit_modes", []),
+                                    "transfers": recommended_route.get("transfers", 0),
+                                    "walking_distance": recommended_route.get("walking_distance", 0),
+                                    "category": "ai_recommended",
+                                    "mode_details": recommended_route.get("mode_details", {}),
+                                    "ai_insights": {
+                                        "rank": recommendation.get("rank", i + 1),
+                                        "score": recommendation.get("score", 0),
+                                        "reasoning": recommendation.get("reasoning", ""),
+                                        "pros": recommendation.get("pros", []),
+                                        "cons": recommendation.get("cons", []),
+                                        "disruption_impact": recommendation.get("estimated_impact_from_disruptions", "unknown"),
+                                        "confidence": ai_analysis_result["confidence_score"]
+                                    },
+                                    "reason": "ai_recommended_alternative",
+                                    "avoided_disruptions": [d["disruption_id"] for d in active_disruptions if d["severity"] == "high"]
+                                }
+                                
+                                state.alternative_routes_due_disruptions.append(enhanced_route)
+                                print(f"  ✅ Added AI-recommended route: {enhanced_route['route_id']} (Score: {recommendation.get('score', 0):.1f})")
+                    
+                    # If no AI recommendations but disruptions exist, fallback to basic alternatives
+                    elif active_disruptions:
+                        print("⚠️  No AI recommendations available, generating basic alternatives...")
+                        _generate_basic_alternatives(state, active_disruptions)
+                    
+                else:
+                    print(f"❌ AI analysis failed: {ai_analysis_result.get('error', 'Unknown error')}")
+                    # Fallback to basic disruption handling
+                    if active_disruptions:
+                        _generate_basic_alternatives(state, active_disruptions)
+            
+            else:
+                print("⚠️  Intelligent disruption service not available, using basic monitoring...")
+                # Fallback to basic disruption handling
+                if active_disruptions:
+                    _generate_basic_alternatives(state, active_disruptions)
+            
+            state.current_step = "intelligent_disruption_monitoring_completed"
+            state.agents_completed.append("disruption_monitoring")
+            
+            span.update(
+                status="completed",
+                output={
+                    "disruptions_found": len(active_disruptions),
+                    "ai_analysis_available": intelligent_disruption_service is not None,
+                    "alternative_routes_generated": len(state.alternative_routes_due_disruptions),
+                    "ai_confidence_score": state.ai_disruption_analysis.get("confidence_score", 0) if hasattr(state, 'ai_disruption_analysis') else 0
+                }
+            )
+            
+        except Exception as e:
+            print(f"❌ Error in intelligent disruption monitoring: {str(e)}")
+            span.update(
+                status="error",
+                error=str(e)
+            )
+            state.errors.append({
+                "node": "disruption_monitoring",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
         
-        # Generate alternative routes if high-severity disruptions found
-        high_severity_disruptions = [d for d in state.current_disruptions 
-                                   if d["severity"] == "high"]
+        return state
+
+def _generate_basic_alternatives(state: TravelState, active_disruptions: List[Dict]) -> None:
+    """
+    Generate basic alternative routes when AI analysis is not available
+    """
+    try:
+        high_severity_disruptions = [d for d in active_disruptions if d["severity"] == "high"]
         
         if high_severity_disruptions:
-            print(f"Found {len(high_severity_disruptions)} high-severity disruptions")
+            print(f"🔄 Generating basic alternatives for {len(high_severity_disruptions)} high-severity disruptions")
             
             # Get alternative routes (re-run routing with different parameters)
             alt_route_result = google_maps_tool._run(
@@ -666,24 +842,24 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                 alt_routes = alt_route_result["routes"][2:]  # Get additional alternatives
                 for i, route in enumerate(alt_routes):
                     state.alternative_routes_due_disruptions.append({
-                        "route_id": f"disruption_alt_{i}",
+                        "route_id": f"basic_alt_{i}",
                         "duration": route["legs"][0]["duration"]["value"] // 60,
                         "distance": route["legs"][0]["distance"]["value"] / 1000,
+                        "steps": route["legs"][0]["steps"],
+                        "polyline": route["overview_polyline"]["points"],
+                        "fare_estimate": None,
+                        "transit_modes": [],
+                        "transfers": 0,
+                        "walking_distance": 0.0,
+                        "category": "basic_alternative",
+                        "mode_details": {"mode": state.mode},
                         "reason": "avoiding_disruption",
                         "avoided_disruptions": [d["disruption_id"] for d in high_severity_disruptions]
                     })
-        
-        state.current_step = "disruption_monitoring_completed"
-        state.agents_completed.append("disruption_monitoring")
+                    print(f"  ✅ Added basic alternative route: basic_alt_{i}")
         
     except Exception as e:
-        state.errors.append({
-            "node": "disruption_monitoring",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        })
-    
-    return state
+        print(f"❌ Error generating basic alternatives: {str(e)}")
 
 def route_optimization_node(state: TravelState) -> TravelState:
     """
@@ -1005,6 +1181,18 @@ def response_compilation_node(state: TravelState) -> TravelState:
                 }
                 for d in state.current_disruptions
             ]
+        
+        # Add AI disruption analysis if available
+        if state.ai_disruption_analysis:
+            response["ai_disruption_analysis"] = {
+                "analysis_timestamp": state.ai_disruption_analysis.get("analysis_timestamp"),
+                "model_used": state.ai_disruption_analysis.get("model_used"),
+                "confidence_score": state.ai_disruption_analysis.get("confidence_score"),
+                "summary": state.ai_disruption_analysis.get("summary"),
+                "reasoning": state.ai_disruption_analysis.get("reasoning"),
+                "disruption_impact": state.ai_disruption_analysis.get("disruption_impact", {}),
+                "recommendations_count": len(state.ai_disruption_analysis.get("recommendations", []))
+            }
         
         state.final_response = response
         state.current_step = "completed"
