@@ -11,7 +11,12 @@ from datetime import datetime, timedelta
 
 # Initialize tools
 google_maps_tool = GoogleMapsAPITool()
-serper_tool = SerperWebSearchTool()
+# Initialize serper_tool conditionally
+try:
+    serper_tool = SerperWebSearchTool()
+except Exception:
+    print("WARNING: SerperWebSearchTool initialization failed. Web search will be disabled.")
+    serper_tool = None
 fare_tool = FareDatabaseTool()
 preference_tool = UserPreferenceTool()
 disruption_tool = DisruptionDatabaseTool()
@@ -535,33 +540,45 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
             # Execute all searches
             search_results = {}
             successful_searches = 0
-            for search_item in search_queries:
-                try:
-                    result = serper_tool._run(search_item["query"])
-                    if result["status"] == "success":
-                        search_results[search_item["category"]] = {
-                            "query": search_item["query"],
-                            "description": search_item["description"],
-                            "data": result["general_info"],
-                            "timestamp": datetime.now().isoformat()
-                        }
-                        successful_searches += 1
-                    else:
-                        print(f"Search failed for {search_item['category']}: {result.get('error', 'Unknown error')}")
-                        search_results[search_item["category"]] = {
-                            "query": search_item["query"],
-                            "description": search_item["description"],
-                            "error": result.get('error', 'Unknown error'),
-                            "timestamp": datetime.now().isoformat()
-                        }
-                except Exception as e:
-                    print(f"Exception during search for {search_item['category']}: {str(e)}")
+            
+            # Check if serper_tool is available
+            if serper_tool is None:
+                print("WARNING: Web search disabled (SERPER_API_KEY not configured)")
+                for search_item in search_queries:
                     search_results[search_item["category"]] = {
                         "query": search_item["query"],
                         "description": search_item["description"],
-                        "error": str(e),
+                        "error": "Web search disabled - SERPER_API_KEY not configured",
                         "timestamp": datetime.now().isoformat()
                     }
+            else:
+                for search_item in search_queries:
+                    try:
+                        result = serper_tool._run(search_item["query"])
+                        if result["status"] == "success":
+                            search_results[search_item["category"]] = {
+                                "query": search_item["query"],
+                                "description": search_item["description"],
+                                "data": result["general_info"],
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            successful_searches += 1
+                        else:
+                            print(f"Search failed for {search_item['category']}: {result.get('error', 'Unknown error')}")
+                            search_results[search_item["category"]] = {
+                                "query": search_item["query"],
+                                "description": search_item["description"],
+                                "error": result.get('error', 'Unknown error'),
+                                "timestamp": datetime.now().isoformat()
+                            }
+                    except Exception as e:
+                        print(f"Exception during search for {search_item['category']}: {str(e)}")
+                        search_results[search_item["category"]] = {
+                            "query": search_item["query"],
+                            "description": search_item["description"],
+                            "error": str(e),
+                            "timestamp": datetime.now().isoformat()
+                        }
             
             # Organize results into state fields
             state.local_insights = {

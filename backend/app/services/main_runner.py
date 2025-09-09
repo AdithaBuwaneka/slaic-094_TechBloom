@@ -18,7 +18,7 @@ def validate_environment():
     required_vars = [
         'GOOGLE_MAPS_API_KEY',
         'SERPER_API_KEY', 
-        'MONGODB_CONNECTION_STRING'
+        'MONGODB_URL'
     ]
     
     missing_vars = []

@@ -75,14 +75,27 @@ class SerperWebSearchTool(BaseTool):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._search = GoogleSerperAPIWrapper(
-            serper_api_key=os.getenv('SERPER_API_KEY')
-        )
+        serper_key = os.getenv('SERPER_API_KEY')
+        if not serper_key:
+            print("WARNING: SERPER_API_KEY not set. Web search will be disabled.")
+            self._search = None
+        else:
+            self._search = GoogleSerperAPIWrapper(
+                serper_api_key=serper_key
+            )
     
     def _run(self, query: str, location: Optional[str] = None) -> Dict:
         """
         Search for local knowledge about routes and areas
         """
+        if not self._search:
+            return {
+                "status": "disabled",
+                "message": "Web search disabled - SERPER_API_KEY not configured",
+                "general_info": {"summary": "Search unavailable", "key_points": [], "relevant_links": []},
+                "timestamp": datetime.now().isoformat()
+            }
+            
         try:
             # Enhance query with location if provided
             enhanced_query = f"{query} {location}" if location else query
@@ -172,9 +185,9 @@ class FareDatabaseTool(BaseTool):
     
     def _initialize_client(self):
         """Initialize MongoDB client with retry logic and error handling"""
-        connection_string = os.getenv('MONGODB_CONNECTION_STRING')
+        connection_string = os.getenv('MONGODB_URL')
         if not connection_string:
-            print("  MONGODB_CONNECTION_STRING not set. Fare database tool will be disabled.")
+            print("  MONGODB_URL not set. Fare database tool will be disabled.")
             return
         
         max_retries = 3
@@ -223,7 +236,7 @@ class FareDatabaseTool(BaseTool):
         
         try:
             # Get the database and collection
-            db = self._client['transit_companion_db']
+            db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
             transit_fares_collection = db['transit_fares']
             
             # Create query parameters for exact match (case-insensitive)
@@ -380,7 +393,7 @@ class FareDatabaseTool(BaseTool):
             }
         
         try:
-            db = self._client['transit_companion_db']
+            db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
             transit_fares_collection = db['transit_fares']
             
             # Query for all active fares for the specified mode
@@ -423,7 +436,7 @@ class FareDatabaseTool(BaseTool):
             }
         
         try:
-            db = self._client['transit_companion_db']
+            db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
             transit_fares_collection = db['transit_fares']
             
             # Aggregate fare statistics
@@ -469,7 +482,7 @@ class FareDatabaseTool(BaseTool):
         
         try:
             # Get the database and collection
-            db = self._client['transit_companion_db']
+            db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
             transit_fares_collection = db['transit_fares']
             
             # Extract step details
@@ -593,8 +606,8 @@ class UserPreferenceTool(BaseTool):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._client = MongoClient(os.getenv('MONGODB_CONNECTION_STRING'))
-        self._db = self._client['transit_companion_db']
+        self._client = MongoClient(os.getenv('MONGODB_URL'))
+        self._db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
         self._preferences_collection = self._db['user_preferences']
         self._history_collection = self._db['user_history']
     
@@ -772,8 +785,8 @@ class DisruptionDatabaseTool(BaseTool):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._client = MongoClient(os.getenv('MONGODB_CONNECTION_STRING'))
-        self._db = self._client['transit_companion_db']
+        self._client = MongoClient(os.getenv('MONGODB_URL'))
+        self._db = self._client[os.getenv('DATABASE_NAME', 'transit_companion_db')]
         self._disruptions_collection = self._db['transit_disruptions']
     
     def _run(self, action: str = "get", route_area: Optional[str] = None, 

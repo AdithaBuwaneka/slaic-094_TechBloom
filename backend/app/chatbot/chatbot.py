@@ -47,6 +47,16 @@ def initialize_rag_system():
     global vectordb, qa_chain
     
     try:
+        # Check if chromadb is available
+        try:
+            import chromadb
+        except ImportError:
+            print("WARNING: chromadb not installed. Chatbot will be disabled.")
+            print("To enable chatbot: pip install chromadb")
+            vectordb = None
+            qa_chain = None
+            return
+        
         # Get the path to the transit guide file in the chatbot directory
         current_dir = Path(__file__).parent
         guide_file_path = current_dir / "transit_app_guide.txt"
@@ -92,7 +102,10 @@ def initialize_rag_system():
         
     except Exception as e:
         print(f"Error initializing RAG system: {str(e)}")
-        raise e
+        print("WARNING: Chatbot will be disabled. Install chromadb with: pip install chromadb")
+        # Don't raise error, just disable chatbot
+        vectordb = None
+        qa_chain = None
 
 @router.get("/")
 async def root():

@@ -1,11 +1,16 @@
 # scripts/seed_database.py
 
 import asyncio
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
 
-# --- Make sure these details match your database.py ---
-MONGO_DETAILS = "mongodb+srv://TechBloom:TechBloom123@smarttransitcompanion.j3c5osf.mongodb.net/"
-DB_NAME = "transit_companion"
+# Load environment variables
+load_dotenv()
+
+# --- Use environment variables for consistency ---
+MONGO_DETAILS = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+DB_NAME = os.getenv("DATABASE_NAME", "transit_companion_db")
 COLLECTION_NAME = "bus_routes"
 
 # --- Here is our mock data ---
