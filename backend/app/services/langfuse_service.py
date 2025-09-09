@@ -28,7 +28,7 @@ class LangfuseService:
         try:
             # Check if Langfuse is configured
             if not settings.LANGFUSE_PUBLIC_KEY or not settings.LANGFUSE_SECRET_KEY:
-                print("⚠️  Langfuse not configured. Tracing will be disabled.")
+                print(" Langfuse not configured. Tracing will be disabled.")
                 return
             
             # Initialize Langfuse client with optimized settings to prevent timeout issues
@@ -49,10 +49,10 @@ class LangfuseService:
             # Initialize the Langfuse handler for LangChain
             self.handler = CallbackHandler()
             
-            print("✅ Langfuse initialized successfully with optimized settings")
+            print("Langfuse initialized successfully with optimized settings")
             
         except Exception as e:
-            print(f"❌ Failed to initialize Langfuse: {e}")
+            print(f" Failed to initialize Langfuse: {e}")
             self.client = None
             self.handler = None
     
@@ -128,7 +128,7 @@ class LangfuseService:
             return Trace(self, trace_id, name, metadata)
             
         except Exception as e:
-            print(f"❌ Failed to create trace: {e}")
+            print(f" Failed to create trace: {e}")
             return None
     
     @contextmanager
@@ -160,7 +160,7 @@ class LangfuseService:
             # Store active span
             self.current_spans[span_id] = span_data
             
-            print(f"🚀 Agent action started: {name}")
+            print(f" Agent action started: {name}")
             
             # Create span object
             class Span:
@@ -194,7 +194,7 @@ class LangfuseService:
                             duration = time.time() - self.start_time
                             span_data['duration'] = duration
                             
-                            print(f"📊 Agent action updated: {self.name} (duration: {duration:.2f}s)")
+                            print(f" Agent action updated: {self.name} (duration: {duration:.2f}s)")
                     except Exception as e:
                         print(f"Warning: Could not update span: {e}")
                 
@@ -208,7 +208,7 @@ class LangfuseService:
                             span_data['end_time'] = time.time()
                             span_data['status'] = 'completed'
                             
-                            print(f"✅ Agent action completed: {self.name} (duration: {duration:.2f}s)")
+                            print(f" Agent action completed: {self.name} (duration: {duration:.2f}s)")
                             
                             # Remove from active spans
                             del self.service.current_spans[self.span_id]
@@ -223,7 +223,7 @@ class LangfuseService:
                 span.end()
             
         except Exception as e:
-            print(f"❌ Failed to start span: {e}")
+            print(f" Failed to start span: {e}")
             yield None
     
     def score_trace(self, trace_id: str, name: str, value: float, 
@@ -240,7 +240,7 @@ class LangfuseService:
                 comment=comment
             )
         except Exception as e:
-            print(f"❌ Failed to score trace: {e}")
+            print(f" Failed to score trace: {e}")
     
     def flush(self):
         """Flush all pending events to Langfuse with robust error handling"""
@@ -248,23 +248,23 @@ class LangfuseService:
             return
         
         try:
-            print("🔄 Flushing events to Langfuse...")
+            print(" Flushing events to Langfuse...")
             
             # Log what we have locally for debugging
             if self.current_trace:
-                print(f"📊 Local trace data: {self.current_trace['name']} (ID: {self.current_trace['id']})")
+                print(f" Local trace data: {self.current_trace['name']} (ID: {self.current_trace['id']})")
             
             if self.current_spans:
-                print(f"📊 Local spans data: {len(self.current_spans)} spans")
+                print(f" Local spans data: {len(self.current_spans)} spans")
                 for span_id, span_data in self.current_spans.items():
                     print(f"   - {span_data['name']} (ID: {span_id})")
             
             # Flush the client - the LangChain callback handler will automatically send traces and spans
             self.client.flush()
-            print("✅ All events flushed to Langfuse successfully")
+            print("All events flushed to Langfuse successfully")
             
         except Exception as e:
-            print(f"❌ Failed to flush events: {e}")
+            print(f"  Failed to flush events: {e}")
             print("   This won't affect your application's functionality")
             print("   Traces will be stored locally and can be sent later")
 

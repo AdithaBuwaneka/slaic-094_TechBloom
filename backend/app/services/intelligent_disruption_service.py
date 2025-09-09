@@ -26,15 +26,15 @@ class IntelligentDisruptionService:
         # Initialize the Gemini 2.0 Flash model
         try:
             self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
-            print("✅ Gemini 2.0 Flash model initialized successfully for disruption monitoring")
+            print(" Gemini model initialized successfully for disruption monitoring")
         except Exception as e:
-            print(f"❌ Error initializing Gemini 2.0 Flash: {str(e)}")
+            print(f" Error initializing Gemini : {str(e)}")
             # Fallback to Gemini 1.5 Flash if 2.0 is not available
             try:
                 self.model = genai.GenerativeModel('gemini-1.5-flash')
-                print("✅ Fallback to Gemini 1.5 Flash model initialized successfully")
+                print(" Fallback to Gemini 1.5 Flash model initialized successfully")
             except Exception as e2:
-                print(f"❌ Error initializing fallback model: {str(e2)}")
+                print(f" Error initializing fallback model: {str(e2)}")
                 raise
     
     def analyze_disruption_and_recommend_routes(self, 
@@ -365,16 +365,16 @@ IMPORTANT:
             confidence = recommendation_result.get("confidence_score", 0)
             
             summary = f"""
-🚨 Disruption Alert: {len(recommendation_result.get('disruption_analysis', {}).get('high_impact_routes', []))} routes affected
+ Disruption Alert: {len(recommendation_result.get('disruption_analysis', {}).get('high_impact_routes', []))} routes affected
 
-🏆 Recommended Route: {top_route.get('route_id', 'Unknown')}
+ Recommended Route: {top_route.get('route_id', 'Unknown')}
    Confidence: {confidence}%
    Reason: {top_route.get('reasoning', 'No reasoning provided')}
 
-💡 Key Advantages:
+ Key Advantages:
 {chr(10).join(f'   • {pro}' for pro in top_route.get('pros', [])[:3])}
 
-⚠️ Considerations:
+ Considerations:
 {chr(10).join(f'   • {con}' for con in top_route.get('cons', [])[:2])}
 """
             
@@ -389,7 +389,7 @@ if __name__ == "__main__":
     # Test the service
     try:
         service = IntelligentDisruptionService()
-        print("✅ Intelligent Disruption Service initialized successfully")
+        print("Intelligent Disruption Service initialized successfully")
         
         # Test with sample data
         test_disruptions = [
@@ -444,14 +444,14 @@ if __name__ == "__main__":
             "Kandy"
         )
         
-        print("\n📊 Analysis Result:")
+        print("\n Analysis Result:")
         print(f"Status: {result['status']}")
         if result['status'] == 'success':
             print(f"Confidence: {result['confidence_score']}%")
             print(f"Recommendations: {len(result['recommended_routes'])} routes")
             
             summary = service.get_route_recommendation_summary(result)
-            print(f"\n📝 Summary:\n{summary}")
+            print(f"\nSummary:\n{summary}")
         
     except Exception as e:
-        print(f"❌ Error testing Intelligent Disruption Service: {str(e)}")
+        print(f" Error testing Intelligent Disruption Service: {str(e)}")

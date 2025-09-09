@@ -93,7 +93,7 @@ class RouteComparisonTool(BaseTool):
         # Debug: Check if all required keys exist in weights
         missing_keys = [criterion for criterion in breakdown if criterion not in weights]
         if missing_keys:
-            print(f"⚠️  Missing weight keys: {missing_keys}")
+            print(f" Missing weight keys: {missing_keys}")
             print(f"Available weight keys: {list(weights.keys())}")
             # Use default weights for missing keys
             default_weights = {"time": 0.3, "cost": 0.25, "comfort": 0.2, "convenience": 0.15, "reliability": 0.1}

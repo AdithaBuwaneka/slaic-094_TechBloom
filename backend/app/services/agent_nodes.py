@@ -22,17 +22,17 @@ preference_learning_tool = PreferenceLearningTool()
 # Initialize LLM summarizer service
 try:
     llm_summarizer = LLMSummarizerService()
-    print("✅ LLM Summarizer Service initialized successfully")
+    print("LLM Summarizer Service initialized successfully")
 except Exception as e:
-    print(f"⚠️  LLM Summarizer Service initialization failed: {str(e)}")
+    print(f"LLM Summarizer Service initialization failed: {str(e)}")
     llm_summarizer = None
 
 # Initialize Intelligent Disruption Service
 try:
     intelligent_disruption_service = IntelligentDisruptionService()
-    print("✅ Intelligent Disruption Service initialized successfully")
+    print("Intelligent Disruption Service initialized successfully")
 except Exception as e:
-    print(f"⚠️  Intelligent Disruption Service initialization failed: {str(e)}")
+    print(f"Intelligent Disruption Service initialization failed: {str(e)}")
     intelligent_disruption_service = None
 
 def input_processing_node(state: TravelState) -> TravelState:
@@ -307,9 +307,9 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                         # Add fare details to the step
                         step["fare_details"] = step_fare
                         
-                        print(f"🚌 Step fare: {step_fare['base_fare']} LKR ({step_fare['source']})")
+                        print(f"Step fare: {step_fare['base_fare']} LKR ({step_fare['source']})")
                     else:
-                        print(f"❌ Failed to calculate fare for step: {step_fare_result.get('error', 'Unknown error')}")
+                        print(f"Failed to calculate fare for step: {step_fare_result.get('error', 'Unknown error')}")
                 else:
                     # Walking step - check if we should offer Uber alternative
                     walking_distance_km = step.get("distance", {}).get("value", 0) / 1000
@@ -391,16 +391,16 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                 
                 total_cost = fuel_cost + parking_cost
                 route["fare_estimate"] = round(total_cost, 2)
-                print(f"⛽ Calculated cost for {route.get('mode_details', {}).get('mode')}: {total_cost:.0f} LKR (fuel: {fuel_cost:.0f}, parking: {parking_cost})")
+                print(f"Calculated cost for {route.get('mode_details', {}).get('mode')}: {total_cost:.0f} LKR (fuel: {fuel_cost:.0f}, parking: {parking_cost})")
         
         state.total_fare_estimate = round(total_estimated_fare, 2)
         state.current_step = "fare_calculation_completed"
         state.agents_completed.append("fare_calculation")
         
-        print(f"💳 Total estimated fare across all routes: {state.total_fare_estimate} LKR")
+        print(f"Total estimated fare across all routes: {state.total_fare_estimate} LKR")
         
     except Exception as e:
-        print(f"❌ Error in fare_calculation_node: {str(e)}")
+        print(f"Error in fare_calculation_node: {str(e)}")
         state.errors.append({
             "node": "fare_calculation",
             "error": str(e),
@@ -714,7 +714,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                 )
                 
                 if ai_analysis_result["status"] == "success":
-                    print(f"✅ AI analysis completed with {ai_analysis_result['confidence_score']}% confidence")
+                    print(f"AI analysis completed with {ai_analysis_result['confidence_score']}% confidence")
                     
                     # Process AI recommendations
                     ai_recommendations = ai_analysis_result.get("recommended_routes", [])
@@ -733,7 +733,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                     
                     # Generate alternative routes based on AI recommendations
                     if ai_recommendations:
-                        print(f"🎯 Processing {len(ai_recommendations)} AI recommendations...")
+                        print(f"Processing {len(ai_recommendations)} AI recommendations...")
                         
                         # Get the top recommended routes that aren't already in our main routes
                         for i, recommendation in enumerate(ai_recommendations[:3]):  # Top 3 recommendations
@@ -774,21 +774,21 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                                 }
                                 
                                 state.alternative_routes_due_disruptions.append(enhanced_route)
-                                print(f"  ✅ Added AI-recommended route: {enhanced_route['route_id']} (Score: {recommendation.get('score', 0):.1f})")
+                                print(f"Added AI-recommended route: {enhanced_route['route_id']} (Score: {recommendation.get('score', 0):.1f})")
                     
                     # If no AI recommendations but disruptions exist, fallback to basic alternatives
                     elif active_disruptions:
-                        print("⚠️  No AI recommendations available, generating basic alternatives...")
+                        print("No AI recommendations available, generating basic alternatives...")
                         _generate_basic_alternatives(state, active_disruptions)
                     
                 else:
-                    print(f"❌ AI analysis failed: {ai_analysis_result.get('error', 'Unknown error')}")
+                    print(f" AI analysis failed: {ai_analysis_result.get('error', 'Unknown error')}")
                     # Fallback to basic disruption handling
                     if active_disruptions:
                         _generate_basic_alternatives(state, active_disruptions)
             
             else:
-                print("⚠️  Intelligent disruption service not available, using basic monitoring...")
+                print("  Intelligent disruption service not available, using basic monitoring...")
                 # Fallback to basic disruption handling
                 if active_disruptions:
                     _generate_basic_alternatives(state, active_disruptions)
@@ -807,7 +807,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
             )
             
         except Exception as e:
-            print(f"❌ Error in intelligent disruption monitoring: {str(e)}")
+            print(f" Error in intelligent disruption monitoring: {str(e)}")
             span.update(
                 status="error",
                 error=str(e)
@@ -856,10 +856,10 @@ def _generate_basic_alternatives(state: TravelState, active_disruptions: List[Di
                         "reason": "avoiding_disruption",
                         "avoided_disruptions": [d["disruption_id"] for d in high_severity_disruptions]
                     })
-                    print(f"  ✅ Added basic alternative route: basic_alt_{i}")
+                    print(f"  Added basic alternative route: basic_alt_{i}")
         
     except Exception as e:
-        print(f"❌ Error generating basic alternatives: {str(e)}")
+        print(f"Error generating basic alternatives: {str(e)}")
 
 def route_optimization_node(state: TravelState) -> TravelState:
     """
@@ -948,13 +948,13 @@ def route_optimization_node(state: TravelState) -> TravelState:
             all_routes.append(route_with_category)
             print(f"  → Added disruption route: {route_with_category['route_id']}")
         
-        print(f"\n📊 Total routes collected for comparison: {len(all_routes)}")
+        print(f"\nTotal routes collected for comparison: {len(all_routes)}")
         
         if all_routes:
-            print(f"🔍 First route summary: {all_routes[0]['route_id']} - {all_routes[0]['duration']} min, {all_routes[0]['distance']:.1f} km")
+            print(f" First route summary: {all_routes[0]['route_id']} - {all_routes[0]['duration']} min, {all_routes[0]['distance']:.1f} km")
             
             # Use route comparison tool
-            print("\n⚖️  Calling route comparison tool...")
+            print("\n  Calling route comparison tool...")
             
             # Create default user preferences if none exist
             user_prefs = state.current_user_preferences
@@ -966,7 +966,7 @@ def route_optimization_node(state: TravelState) -> TravelState:
                     "max_walking_distance": 1.0,
                     "preferred_transit_modes": ["bus", "train"]
                 }
-                print("⚠️  No user preferences found, using defaults")
+                print("  No user preferences found, using defaults")
             else:
                 # Convert Pydantic model to dictionary
                 user_prefs = user_prefs.dict() if hasattr(user_prefs, 'dict') else user_prefs
@@ -981,7 +981,7 @@ def route_optimization_node(state: TravelState) -> TravelState:
                     "convenience": 0.15,
                     "reliability": 0.1
                 }
-                print("⚠️  No preference weights found, using defaults")
+                print("  No preference weights found, using defaults")
             
             comparison_result = route_comparison_tool._run(
                 routes=all_routes,
@@ -989,15 +989,15 @@ def route_optimization_node(state: TravelState) -> TravelState:
                 weights=weights
             )
             
-            print(f"📈 Route comparison result: {comparison_result['status']}")
+            print(f" Route comparison result: {comparison_result['status']}")
             
             if comparison_result["status"] == "success":
                 ranked_routes = comparison_result["ranked_routes"]
-                print(f"🏆 Number of ranked routes: {len(ranked_routes)}")
+                print(f" Number of ranked routes: {len(ranked_routes)}")
                 
                 # Store top recommendations
                 state.recommended_routes = ranked_routes[:state.config.get("max_routes", 5)]
-                print(f"💾 Stored {len(state.recommended_routes)} recommended routes")
+                print(f" Stored {len(state.recommended_routes)} recommended routes")
                 
                 # Store route rankings
                 for ranked_route in ranked_routes:
@@ -1005,15 +1005,15 @@ def route_optimization_node(state: TravelState) -> TravelState:
                     state.route_rankings[route_id] = ranked_route["score"]["total"]
                     print(f"  → Route {route_id}: Score {ranked_route['score']['total']:.3f}")
             else:
-                print(f"❌ Route comparison failed: {comparison_result.get('error', 'Unknown error')}")
+                print(f" Route comparison failed: {comparison_result.get('error', 'Unknown error')}")
         else:
-            print("⚠️  No routes to compare!")
+            print("  No routes to compare!")
         
         state.current_step = "route_optimization_completed"
         state.agents_completed.append("route_optimization")
         
     except Exception as e:
-        print(f"❌ Error in route_optimization_node: {str(e)}")
+        print(f" Error in route_optimization_node: {str(e)}")
         import traceback
         traceback.print_exc()
         state.errors.append({
@@ -1157,12 +1157,12 @@ def response_compilation_node(state: TravelState) -> TravelState:
                     
                     if summary_result["status"] == "success":
                         user_friendly_summary = summary_result["summary"]
-                        print(f"✅ LLM Summary generated: {len(user_friendly_summary.split(chr(10)))} lines")
+                        print(f" LLM Summary generated: {len(user_friendly_summary.split(chr(10)))} lines")
                     else:
-                        print(f"⚠️  LLM Summary failed: {summary_result.get('error', 'Unknown error')}")
+                        print(f" LLM Summary failed: {summary_result.get('error', 'Unknown error')}")
                         
                 except Exception as e:
-                    print(f"⚠️  Error generating LLM summary: {str(e)}")
+                    print(f" Error generating LLM summary: {str(e)}")
                     user_friendly_summary = "Local information available but summary generation failed."
             
             # Add ONLY the LLM-generated destination summary - nothing else

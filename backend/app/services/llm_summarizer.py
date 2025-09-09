@@ -25,9 +25,9 @@ class LLMSummarizerService:
         # Initialize the model
         try:
             self.model = genai.GenerativeModel('gemini-1.5-flash')
-            print("✅ Google Generative AI model initialized successfully")
+            print("Google Generative AI model initialized successfully")
         except Exception as e:
-            print(f"❌ Error initializing Google Generative AI: {str(e)}")
+            print(f" Error initializing Google Generative AI: {str(e)}")
             raise
     
     def summarize_search_results(self, search_results: Dict[str, Any], 
@@ -279,7 +279,7 @@ if __name__ == "__main__":
     # Test the service
     try:
         summarizer = LLMSummarizerService()
-        print("✅ LLM Summarizer Service initialized successfully")
+        print(" LLM Summarizer Service initialized successfully")
         
         # Test with sample data
         test_results = {
@@ -297,8 +297,8 @@ if __name__ == "__main__":
             "User is in Colombo and needs to reach Kandy by evening"
         )
         
-        print("\n📝 Generated Summary:")
+        print("\n Generated Summary:")
         print(summary.get("summary", "No summary generated"))
         
     except Exception as e:
-        print(f"❌ Error testing LLM Summarizer: {str(e)}")
+        print(f" Error testing LLM Summarizer: {str(e)}")

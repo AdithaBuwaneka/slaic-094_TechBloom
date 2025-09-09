@@ -174,7 +174,7 @@ class FareDatabaseTool(BaseTool):
         """Initialize MongoDB client with retry logic and error handling"""
         connection_string = os.getenv('MONGODB_CONNECTION_STRING')
         if not connection_string:
-            print("⚠️  MONGODB_CONNECTION_STRING not set. Fare database tool will be disabled.")
+            print("  MONGODB_CONNECTION_STRING not set. Fare database tool will be disabled.")
             return
         
         max_retries = 3
@@ -182,7 +182,7 @@ class FareDatabaseTool(BaseTool):
         
         for attempt in range(max_retries):
             try:
-                print(f"🔄 Attempting MongoDB connection (attempt {attempt + 1}/{max_retries})...")
+                print(f" Attempting MongoDB connection (attempt {attempt + 1}/{max_retries})...")
                 
                 # Set connection timeout to prevent long DNS resolution
                 self._client = MongoClient(
@@ -196,18 +196,18 @@ class FareDatabaseTool(BaseTool):
                 
                 # Test the connection
                 self._client.admin.command('ping')
-                print("✅ MongoDB connection established successfully")
+                print(" MongoDB connection established successfully")
                 break
                 
             except Exception as e:
-                print(f"❌ MongoDB connection attempt {attempt + 1} failed: {str(e)}")
+                print(f" MongoDB connection attempt {attempt + 1} failed: {str(e)}")
                 
                 if attempt < max_retries - 1:
                     print(f"⏳ Retrying in {retry_delay} seconds...")
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
-                    print("❌ All MongoDB connection attempts failed. Fare database tool will be disabled.")
+                    print(" All MongoDB connection attempts failed. Fare database tool will be disabled.")
                     self._client = None
     
     def _run(self, mode: str, source: str, destination: str, vehicle_type: str = None) -> Dict:
@@ -336,7 +336,7 @@ class FareDatabaseTool(BaseTool):
             
         except Exception as e:
             # Log the error for debugging
-            print(f"❌ Error in FareDatabaseTool._run: {str(e)}")
+            print(f" Error in FareDatabaseTool._run: {str(e)}")
             
             # Return fallback response even on error
             return {
@@ -404,7 +404,7 @@ class FareDatabaseTool(BaseTool):
             }
             
         except Exception as e:
-            print(f"❌ Error in FareDatabaseTool.get_fares_by_mode: {str(e)}")
+            print(f" Error in FareDatabaseTool.get_fares_by_mode: {str(e)}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -449,7 +449,7 @@ class FareDatabaseTool(BaseTool):
             }
             
         except Exception as e:
-            print(f"❌ Error in FareDatabaseTool.get_fare_statistics: {str(e)}")
+            print(f" Error in FareDatabaseTool.get_fare_statistics: {str(e)}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -532,10 +532,10 @@ class FareDatabaseTool(BaseTool):
                 for query in queries_to_try:
                     fare_record = transit_fares_collection.find_one(query)
                     if fare_record:
-                        print(f"✅ Found fare record with query: {query}")
+                        print(f" Found fare record with query: {query}")
                         break
             else:
-                print("⚠️ No valid query parameters available, skipping database lookup")
+                print(" No valid query parameters available, skipping database lookup")
             
             if fare_record:
                 # Convert ObjectId to string for JSON serialization
@@ -576,7 +576,7 @@ class FareDatabaseTool(BaseTool):
             }
             
         except Exception as e:
-            print(f"❌ Error in FareDatabaseTool.get_step_fare: {str(e)}")
+            print(f" Error in FareDatabaseTool.get_step_fare: {str(e)}")
             return {
                 "status": "error",
                 "error": str(e),
