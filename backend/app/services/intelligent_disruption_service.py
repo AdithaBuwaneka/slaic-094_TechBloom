@@ -16,9 +16,9 @@ class IntelligentDisruptionService:
     """
     
     def __init__(self):
-        self.api_key = os.getenv('GOOGLE_API_KEY')
+        self.api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+            raise ValueError("GOOGLE_GEMINI_API_KEY environment variable is not set")
         
         # Configure Google Generative AI
         genai.configure(api_key=self.api_key)

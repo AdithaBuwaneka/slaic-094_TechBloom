@@ -72,28 +72,32 @@ def input_processing_node(state: TravelState) -> TravelState:
                 from app.models.travel_schema import UserPreferences
                 pref_dict = pref_result["preferences"]
                 state.current_user_preferences = UserPreferences(**pref_dict)
-                span.update(
-                    input={"user_id": state.user_id},
-                    output={"preferences_loaded": True, "preferences": pref_result["preferences"]}
-                )
+                if span:
+                    span.update(
+                        input={"user_id": state.user_id},
+                        output={"preferences_loaded": True, "preferences": pref_result["preferences"]}
+                    )
             else:
-                span.update(
-                    input={"user_id": state.user_id},
-                    output={"preferences_loaded": False, "error": pref_result.get("error")}
-                )
+                if span:
+                    span.update(
+                        input={"user_id": state.user_id},
+                        output={"preferences_loaded": False, "error": pref_result.get("error")}
+                    )
             
             # Set processing step
             state.current_step = "input_processed"
             state.agents_completed.append("input_processing")
             
-            span.update(status="completed")
+            if span:
+                span.update(status="completed")
             return state
             
         except Exception as e:
-            span.update(
-                status="error",
-                error=str(e)
-            )
+            if span:
+                span.update(
+                    status="error",
+                    error=str(e)
+                )
             state.errors.append({
                 "node": "input_processing",
                 "error": str(e),
@@ -141,7 +145,8 @@ def standard_route_node(state: TravelState) -> TravelState:
             
             print(f"Google Maps API result: {route_result['status']}")
             
-            span.update(
+            if span:
+                span.update(
                 input={
                     "origin": state.source,
                     "destination": state.destination,
@@ -201,7 +206,8 @@ def standard_route_node(state: TravelState) -> TravelState:
             state.current_step = "standard_routes_completed"
             state.agents_completed.append("standard_route")
             
-            span.update(
+            if span:
+                span.update(
                 status="completed",
                 output={
                     "routes_found": len(state.primary_routes) + len(state.supplementary_routes),
@@ -212,10 +218,11 @@ def standard_route_node(state: TravelState) -> TravelState:
             
         except Exception as e:
             print(f"Error in standard_route_node: {str(e)}")
-            span.update(
-                status="error",
-                error=str(e)
-            )
+            if span:
+                span.update(
+                    status="error",
+                    error=str(e)
+                )
             state.errors.append({
                 "node": "standard_route",
                 "error": str(e),
@@ -350,7 +357,7 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                             }
                         }
                         
-                        print(f"🚶 Walking step: {walking_distance_km:.2f}km - Uber alternative: {int(uber_duration)}min, {int(uber_cost)} LKR")
+                        print(f"Walking step: {walking_distance_km:.2f}km - Uber alternative: {int(uber_duration)}min, {int(uber_cost)} LKR")
                     else:
                         # Regular walking step - no fare
                         step["fare_details"] = {
@@ -364,7 +371,7 @@ def fare_calculation_node(state: TravelState) -> TravelState:
             if len(transit_steps) > 1:
                 transfer_penalty = (len(transit_steps) - 1) * 5  # 5 LKR per transfer
                 route_fare += transfer_penalty
-                print(f"🔄 Added transfer penalty: {transfer_penalty} LKR for {len(transit_steps) - 1} transfers")
+                print(f"Added transfer penalty: {transfer_penalty} LKR for {len(transit_steps) - 1} transfers")
             
             # Check if last mile is needed
             route_end_distance = route.get("walking_distance", 0)
@@ -381,14 +388,14 @@ def fare_calculation_node(state: TravelState) -> TravelState:
                             "route_id": route["route_id"],
                             "option": best_last_mile
                         })
-                        print(f"🚶 Added last mile cost: {best_last_mile['cost']} LKR")
+                        print(f"Added last mile cost: {best_last_mile['cost']} LKR")
             
             # Store the calculated fare and step details
             route["fare_estimate"] = round(route_fare, 2)
             route["step_fares"] = step_fares
             total_estimated_fare = max(total_estimated_fare, route_fare)
             
-            print(f"💰 Total fare for route {route.get('route_id')}: {route_fare:.0f} LKR (from {len(step_fares)} transit steps)")
+            print(f"Total fare for route {route.get('route_id')}: {route_fare:.0f} LKR (from {len(step_fares)} transit steps)")
         
         # Also calculate fares for standard routes if they exist
         for route in state.primary_routes + state.supplementary_routes:
@@ -449,14 +456,17 @@ def user_preference_analysis_node(state: TravelState) -> TravelState:
         # Filter routes based on strict preferences
         if state.transit_routes:
             filtered_routes = []
+            max_walking_distance = getattr(preferences, "max_walking_distance", 1.0)
+            preferred_modes = getattr(preferences, "preferred_transit_modes", ["bus", "train"])
+            
             for route in state.transit_routes:
                 # Check walking distance tolerance
-                if route.get("walking_distance", 0) <= state.preference_weight_factors["walking_tolerance"]:
+                if route.get("walking_distance", 0) <= max_walking_distance:
                     # Check if route uses preferred modes
                     route_modes = route.get("transit_modes", [])
-                    if any(mode in state.preference_weight_factors["preferred_modes"] for mode in route_modes):
+                    if any(mode in preferred_modes for mode in route_modes):
                         filtered_routes.append(route)
-                    elif not state.preference_weight_factors["preferred_modes"]:  # No strict preference
+                    elif not preferred_modes:  # No strict preference
                         filtered_routes.append(route)
             
             # If filtering removes all routes, use original list with warning
@@ -499,8 +509,8 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
         }
     ) as span:
         try:
-            # Create a copy of the state to avoid conflicts
-            state_copy = state.model_copy(deep=True)
+            # Use the state directly - no need to copy since we're just reading from it
+            state_copy = state
             
             # Comprehensive search for route information
             search_queries = [
@@ -536,7 +546,8 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
                 }
             ]
             
-            span.update(
+            if span:
+                span.update(
                 input={
                     "search_queries": search_queries,
                     "source": state.source,
@@ -639,7 +650,8 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
             state.current_step = "local_knowledge_completed"
             state.agents_completed.append("local_knowledge_agent")
             
-            span.update(
+            if span:
+                span.update(
                 status="completed",
                 output={
                     "searches_executed": len(search_queries),
@@ -653,10 +665,11 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
             
         except Exception as e:
             print(f"Error in local knowledge agent: {str(e)}")
-            span.update(
-                status="error",
-                error=str(e)
-            )
+            if span:
+                span.update(
+                    status="error",
+                    error=str(e)
+                )
             state.errors.append({
                 "node": "local_knowledge_agent",
                 "error": str(e),
@@ -671,7 +684,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
     Analyzes disruptions and recommends best alternative routes based on user preferences,
     cost, duration, and other factors.
     """
-    print("🤖 Intelligent disruption monitoring with Gemini 2.0 Flash")
+    print("Intelligent disruption monitoring with Gemini 2.0 Flash")
     
     # Start Langfuse span for this agent action
     with langfuse_service.start_span(
@@ -714,7 +727,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                         active_disruptions.append(disruption_info)
                         state.current_disruptions.append(disruption_info)
             
-            print(f"🔍 Found {len(active_disruptions)} active disruptions")
+            print(f"Found {len(active_disruptions)} active disruptions")
             
             # Step 2: Use AI to analyze disruptions and recommend routes
             if intelligent_disruption_service and (active_disruptions or state.transit_routes):
@@ -743,16 +756,17 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
                     destination=state.destination
                 )
                 
-                span.update(
-                    input={
-                        "disruptions_count": len(active_disruptions),
-                        "available_routes_count": len(available_routes),
-                        "user_preferences_available": user_prefs is not None,
-                        "source": state.source,
-                        "destination": state.destination
-                    },
-                    output={"ai_analysis_result": ai_analysis_result}
-                )
+                if span:
+                    span.update(
+                        input={
+                            "disruptions_count": len(active_disruptions),
+                            "available_routes_count": len(available_routes),
+                            "user_preferences_available": user_prefs is not None,
+                            "source": state.source,
+                            "destination": state.destination
+                        },
+                        output={"ai_analysis_result": ai_analysis_result}
+                    )
                 
                 if ai_analysis_result["status"] == "success":
                     print(f"AI analysis completed with {ai_analysis_result['confidence_score']}% confidence")
@@ -837,7 +851,8 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
             state.current_step = "intelligent_disruption_monitoring_completed"
             state.agents_completed.append("disruption_monitoring")
             
-            span.update(
+            if span:
+                span.update(
                 status="completed",
                 output={
                     "disruptions_found": len(active_disruptions),
@@ -849,10 +864,11 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
             
         except Exception as e:
             print(f" Error in intelligent disruption monitoring: {str(e)}")
-            span.update(
-                status="error",
-                error=str(e)
-            )
+            if span:
+                span.update(
+                    status="error",
+                    error=str(e)
+                )
             state.errors.append({
                 "node": "disruption_monitoring",
                 "error": str(e),
@@ -869,7 +885,7 @@ def _generate_basic_alternatives(state: TravelState, active_disruptions: List[Di
         high_severity_disruptions = [d for d in active_disruptions if d["severity"] == "high"]
         
         if high_severity_disruptions:
-            print(f"🔄 Generating basic alternatives for {len(high_severity_disruptions)} high-severity disruptions")
+            print(f"Generating basic alternatives for {len(high_severity_disruptions)} high-severity disruptions")
             
             # Get alternative routes (re-run routing with different parameters)
             alt_route_result = google_maps_tool._run(

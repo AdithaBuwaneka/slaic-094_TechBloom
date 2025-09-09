@@ -1,3 +1,4 @@
+
 """
 Multi-Agent Travel System
 Main application entry point
@@ -27,30 +28,30 @@ def validate_environment():
             missing_vars.append(var)
     
     if missing_vars:
-        print("❌ Missing required environment variables:")
+        print("Missing required environment variables:")
         for var in missing_vars:
             print(f"   - {var}")
         print("\nPlease check your .env file and ensure all variables are set.")
         return False
     
-    print("✅ Environment variables validated")
+    print("Environment variables validated")
     
     # Check Langfuse configuration
     if langfuse_service.is_enabled():
-        print("✅ Langfuse tracing enabled")
+        print("Langfuse tracing enabled")
     else:
-        print("⚠️  Langfuse tracing disabled (configure LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable)")
+        print("Warning: Langfuse tracing disabled (configure LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable)")
     
     return True
 
 def print_route_results(result):
     """Pretty print route results"""
     if result["status"] == "error":
-        print(f"❌ Error: {result['error']}")
+        print(f"Error: {result['error']}")
         return
     
     response = result["response"]
-    print(f"\n📍 Route Results:")
+    print(f"\nRoute Results:")
     print(f"   Request ID: {response['request_id']}")
     print(f"   From: {response['query']['source']}")
     print(f"   To: {response['query']['destination']}")
@@ -60,10 +61,10 @@ def print_route_results(result):
     
     # Show trace ID if Langfuse is enabled
     if result.get('trace_id'):
-        print(f"   🔍 Trace ID: {result['trace_id']}")
+        print(f"   Trace ID: {result['trace_id']}")
         print(f"      View in Langfuse: https://cloud.langfuse.com/traces/{result['trace_id']}")
     
-    print(f"\n🛤️  Recommended Routes ({len(response['recommended_routes'])}):")
+    print(f"\nRecommended Routes ({len(response['recommended_routes'])}):")
     for i, route in enumerate(response['recommended_routes'], 1):
         print(f"\n   Route {i}:")
         print(f"      Duration: {route['summary']['duration_minutes']} min")
@@ -85,19 +86,19 @@ def print_route_results(result):
     
     # Show disruptions if any
     if 'disruptions' in response:
-        print(f"\n⚠️  Active Disruptions ({len(response['disruptions'])}):")
+        print(f"\nActive Disruptions ({len(response['disruptions'])}):")
         for disruption in response['disruptions']:
             print(f"   - {disruption['type']} at {disruption['location']} ({disruption['severity']})")
     
     # Show warnings if any
     if 'warnings' in response:
-        print(f"\n⚠️  Warnings:")
+        print(f"\nWarnings:")
         for warning in response['warnings']:
             print(f"   - {warning['source']}: {warning['message']}")
 
 def interactive_mode():
     """Run interactive mode for testing"""
-    print("\n🎮 Interactive Mode")
+    print("\nInteractive Mode")
     print("=" * 50)
     
     while True:
@@ -105,11 +106,11 @@ def interactive_mode():
             print("\nEnter travel details (or 'quit' to exit):")
             
             # Get user input
-            source = input("📍 From: ").strip()
+            source = input("From: ").strip()
             if source.lower() == 'quit':
                 break
                 
-            destination = input("📍 To: ").strip()
+            destination = input("To: ").strip()
             if destination.lower() == 'quit':
                 break
             
@@ -130,7 +131,7 @@ def interactive_mode():
             
             user_id = input("User ID (or press Enter for default): ").strip() or "user_123"
             
-            print(f"\n🚀 Processing route from {source} to {destination} via {mode}...")
+            print(f"\nProcessing route from {source} to {destination} via {mode}...")
             
             # Run the travel agent
             result = run_travel_agent(
@@ -145,14 +146,14 @@ def interactive_mode():
             print_route_results(result)
             
         except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
+            print("\n\nGoodbye!")
             break
         except Exception as e:
-            print(f"\n❌ Error: {str(e)}")
+            print(f"\nError: {str(e)}")
 
 def run_demo_scenarios():
     """Run pre-defined demo scenarios"""
-    print("\n🎬 Demo Scenarios")
+    print("\nDemo Scenarios")
     print("=" * 50)
     
     scenarios = [
@@ -181,7 +182,7 @@ def run_demo_scenarios():
     ]
     
     for i, scenario in enumerate(scenarios, 1):
-        print(f"\n🎯 Scenario {i}: {scenario['name']}")
+        print(f"\nScenario {i}: {scenario['name']}")
         print("-" * 30)
         
         result = run_travel_agent(
@@ -198,7 +199,7 @@ def run_demo_scenarios():
 
 def main():
     """Main application function"""
-    print("🚀 Multi-Agent Travel System")
+    print("Multi-Agent Travel System")
     print("=" * 50)
     
     # Validate environment
@@ -206,14 +207,14 @@ def main():
         return
     
     # Setup database
-    # setup_choice = input("\n🗄️  Setup database with dummy data? (y/n): ").lower()
+    # setup_choice = input("\nSetup database with dummy data? (y/n): ").lower()
     # if setup_choice == 'y':
     #     if not setup_database():
-    #         print("❌ Cannot continue without database setup")
+    #         print("Cannot continue without database setup")
     #         return
     
     # Choose mode
-    print("\n🎯 Choose operation mode:")
+    print("\nChoose operation mode:")
     print("  1. Interactive mode")
     print("  2. Demo scenarios")
     print("  3. Single test")
@@ -226,7 +227,7 @@ def main():
         run_demo_scenarios()
     elif choice == "3":
         # Single test
-        print("\n🧪 Running single test...")
+        print("\nRunning single test...")
         result = run_travel_agent(
             source="Times Square, New York",
             destination="Brooklyn Bridge, New York",
@@ -236,14 +237,14 @@ def main():
         )
         print_route_results(result)
     else:
-        print("❌ Invalid choice")
+        print("Invalid choice")
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n👋 Application terminated by user")
+        print("\n\nApplication terminated by user")
     except Exception as e:
-        print(f"\n💥 Fatal error: {str(e)}")
+        print(f"\nFatal error: {str(e)}")
         import traceback
         traceback.print_exc()

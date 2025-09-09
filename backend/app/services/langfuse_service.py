@@ -110,7 +110,7 @@ class LangfuseService:
                             duration = time.time() - self.start_time
                             self.service.current_trace['duration'] = duration
                             
-                            print(f"🔍 Trace updated: {self.name} (duration: {duration:.2f}s)")
+                            print(f"Trace updated: {self.name} (duration: {duration:.2f}s)")
                     except Exception as e:
                         print(f"Warning: Could not update trace: {e}")
                 

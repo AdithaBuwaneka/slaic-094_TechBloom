@@ -50,7 +50,13 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
 
     # Add departure time if provided
     if departure_time:
-        request_payload["departureTime"] = f"{departure_time}s"
+        from datetime import datetime
+        # Convert timestamp to proper ISO format with 'Z' suffix
+        if isinstance(departure_time, (int, float)):
+            dt = datetime.fromtimestamp(departure_time)
+            request_payload["departureTime"] = dt.isoformat() + "Z"
+        else:
+            request_payload["departureTime"] = f"{departure_time}Z" if not str(departure_time).endswith('Z') else str(departure_time)
 
     # Add transit preferences
     if api_mode == "TRANSIT" and transit_mode_preference:

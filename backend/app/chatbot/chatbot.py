@@ -72,7 +72,7 @@ def initialize_rag_system():
         # Embeddings + Vector DB
         embeddings = GoogleGenerativeAIEmbeddings(
             model="models/embedding-001",
-            google_api_key=settings.GOOGLE_API_KEY
+            google_api_key=settings.GOOGLE_GEMINI_API_KEY
         )
         
         # Vector database path in the chatbot directory
@@ -86,11 +86,11 @@ def initialize_rag_system():
             vectordb = Chroma.from_documents(chunks, embedding=embeddings, persist_directory=str(db_path))
             print("Created new vector database")
         
-        # LLM
+        # LLM - Using latest Gemini 2.0 Flash (faster, better, cheaper)
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash", 
+            model="gemini-2.0-flash-exp", 
             temperature=0.2,
-            google_api_key=settings.GOOGLE_API_KEY,
+            google_api_key=settings.GOOGLE_GEMINI_API_KEY,
             convert_system_message_to_human=True
         )
         
@@ -115,7 +115,7 @@ async def root():
 @router.post("/ask", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):
     """
-    Ask a question to the RAG system
+    Ask a question to the RAG system with quota management
     """
     global qa_chain
     
@@ -123,29 +123,69 @@ async def ask_question(request: QuestionRequest):
         raise HTTPException(status_code=500, detail="RAG system not initialized")
     
     try:
-        # Update LLM temperature if different from default
-        if request.temperature != 0.2:
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash", 
-                temperature=request.temperature,
-                google_api_key=settings.GOOGLE_API_KEY,
-                convert_system_message_to_human=True
-            )
-            retriever = vectordb.as_retriever(search_kwargs={"k": 2})  # Limit to 2 results
-            qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+        import time
+        import random
+        from app.services.cache_manager import chatbot_cache
         
-        # Get answer from QA chain using invoke with LangSmith tracing
-        if tracer:
-            # Include LangSmith callback for tracing
-            result = qa_chain.invoke(
-                {"query": request.question},
-                config={"callbacks": [tracer], "tags": ["rag-question"], "metadata": {"temperature": request.temperature}}
-            )
-        else:
-            result = qa_chain.invoke({"query": request.question})
+        # Check cache first to avoid API calls
+        cache_key = {"question": request.question, "temperature": request.temperature}
+        cached_response = chatbot_cache.get(cache_key)
+        if cached_response:
+            print(f"Returning cached response for: {request.question[:50]}...")
+            return QuestionResponse(question=request.question, answer=cached_response["answer"])
+        
+        # Add exponential backoff for quota limits
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Update LLM temperature if different from default
+                if request.temperature != 0.2:
+                    llm = ChatGoogleGenerativeAI(
+                        model="gemini-2.0-flash-exp", 
+                        temperature=request.temperature,
+                        google_api_key=settings.GOOGLE_GEMINI_API_KEY,
+                        convert_system_message_to_human=True
+                    )
+                    retriever = vectordb.as_retriever(search_kwargs={"k": 1})  # Reduce to 1 result to save quota
+                    qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+                
+                # Get answer from QA chain using invoke with LangSmith tracing
+                if tracer:
+                    # Include LangSmith callback for tracing
+                    result = qa_chain.invoke(
+                        {"query": request.question},
+                        config={"callbacks": [tracer], "tags": ["rag-question"], "metadata": {"temperature": request.temperature}}
+                    )
+                else:
+                    result = qa_chain.invoke({"query": request.question})
+                
+                # If successful, break out of retry loop
+                break
+                
+            except Exception as quota_error:
+                error_str = str(quota_error)
+                if "quota" in error_str.lower() or "429" in error_str:
+                    if attempt < max_retries - 1:
+                        # Exponential backoff: 2^attempt seconds + random jitter
+                        delay = (2 ** attempt) + random.uniform(0, 1)
+                        print(f"Quota exceeded, retrying in {delay:.1f}s (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(delay)
+                        continue
+                    else:
+                        # Final attempt failed, return fallback response
+                        return QuestionResponse(
+                            question=request.question, 
+                            answer="I'm currently experiencing high demand. The Smart Transit Companion app helps you navigate Sri Lankan public transport with real-time information, route planning, and multi-language support. Please try again in a few minutes."
+                        )
+                else:
+                    # Non-quota error, re-raise
+                    raise quota_error
             
         answer = result["result"]
         print(f"Question: {request.question}\nAnswer: {answer}")
+        
+        # Cache the successful response
+        chatbot_cache.set(cache_key, {"answer": answer})
         
         # Log to LangSmith if available
         if langsmith_client:

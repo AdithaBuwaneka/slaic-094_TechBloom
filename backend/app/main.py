@@ -6,9 +6,17 @@ from app.core.database import connect_to_mongo, close_mongo_connection, test_db_
 from app.api.routes import router
 from dotenv import load_dotenv
 import os
+import sys
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure encoding for Windows systems to prevent Unicode errors
+if sys.platform.startswith('win'):
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
 
 # Check for API Key on startup
 if not os.getenv('GOOGLE_MAPS_API_KEY') or "YOUR_API_KEY_HERE" in os.getenv('GOOGLE_MAPS_API_KEY'):

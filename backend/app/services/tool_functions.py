@@ -24,43 +24,53 @@ class GoogleMapsAPITool(BaseTool):
              alternatives: bool = True, departure_time: Optional[datetime] = None,
              transit_mode_preference: Optional[str] = None) -> Dict:
         """
-        Get routes from Google Maps
+        Get routes using Google Routes API v2
         """
-        # Initialize Google Maps client when needed
-        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-        if not api_key:
-            raise ValueError("GOOGLE_MAPS_API_KEY environment variable is not set")
-        
-        gmaps = googlemaps.Client(key=api_key)
+        from app.services.google_maps_service import get_optimized_route
+        import time
         
         try:
-            if mode == "transit":
-                # Build the directions request parameters
-                directions_params = {
-                    "origin": origin,
-                    "destination": destination,
-                    "mode": "transit",
-                    "alternatives": alternatives,
-                    "departure_time": departure_time or datetime.now()
-                }
-                
-                # Add transit mode preference if specified
-                if transit_mode_preference:
-                    directions_params["transit_mode"] = transit_mode_preference
-                result = gmaps.directions(**directions_params)
+            # Convert datetime to timestamp if provided
+            departure_timestamp = None
+            if departure_time:
+                departure_timestamp = int(departure_time.timestamp())
             else:
-                result = gmaps.directions(
-                    origin=origin,
-                    destination=destination,
-                    mode=mode,
-                    alternatives=alternatives
-                )
+                departure_timestamp = int(time.time())
+            
+            # Use the updated Routes API v2 service
+            result, error = get_optimized_route(
+                origin=origin,
+                destination=destination,
+                mode=mode,
+                departure_time=departure_timestamp,
+                transit_mode_preference=transit_mode_preference
+            )
+            
+            if error:
+                return {
+                    "status": "error",
+                    "error": error,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Convert to expected format for multi-agent system
+            routes = []
+            if result:
+                routes.append({
+                    "legs": [{
+                        "duration": {"value": int(result.get("duration_text", "0").split()[0]) * 60 if "hour" not in result.get("duration_text", "") else int(result.get("duration_text", "0").split()[0]) * 3600},
+                        "distance": {"value": int(float(result.get("distance_text", "0").split()[0]) * 1000)},
+                        "steps": result.get("steps", [])
+                    }],
+                    "overview_polyline": {"points": ""}
+                })
             
             return {
                 "status": "success",
-                "routes": result,
+                "routes": routes,
                 "timestamp": datetime.now().isoformat()
             }
+            
         except Exception as e:
             return {
                 "status": "error",
@@ -174,6 +184,25 @@ class SerperWebSearchTool(BaseTool):
                 "status": "error",
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
+            }
+    
+    def _process_search_results(self, results: str, query: str) -> Dict:
+        """Process and structure search results"""
+        try:
+            # Basic processing of search results
+            lines = results.split('\n') if results else []
+            key_points = [line.strip() for line in lines if line.strip() and len(line.strip()) > 10][:5]
+            
+            return {
+                "summary": f"Search results for: {query}",
+                "key_points": key_points,
+                "relevant_links": []
+            }
+        except Exception as e:
+            return {
+                "summary": f"Search completed for: {query}",
+                "key_points": [f"Search results available but processing failed: {str(e)}"],
+                "relevant_links": []
             }
 
 
@@ -621,7 +650,7 @@ class FareDatabaseTool(BaseTool):
             
             distance = step.get("distance", {}).get("value", 0) / 1000  # Convert to km
             
-            print(f"🔍 Looking up fare for step: {departure_stop} -> {arrival_stop}, line: {line_name}, mode: {vehicle_type}")
+            print(f"Looking up fare for step: {departure_stop} -> {arrival_stop}, line: {line_name}, mode: {vehicle_type}")
             
             # Build queries only with exact matches
             queries_to_try = []

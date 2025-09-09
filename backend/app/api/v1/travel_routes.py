@@ -72,6 +72,8 @@ async def plan_travel_route(request: TravelRequest):
     4. Return optimized recommendations
     """
     try:
+        print(f"Route handler: Processing request for {request.source} to {request.destination} ({request.mode})")
+        
         # Run the travel agent workflow
         result = run_travel_agent(
             source=request.source,
@@ -80,6 +82,13 @@ async def plan_travel_route(request: TravelRequest):
             user_id=request.user_id,
             preferred_transit=request.preferred_transit
         )
+        
+        print(f"Route handler: Workflow result status: {result.get('status')}")
+        
+        if result.get('status') == 'error':
+            print(f"Route handler: Workflow returned error: {result.get('error')}")
+        else:
+            print(f"Route handler: Workflow completed successfully with {len(result.get('agents_used', []))} agents")
         
         # Store the request in database for tracking
         await db.database.travel_requests.insert_one({

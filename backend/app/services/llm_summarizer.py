@@ -15,16 +15,16 @@ class LLMSummarizerService:
     """
     
     def __init__(self):
-        self.api_key = os.getenv('GOOGLE_API_KEY')
+        self.api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+            raise ValueError("GOOGLE_GEMINI_API_KEY environment variable is not set")
         
         # Configure Google Generative AI
         genai.configure(api_key=self.api_key)
         
-        # Initialize the model
+        # Initialize the model with latest Gemini 2.0
         try:
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
             print("Google Generative AI model initialized successfully")
         except Exception as e:
             print(f" Error initializing Google Generative AI: {str(e)}")
