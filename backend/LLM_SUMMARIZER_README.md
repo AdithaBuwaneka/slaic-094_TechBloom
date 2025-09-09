@@ -5,7 +5,7 @@ This service integrates Google's Generative AI (Gemini) to provide user-friendly
 ## Features
 
 - **Destination Insights**: Converts complex search results into destination-focused insights in 4-5 lines
-- **Local Knowledge Synthesis**: Generates practical local tips and destination information
+- **Local Knowledge Synthesis**: Generates practical local tips and destination informations
 - **LangChain Integration**: Available as a LangChain tool for workflow integration
 - **Error Handling**: Graceful fallbacks when LLM service is unavailable
 
