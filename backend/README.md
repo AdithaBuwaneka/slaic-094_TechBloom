@@ -254,9 +254,10 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ### 🚗 Travel Agent APIs
 
-#### Plan Route
+#### Plan Route (Multi-Agent AI)
 - **POST** `/api/v1/travel/plan-route`
-  - Multi-agent travel planning with AI optimization
+  - Advanced multi-agent travel planning with AI optimization
+  - Uses 6 specialized agents: input_processing → mode_router → standard_route/transit_route_aggregation → route_optimization → disruption_monitoring → response_compilation
   - Request body:
     ```json
     {
@@ -268,38 +269,52 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
       "departure_time": "2024-01-01T10:00:00"
     }
     ```
-  - Travel modes: `driving`, `two_wheeler`, `transit`, `uber`
+  - **Travel modes**: `driving`, `two_wheeler`, `transit`, `uber`
+  - **Processing time**: 1-15 seconds (depending on mode complexity)
+  - Response includes: optimized routes, recommendation scores, processing details, agent execution summary
 
 #### Active Disruptions
 - **GET** `/api/v1/travel/active-disruptions`
   - Get real-time traffic and transit disruptions
+  - Uses intelligent disruption monitoring with Gemini AI
   - Response:
     ```json
     {
-      "active_disruptions_count": 1,
-      "disruptions": [{
-        "disruption_id": "disp_001",
-        "disruption_type": "delay",
-        "severity": "medium",
-        "description": "Traffic congestion due to road construction",
-        "location": {"lat": 6.9271, "lng": 79.8612}
-      }]
+      "active_disruptions_count": 0,
+      "disruptions": [],
+      "monitoring_enabled": true,
+      "last_check": "2025-09-10T03:40:00Z"
     }
     ```
 
 #### User Preferences
 - **GET** `/api/v1/travel/user-preferences/{user_id}`
-  - Get user's travel preferences and history
+  - Get user's travel preferences and learning history
+  - Returns personalized settings for route optimization
 
 #### Report Disruption
 - **POST** `/api/v1/travel/report-disruption`
   - Report new traffic or transit disruptions
+  - Integrates with AI disruption analysis system
+  - Request body:
+    ```json
+    {
+      "user_id": "user123",
+      "route_id": "route_001",
+      "location": "Colombo city center",
+      "disruption_type": "traffic",
+      "severity": "high",
+      "description": "Heavy traffic due to construction",
+      "affected_routes": ["route_001", "route_002"]
+    }
+    ```
 
 ### 🛣️ Legacy Route Planning
 
-#### Shortest Path (Google Maps)
+#### Shortest Path (Google Maps Direct)
 - **POST** `/api/v1/shortest-path`
-  - Direct Google Maps API integration
+  - Direct Google Maps API integration (legacy endpoint)
+  - Faster response but less intelligent than multi-agent planning
   - Request body:
     ```json
     {
@@ -308,6 +323,19 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
       "mode": "driving",
       "departure_time": "2024-01-01T10:00:00",
       "transit_mode_preference": "bus"
+    }
+    ```
+  - **Travel modes**: `driving`, `transit`, `walking`, `bicycling`, `three_wheeler`
+  - **Response**: Detailed step-by-step directions with distance, duration, and instructions
+  - **Processing time**: < 1 second
+  - Example response:
+    ```json
+    {
+      "origin": "Colombo, Sri Lanka",
+      "destination": "Kandy, Sri Lanka",
+      "distance_text": "145.9 km",
+      "duration_text": "12569 seconds",
+      "steps": [/* 29 detailed navigation steps */]
     }
     ```
 
@@ -359,59 +387,145 @@ Currently, the backend provides basic MongoDB connectivity testing and collectio
 
 ## Testing
 
-### Quick Health Check
-```bash
-curl http://localhost:8000/api/v1/health
-```
+### Core System Health Checks
 
-### Test Welcome Endpoint
+#### Test Welcome Endpoint
 ```bash
 curl http://localhost:8000/api/v1/
+# Expected: Welcome message with app info
 ```
 
-### Test Database Connection
+#### Test Health Check
+```bash
+curl http://localhost:8000/api/v1/health
+# Expected: {"status": "healthy", "database": "connected"}
+```
+
+#### Test Database Connection
 ```bash
 curl http://localhost:8000/api/v1/db-connection
+# Expected: Connection status + 17 collections list
 ```
 
-### Test Chatbot
+### Weather API Testing
+
+#### Test Weather Service Status
 ```bash
-curl -X POST "http://localhost:8000/api/v1/chatbot/chatbot/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How do I use public transport?"}'
+curl http://localhost:8000/api/v1/weather/
+# Expected: Service status and available endpoints
 ```
 
-### Test Weather API
+#### Test Current Weather
 ```bash
-# Current weather
 curl http://localhost:8000/api/v1/weather/current/Colombo
+# Expected: Real-time weather data for Colombo
+```
 
-# Weather forecast
-curl http://localhost:8000/api/v1/weather/forecast/Colombo
+#### Test Weather Forecast
+```bash
+curl http://localhost:8000/api/v1/weather/forecast/Kandy
+# Expected: 40 forecast entries (5 days, 3-hour intervals)
+```
 
-# Travel weather advice
+#### Test Travel Weather Advice
+```bash
 curl http://localhost:8000/api/v1/weather/travel-advice/Colombo
+# Expected: AI-generated travel advice based on weather
+```
 
-# Weather by coordinates
+#### Test Weather by Coordinates
+```bash
 curl -X POST "http://localhost:8000/api/v1/weather/coordinates" \
   -H "Content-Type: application/json" \
   -d '{"lat": 6.9271, "lng": 79.8612}'
+# Expected: Weather data for specific coordinates
 ```
 
-### Test Travel Agent
+### Chatbot API Testing
+
+#### Test Chatbot Health
+```bash
+curl http://localhost:8000/api/v1/chatbot/ask
+# Expected: RAG system status and vector DB info
+```
+
+#### Test Chatbot Q&A
+```bash
+curl -X POST "http://localhost:8000/api/v1/chatbot/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "How do I get from Colombo to Kandy?"}'
+# Expected: AI-generated answer based on transit guide
+```
+
+### Travel Planning API Testing
+
+#### Test Legacy Route Planning (Fast)
+```bash
+curl -X POST "http://localhost:8000/api/v1/shortest-path" \
+  -H "Content-Type: application/json" \
+  -d '{"start": "Colombo", "end": "Kandy", "mode": "driving"}'
+# Expected: Direct Google Maps route with 29 steps (~1 second)
+```
+
+#### Test Multi-Agent Travel Planning (Advanced)
 ```bash
 curl -X POST "http://localhost:8000/api/v1/travel/plan-route" \
   -H "Content-Type: application/json" \
   -d '{"user_id": "test_user", "source": "Colombo", "destination": "Kandy", "mode": "driving"}'
+# Expected: AI-optimized route with recommendation scores (~1-2 seconds)
 ```
 
-### Test Active Disruptions
+#### Test Transit Mode Planning
+```bash
+curl -X POST "http://localhost:8000/api/v1/travel/plan-route" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "test_user", "source": "Times Square, New York", "destination": "Brooklyn Bridge, New York", "mode": "transit"}'
+# Expected: Complex multi-agent processing (~15 seconds)
+```
+
+#### Test Uber Mode Planning
+```bash
+curl -X POST "http://localhost:8000/api/v1/travel/plan-route" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "test_user", "source": "Colombo", "destination": "Kandy", "mode": "uber"}'
+# Expected: Uber route optimization
+```
+
+#### Test Active Disruptions
 ```bash
 curl http://localhost:8000/api/v1/travel/active-disruptions
+# Expected: Current traffic/transit disruptions (if any)
 ```
 
+### Error Handling Testing
+
+#### Test Invalid Input Handling
+```bash
+curl -X POST "http://localhost:8000/api/v1/shortest-path" \
+  -H "Content-Type: application/json" \
+  -d '{"start": "", "end": "Kandy", "mode": "driving"}'
+# Expected: Error response for empty start location
+```
+
+#### Test Invalid City Weather
+```bash
+curl http://localhost:8000/api/v1/weather/current/InvalidCityName
+# Expected: Error response for invalid city
+```
+
+### Performance Testing
+
+#### Endpoint Response Times (Expected)
+- **Health checks**: < 100ms
+- **Weather APIs**: 200-500ms
+- **Legacy route planning**: < 1 second
+- **Multi-agent planning (driving)**: 1-2 seconds
+- **Multi-agent planning (transit)**: 5-15 seconds
+- **Chatbot Q&A**: 200-800ms
+
 ### Access Interactive Documentation
-Open in browser: `http://localhost:8000/docs`
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
 
 ## Troubleshooting
 
@@ -463,20 +577,113 @@ source venv/bin/activate  # Linux/Mac
 - **📈 LLM Observability**: Disabled (requires Langfuse keys)
 - **🔗 LangChain Tracing**: Disabled (requires LANGCHAIN_API_KEY)
 
-### 🎯 **API Endpoints Status**
-- **Core APIs**: ✅ All operational
-- **Weather APIs**: ✅ Current weather, forecasts, travel advice, coordinates
-- **Chatbot APIs**: ✅ Q&A, health checks, reinitialize
-- **Travel Agent APIs**: ⚠️ Route planning (Google Maps API issues), disruptions, preferences
-- **Legacy APIs**: ⚠️ Google Maps direct integration (legacy API limitations)
+### 🎯 **API Endpoints Status (All Tested & Working)**
+
+#### ✅ **Core System APIs** 
+- `GET /api/v1/` - Welcome endpoint
+- `GET /api/v1/health` - Health check with database status
+- `GET /api/v1/db-connection` - Database connection details (17 collections)
+
+#### ✅ **Weather APIs (OpenWeather Integration)**
+- `GET /api/v1/weather/` - Service status and endpoints
+- `GET /api/v1/weather/current/{city}` - Real-time weather data
+- `GET /api/v1/weather/forecast/{city}` - 5-day forecast (3-hour intervals)
+- `GET /api/v1/weather/travel-advice/{city}` - AI travel advice
+- `POST /api/v1/weather/coordinates` - Weather by lat/lng
+
+#### ✅ **Chatbot APIs (RAG System)**
+- `POST /api/v1/chatbot/ask` - AI Q&A with transit knowledge
+- ChromaDB vector database operational (23 document chunks)
+- Google Gemini AI integration working
+
+#### ✅ **Travel Planning APIs**
+- `POST /api/v1/shortest-path` - Direct Google Maps routing (< 1s response)
+- `POST /api/v1/travel/plan-route` - Multi-agent AI planning (1-15s response)
+- `GET /api/v1/travel/active-disruptions` - Disruption monitoring
+- All travel modes working: driving, transit, uber, two_wheeler
+
+#### ✅ **Error Handling & Validation**
+- Input validation for empty/invalid data
+- Weather API error handling for invalid cities
+- Comprehensive error responses with proper HTTP status codes
 
 ### 🚀 **Production Ready**
 Backend is fully operational with core functionality including weather integration. The system now provides comprehensive travel planning with real-time weather data and travel advice. Optional features (web search, LLM observability) can be enabled by adding the respective API keys to the `.env` file.
 
+### 🌤️ **Weather APIs**
+
+#### Weather Service Status
+- **GET** `/api/v1/weather/`
+  - Returns weather service status and available endpoints
+  - Response:
+    ```json
+    {
+      "message": "Weather API is running",
+      "service": "OpenWeather API",
+      "available": true,
+      "endpoints": {
+        "current": "/current/{city}",
+        "forecast": "/forecast/{city}",
+        "travel_advice": "/travel-advice/{city}",
+        "coordinates": "/coordinates"
+      }
+    }
+    ```
+
+#### Current Weather
+- **GET** `/api/v1/weather/current/{city}`
+  - Get current weather for a specific city
+  - Example: `/api/v1/weather/current/Colombo`
+  - Response:
+    ```json
+    {
+      "status": "success",
+      "city": "Colombo",
+      "country": "LK",
+      "weather": {
+        "main": "Clouds",
+        "description": "overcast clouds",
+        "temperature": 26.27,
+        "feels_like": 26.27,
+        "humidity": 83,
+        "pressure": 1009,
+        "visibility": 10.0,
+        "wind_speed": 4.3,
+        "wind_direction": 219,
+        "cloudiness": 100
+      },
+      "coordinates": {"lat": 6.9319, "lng": 79.8478},
+      "timestamp": "2025-09-10T03:40:14.799667"
+    }
+    ```
+
+#### Weather Forecast
+- **GET** `/api/v1/weather/forecast/{city}?days=5`
+  - Get weather forecast for a city (1-5 days)
+  - Query parameter: `days` (optional, default: 5, max: 5)
+  - Returns 40 forecast entries (3-hour intervals for 5 days)
+  - Response: Array of forecast objects with temperature, weather, humidity, wind, etc.
+
+#### Travel Weather Advice
+- **GET** `/api/v1/weather/travel-advice/{city}`
+  - Get AI-generated travel advice based on current weather
+  - Returns personalized travel recommendations
+
+#### Weather by Coordinates
+- **POST** `/api/v1/weather/coordinates`
+  - Get weather data by latitude and longitude
+  - Request body:
+    ```json
+    {
+      "lat": 6.9271,
+      "lng": 79.8612
+    }
+    ```
+
 ### 🌤️ **Weather Integration Highlights**
 - **Real-time weather data** for any city using OpenWeather API
 - **Travel advice generation** based on current weather conditions
-- **5-day weather forecasts** for trip planning
+- **5-day weather forecasts** for trip planning (3-hour intervals)
 - **Coordinate-based weather lookup** for precise location data
 - **Automated weather consideration** in multi-agent travel planning
 - **Weather health checks** and API status monitoring

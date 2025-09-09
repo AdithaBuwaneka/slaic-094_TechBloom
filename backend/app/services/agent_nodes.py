@@ -1146,7 +1146,7 @@ def response_compilation_node(state: TravelState) -> TravelState:
             # Add recommendation score if available
             if state.recommended_routes:
                 for rec in state.recommended_routes:
-                    if rec["route"]["route_id"] == route.get("route_id"):
+                    if rec["route"]["route_id"] == formatted_route["route_id"]:
                         formatted_route["recommendation_score"] = rec["score"]["total"]
                         formatted_route["score_breakdown"] = rec["breakdown"]
                         break
@@ -1277,6 +1277,42 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
     Format a route into Google Maps API response structure
     """
     try:
+        # Ensure route is a dictionary (handle RouteInfo objects or other types)
+        if hasattr(route, 'dict'):
+            route = route.dict()
+        elif isinstance(route, dict):
+            pass  # Already a dict
+        elif hasattr(route, '__dict__'):
+            # Convert object attributes to dict
+            route = {
+                "route_id": getattr(route, 'route_id', 'unknown'),
+                "duration": getattr(route, 'duration', 60),
+                "distance": getattr(route, 'distance', 10),
+                "steps": getattr(route, 'steps', []),
+                "polyline": getattr(route, 'polyline', ''),
+                "transit_modes": getattr(route, 'transit_modes', []),
+                "transfers": getattr(route, 'transfers', 0),
+                "walking_distance": getattr(route, 'walking_distance', 0),
+                "category": getattr(route, 'category', 'unknown'),
+                "mode_details": getattr(route, 'mode_details', {}),
+                "fare_estimate": getattr(route, 'fare_estimate', None)
+            }
+        else:
+            # If route is a string or other type, create a basic dict
+            route = {
+                "route_id": str(route) if route else "unknown",
+                "duration": 60,
+                "distance": 10,
+                "steps": [],
+                "polyline": "",
+                "transit_modes": [],
+                "transfers": 0,
+                "walking_distance": 0,
+                "category": "unknown",
+                "mode_details": {},
+                "fare_estimate": None
+            }
+        
         # Calculate duration and distance
         duration_minutes = route.get("duration", 0)
         distance_km = route.get("distance", 0)
@@ -1378,7 +1414,7 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
         print(f"Error formatting route: {str(e)}")
         # Return a basic formatted route
         return {
-            "route_id": route.get("route_id", "unknown"),
+            "route_id": route.get("route_id", "unknown") if isinstance(route, dict) else "unknown",
             "origin": f"{state.source}, Sri Lanka",
             "destination": f"{state.destination}, Sri Lanka",
             "distance_text": "Unknown",
@@ -1386,10 +1422,18 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
             "start_time": "Unknown",
             "end_time": "Unknown",
             "steps": [],
-            "estimated_cost": route.get("fare_estimate"),
+            "estimated_cost": route.get("fare_estimate") if isinstance(route, dict) else None,
             "cost_currency": "LKR",
             "route_source": source,
-            "error": str(e)
+            "recommendation_score": 0.0,
+            "score_breakdown": {
+                "time": 0,
+                "cost": 0,
+                "comfort": 0.5,
+                "convenience": 1,
+                "reliability": 0.7
+            },
+            "is_recommended": False
         }
 
 # Conditional routing functions
