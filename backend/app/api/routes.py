@@ -10,6 +10,8 @@ import time
 from app.api.v1.travel_routes import router as travel_router
 from app.api.v1.chatbot_routes import router as chatbot_router
 from app.api.v1.weather_routes import router as weather_router
+from app.api.v1.sri_lanka_routes import router as sri_lanka_router  # NEW: Sri Lankan data sources
+from app.api.v1.community_routes import router as community_router  # NEW: Community data reporting
 
 router = APIRouter()
 
@@ -110,3 +112,9 @@ router.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
 
 # Include the weather routes
 router.include_router(weather_router, prefix="/weather", tags=["Weather"])
+
+# Include the Sri Lankan transit routes
+router.include_router(sri_lanka_router, prefix="/sri-lanka", tags=["Sri Lankan Transit Data"])
+
+# Include the community data routes
+router.include_router(community_router, prefix="/community", tags=["Community Data"])

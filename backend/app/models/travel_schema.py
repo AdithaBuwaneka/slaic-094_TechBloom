@@ -1,6 +1,17 @@
 from typing import List, Dict, Optional, Any, Union
 from pydantic import BaseModel, Field
 from datetime import datetime
+from enum import Enum
+
+# Sri Lankan Transit Modes for SLAIC 2025
+class SriLankanTravelMode(str, Enum):
+    DRIVING = "driving"
+    TWO_WHEELER = "two_wheeler" 
+    TRANSIT = "transit"  # General public transit
+    TRAIN = "train"      # Sri Lanka Railways - NEW
+    BUS = "bus"          # Sri Lankan buses - NEW  
+    TUK_TUK = "tuk-tuk"  # Three-wheeler - NEW
+    UBER = "uber"
 
 
 class RouteInfo(BaseModel):
@@ -43,7 +54,7 @@ class TravelState(BaseModel):
     request_id: str = Field(default_factory=lambda: f"req_{datetime.now().timestamp()}")
     source: str
     destination: str
-    mode: str  # driving, two_wheeler, transit, uber
+    mode: str  # driving, two_wheeler, transit, train, bus, tuk-tuk, uber - Sri Lankan modes
     preferred_transit: Optional[str] = None
     user_id: str
     departure_time: Optional[datetime] = None
@@ -79,6 +90,7 @@ class TravelState(BaseModel):
     # Final Output
     recommended_routes: List[Dict] = []
     route_rankings: Dict[str, float] = {}
+    cheapest_route: Optional[Dict[str, Any]] = None  # NEW: For fare optimization agent
     final_response: Dict[str, Any] = {}
     
     # Process Tracking

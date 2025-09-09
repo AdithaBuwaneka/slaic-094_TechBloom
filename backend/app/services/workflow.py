@@ -20,6 +20,7 @@ def create_travel_agent_workflow():
     workflow.add_node("standard_route", standard_route_node)
     workflow.add_node("transit_route_aggregation", transit_route_aggregation_node)
     workflow.add_node("fare_calculation", fare_calculation_node)
+    workflow.add_node("fare_optimization", fare_optimization_node)  # NEW: Agent #7 for SLAIC 2025
     workflow.add_node("user_preference_analysis", user_preference_analysis_node)
     workflow.add_node("local_knowledge_agent", local_knowledge_agent_node)
     workflow.add_node("disruption_monitoring", disruption_monitoring_node)
@@ -42,12 +43,22 @@ def create_travel_agent_workflow():
         }
     )
     
-    # Standard route processing (direct to optimization)
-    workflow.add_edge("standard_route", "route_optimization")
+    # Standard route processing (with fare calculation and optimization)
+    workflow.add_edge("standard_route", "fare_calculation")  # NEW: Add fare calculation to standard routes
+    workflow.add_edge("fare_calculation", "fare_optimization")  # Then fare optimization
     
     # Multi-agent transit processing (sequential execution to avoid conflicts)
     workflow.add_edge("transit_route_aggregation", "fare_calculation")
-    workflow.add_edge("fare_calculation", "user_preference_analysis")
+    
+    # Conditional routing after fare optimization based on mode (Sri Lankan modes)
+    workflow.add_conditional_edges(
+        "fare_optimization",
+        lambda state: "continue_multi_agent" if state.mode in ["transit", "train", "bus"] else "direct_to_optimization",
+        {
+            "continue_multi_agent": "user_preference_analysis",
+            "direct_to_optimization": "route_optimization"
+        }
+    )
     workflow.add_edge("user_preference_analysis", "local_knowledge_agent")
     workflow.add_edge("local_knowledge_agent", "route_optimization")
     

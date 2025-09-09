@@ -118,7 +118,7 @@ def mode_router_node(state: TravelState) -> TravelState:
 
 def standard_route_node(state: TravelState) -> TravelState:
     """
-    Handle standard routing (driving, two_wheeler, uber)
+    Handle standard routing (driving, two_wheeler, uber, tuk-tuk) - Updated for Sri Lankan modes
     """
     print(f"Getting standard routes for {state.mode}")
     
@@ -397,20 +397,39 @@ def fare_calculation_node(state: TravelState) -> TravelState:
             
             print(f"Total fare for route {route.get('route_id')}: {route_fare:.0f} LKR (from {len(step_fares)} transit steps)")
         
-        # Also calculate fares for standard routes if they exist
+        # Also calculate fares for standard routes if they exist (Sri Lankan modes)
         for route in state.primary_routes + state.supplementary_routes:
-            if route.get("mode_details", {}).get("mode") in ["driving", "two_wheeler"]:
+            mode = route.get("mode_details", {}).get("mode")
+            if mode in ["driving", "two_wheeler", "uber", "tuk-tuk"]:
                 distance = route.get("distance", 0)
-                # Fuel cost estimation: 2 LKR per km for driving, 1 LKR per km for two-wheeler
-                fuel_cost_per_km = 2 if route.get("mode_details", {}).get("mode") == "driving" else 1
+                
+                # Sri Lankan fare calculation per mode
+                if mode == "driving":
+                    fuel_cost_per_km = 2  # LKR per km
+                    parking_cost = 50     # LKR
+                elif mode == "two_wheeler":
+                    fuel_cost_per_km = 1  # LKR per km  
+                    parking_cost = 20     # LKR (cheaper parking)
+                elif mode == "tuk-tuk":
+                    # Tuk-tuk: Base fare + distance rate (Sri Lankan rates)
+                    base_fare = 50        # LKR base
+                    fare_per_km = 30      # LKR per km
+                    fuel_cost_per_km = fare_per_km
+                    parking_cost = base_fare
+                elif mode == "uber":
+                    # Uber: Base + time + distance (Sri Lankan rates)
+                    base_fare = 100       # LKR base
+                    fare_per_km = 50      # LKR per km
+                    fuel_cost_per_km = fare_per_km
+                    parking_cost = base_fare
+                else:
+                    fuel_cost_per_km = 2
+                    parking_cost = 50
+                
                 fuel_cost = distance * fuel_cost_per_km
-                
-                # Add parking cost (assume 50 LKR for destination parking)
-                parking_cost = 50
-                
                 total_cost = fuel_cost + parking_cost
                 route["fare_estimate"] = round(total_cost, 2)
-                print(f"Calculated cost for {route.get('mode_details', {}).get('mode')}: {total_cost:.0f} LKR (fuel: {fuel_cost:.0f}, parking: {parking_cost})")
+                print(f"Calculated cost for {mode}: {total_cost:.0f} LKR (base/fuel: {fuel_cost:.0f}, additional: {parking_cost})")
         
         state.total_fare_estimate = round(total_estimated_fare, 2)
         state.current_step = "fare_calculation_completed"
@@ -422,6 +441,190 @@ def fare_calculation_node(state: TravelState) -> TravelState:
         print(f"Error in fare_calculation_node: {str(e)}")
         state.errors.append({
             "node": "fare_calculation",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
+    
+    return state
+
+def fare_optimization_node(state: TravelState) -> TravelState:
+    """
+    Fare Optimization Agent: Identifies the lowest-cost travel combinations,
+    including passes, discounts, and offers - Required Agent #7 for SLAIC 2025
+    """
+    print("🎯 Fare Optimization Agent: Finding lowest-cost travel combinations")
+    
+    try:
+        # Sri Lankan-specific fare optimization strategies
+        optimized_routes = []
+        
+        # Collect all routes with fare estimates
+        all_routes_with_fares = []
+        
+        # Add primary routes
+        for route in state.primary_routes:
+            if route.get("fare_estimate"):
+                all_routes_with_fares.append({
+                    "route": route,
+                    "type": "primary",
+                    "base_cost": route["fare_estimate"]
+                })
+        
+        # Add supplementary routes  
+        for route in state.supplementary_routes:
+            if route.get("fare_estimate"):
+                all_routes_with_fares.append({
+                    "route": route,
+                    "type": "supplementary", 
+                    "base_cost": route["fare_estimate"]
+                })
+        
+        # Add transit routes
+        for route in state.transit_routes:
+            if route.get("fare_estimate"):
+                all_routes_with_fares.append({
+                    "route": route,
+                    "type": "transit",
+                    "base_cost": route["fare_estimate"]
+                })
+        
+        # Apply Sri Lankan fare optimization strategies
+        for route_info in all_routes_with_fares:
+            route = route_info["route"]
+            base_cost = route_info["base_cost"]
+            optimizations = []
+            final_cost = base_cost
+            
+            # 1. Transit Pass Discounts (Sri Lankan context)
+            if route_info["type"] == "transit":
+                # Monthly bus pass discount (20% off for regular commuters)
+                monthly_pass_savings = base_cost * 0.20
+                optimizations.append({
+                    "type": "monthly_bus_pass",
+                    "savings": monthly_pass_savings,
+                    "description": "Monthly bus pass - 20% discount",
+                    "applicable": True
+                })
+                
+                # Student discount (30% off with student ID)
+                student_savings = base_cost * 0.30
+                optimizations.append({
+                    "type": "student_discount", 
+                    "savings": student_savings,
+                    "description": "Student discount - 30% off with valid ID",
+                    "applicable": True
+                })
+                
+                # Senior citizen discount (50% off for 60+)
+                senior_savings = base_cost * 0.50
+                optimizations.append({
+                    "type": "senior_discount",
+                    "savings": senior_savings, 
+                    "description": "Senior citizen discount - 50% off (60+ years)",
+                    "applicable": True
+                })
+            
+            # 2. Multi-modal combination savings
+            if len(all_routes_with_fares) > 1:
+                combo_savings = base_cost * 0.10
+                optimizations.append({
+                    "type": "multi_modal_combo",
+                    "savings": combo_savings,
+                    "description": "Multi-modal combination discount - 10% off total",
+                    "applicable": True
+                })
+            
+            # 3. Off-peak travel discounts
+            departure_time = state.departure_time
+            if departure_time:
+                hour = departure_time.hour
+                # Off-peak hours: 10 AM - 3 PM and after 7 PM
+                if (10 <= hour <= 15) or hour >= 19:
+                    off_peak_savings = base_cost * 0.15
+                    optimizations.append({
+                        "type": "off_peak_discount",
+                        "savings": off_peak_savings,
+                        "description": "Off-peak travel discount - 15% off",
+                        "applicable": True
+                    })
+            
+            # 4. Fuel-sharing for private vehicle routes (Sri Lankan modes)
+            if route_info["type"] in ["primary", "supplementary"]:
+                mode = route.get("mode_details", {}).get("mode", "")
+                if mode in ["driving", "two_wheeler"]:
+                    # Carpooling savings (split fuel cost)
+                    carpool_savings = base_cost * 0.50
+                    optimizations.append({
+                        "type": "carpooling",
+                        "savings": carpool_savings,
+                        "description": "Carpooling - Share fuel costs (50% savings)",
+                        "applicable": True
+                    })
+                elif mode == "tuk-tuk":
+                    # Tuk-tuk sharing (common in Sri Lanka)
+                    sharing_savings = base_cost * 0.30
+                    optimizations.append({
+                        "type": "tuk_tuk_sharing",
+                        "savings": sharing_savings,
+                        "description": "Tuk-tuk sharing - Split fare with others (30% savings)",
+                        "applicable": True
+                    })
+                elif mode == "uber":
+                    # UberPool equivalent
+                    pool_savings = base_cost * 0.25
+                    optimizations.append({
+                        "type": "ride_sharing",
+                        "savings": pool_savings,
+                        "description": "Ride sharing - Share trip with others (25% savings)",
+                        "applicable": True
+                    })
+            
+            # Calculate best optimization
+            best_optimization = max(optimizations, key=lambda x: x["savings"]) if optimizations else None
+            
+            if best_optimization:
+                final_cost = max(0, base_cost - best_optimization["savings"])
+                route["optimized_fare"] = round(final_cost, 2)
+                route["fare_optimization"] = {
+                    "original_cost": base_cost,
+                    "optimized_cost": final_cost,
+                    "savings": best_optimization["savings"],
+                    "best_option": best_optimization,
+                    "all_options": optimizations
+                }
+                print(f"💰 Route {route.get('route_id')}: {base_cost:.0f} LKR → {final_cost:.0f} LKR (saved {best_optimization['savings']:.0f} LKR with {best_optimization['type']})")
+            else:
+                route["optimized_fare"] = base_cost
+                route["fare_optimization"] = {
+                    "original_cost": base_cost,
+                    "optimized_cost": base_cost,
+                    "savings": 0,
+                    "best_option": None,
+                    "all_options": []
+                }
+        
+        # Find the absolute lowest cost route
+        if all_routes_with_fares:
+            cheapest_route = min(all_routes_with_fares, 
+                               key=lambda x: x["route"].get("optimized_fare", x["route"].get("fare_estimate", float('inf'))))
+            
+            state.cheapest_route = {
+                "route_id": cheapest_route["route"]["route_id"],
+                "original_cost": cheapest_route["base_cost"],
+                "optimized_cost": cheapest_route["route"].get("optimized_fare", cheapest_route["base_cost"]),
+                "savings": cheapest_route["route"].get("fare_optimization", {}).get("savings", 0),
+                "optimization_type": cheapest_route["route"].get("fare_optimization", {}).get("best_option", {}).get("type", "none")
+            }
+            
+            print(f"🏆 Cheapest option: {state.cheapest_route['route_id']} - {state.cheapest_route['optimized_cost']:.0f} LKR")
+        
+        state.current_step = "fare_optimization_completed"
+        state.agents_completed.append("fare_optimization")
+        
+    except Exception as e:
+        print(f"Error in fare_optimization_node: {str(e)}")
+        state.errors.append({
+            "node": "fare_optimization", 
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         })
@@ -1438,10 +1641,12 @@ def _format_route_for_response(route: Dict, state: TravelState, source: str) -> 
 
 # Conditional routing functions
 def should_use_multi_agent(state: TravelState) -> str:
-    """Determine if multi-agent processing is needed"""
-    if state.mode == "transit":
+    """Determine if multi-agent processing is needed - Updated for Sri Lankan modes"""
+    # Sri Lankan public transit modes use full multi-agent processing
+    if state.mode in ["transit", "train", "bus"]:
         return "transit_processing"
-    elif state.mode in ["driving", "two_wheeler", "uber"]:
+    # Private/individual modes use standard processing  
+    elif state.mode in ["driving", "two_wheeler", "uber", "tuk-tuk"]:
         return "standard_processing"
     else:
         return "standard_processing"  # Default fallback
