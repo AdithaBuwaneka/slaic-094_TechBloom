@@ -68,6 +68,62 @@ class GoogleMapsAPITool(BaseTool):
                 "timestamp": datetime.now().isoformat()
             }
 
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
 class SerperWebSearchTool(BaseTool):
     name: str = "serper_web_search"
     description: str = "Search web for local knowledge and route information"
@@ -113,6 +169,62 @@ class SerperWebSearchTool(BaseTool):
                 "timestamp": datetime.now().isoformat(),
                 "query": enhanced_query
             }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
         except Exception as e:
             return {
                 "status": "error",
@@ -720,6 +832,62 @@ class UserPreferenceTool(BaseTool):
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
     
     def update_preferences(self, user_id: str, preferences: Dict, 
                           current_selection: Dict) -> Dict:
@@ -748,6 +916,62 @@ class UserPreferenceTool(BaseTool):
                 "updated_preferences": updated_prefs,
                 "timestamp": datetime.now().isoformat()
             }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
         except Exception as e:
             return {
                 "status": "error",
@@ -832,6 +1056,62 @@ class DisruptionDatabaseTool(BaseTool):
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
     
     def report_disruption(self, disruption_data: Dict) -> Dict:
         """Report a new disruption"""
@@ -847,6 +1127,62 @@ class DisruptionDatabaseTool(BaseTool):
                 "inserted_id": str(result.inserted_id),
                 "timestamp": datetime.now().isoformat()
             }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+
+class WeatherAPITool(BaseTool):
+    name: str = "weather_api"
+    description: str = "Get current weather and forecast information for travel planning"
+    
+    def _run(self, city: str, action: str = "current") -> Dict:
+        """
+        Get weather information for a city
+        Actions: 'current', 'forecast', 'travel_advice'
+        """
+        from app.services.weather_service import weather_service
+        
+        try:
+            if action == "current":
+                return weather_service.get_current_weather(city)
+            elif action == "forecast":
+                return weather_service.get_weather_forecast(city)
+            elif action == "travel_advice":
+                current_weather = weather_service.get_current_weather(city)
+                if current_weather.get("status") == "success":
+                    advice = weather_service.get_travel_weather_advice(current_weather)
+                    return {
+                        "status": "success",
+                        "city": current_weather["city"],
+                        "current_weather": current_weather["weather"],
+                        "travel_advice": advice,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                else:
+                    return current_weather
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unknown action: {action}. Use 'current', 'forecast', or 'travel_advice'",
+                    "timestamp": datetime.now().isoformat()
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    def get_weather_by_coordinates(self, lat: float, lng: float) -> Dict:
+        """Get weather by coordinates"""
+        from app.services.weather_service import weather_service
+        
+        try:
+            return weather_service.get_weather_by_coordinates(lat, lng)
         except Exception as e:
             return {
                 "status": "error",

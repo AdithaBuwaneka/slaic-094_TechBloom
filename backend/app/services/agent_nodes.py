@@ -17,6 +17,13 @@ try:
 except Exception:
     print("WARNING: SerperWebSearchTool initialization failed. Web search will be disabled.")
     serper_tool = None
+# Initialize weather tool
+try:
+    weather_tool = WeatherAPITool()
+    print("Weather API tool initialized successfully")
+except Exception as e:
+    print(f"WARNING: Weather API tool initialization failed: {e}")
+    weather_tool = None
 fare_tool = FareDatabaseTool()
 preference_tool = UserPreferenceTool()
 disruption_tool = DisruptionDatabaseTool()
@@ -579,6 +586,23 @@ def local_knowledge_agent_node(state: TravelState) -> TravelState:
                             "error": str(e),
                             "timestamp": datetime.now().isoformat()
                         }
+            
+            # Enhance weather data with OpenWeather API
+            if weather_tool is not None:
+                try:
+                    # Get weather for source city
+                    source_weather = weather_tool._run(state_copy.source, "travel_advice")
+                    if source_weather.get("status") == "success":
+                        search_results["weather_info"] = {
+                            "api_data": source_weather,
+                            "source": "OpenWeather API",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        print(f"Weather data retrieved for {source_weather.get('city', state_copy.source)}")
+                    else:
+                        print(f"WARNING: Weather API failed: {source_weather.get('error', 'Unknown error')}")
+                except Exception as e:
+                    print(f"WARNING: Weather tool error: {str(e)}")
             
             # Organize results into state fields
             state.local_insights = {

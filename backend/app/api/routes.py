@@ -9,6 +9,7 @@ import time
 # Import the new travel routes
 from app.api.v1.travel_routes import router as travel_router
 from app.api.v1.chatbot_routes import router as chatbot_router
+from app.api.v1.weather_routes import router as weather_router
 
 router = APIRouter()
 
@@ -106,3 +107,6 @@ router.include_router(travel_router, prefix="/travel", tags=["Travel Agent Workf
 
 # Include the chatbot routes  
 router.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])
+
+# Include the weather routes
+router.include_router(weather_router, prefix="/weather", tags=["Weather"])

@@ -11,6 +11,7 @@ A FastAPI backend application with MongoDB database integration for the Transit 
 - **🛣️ Google Maps Integration**: Real-time routing and directions
 - **📊 Disruption Monitoring**: Active traffic and transit disruption tracking
 - **👤 User Preference Learning**: Personalized route recommendations
+- **🌤️ Weather Integration**: Real-time weather data and travel advice via OpenWeather API
 - **🔍 Web Search Integration**: Real-time information gathering (optional)
 - **📈 LLM Observability**: Langfuse integration for AI performance monitoring
 - **⚡ Health Monitoring**: Comprehensive health checks and database status
@@ -37,10 +38,11 @@ BACKEND/
 │   ├── services/
 │   │   ├── workflow.py        # Multi-agent workflow orchestration
 │   │   ├── agent_nodes.py     # Individual AI agent implementations
-│   │   ├── tool_functions.py  # External API integrations (Google Maps, Serper)
+│   │   ├── tool_functions.py  # External API integrations (Google Maps, Serper, Weather)
 │   │   ├── analysis_tools.py  # Data analysis and optimization tools
 │   │   ├── llm_summarizer.py  # LLM summarization service
 │   │   ├── intelligent_disruption_service.py  # Smart disruption monitoring
+│   │   ├── weather_service.py # OpenWeather API integration
 │   │   ├── langfuse_service.py # Observability and tracing service
 │   │   ├── google_maps_service.py # Google Maps API wrapper
 │   │   └── main_runner.py     # CLI execution entry point
@@ -68,6 +70,7 @@ BACKEND/
 - **MongoDB Atlas** (cloud database) or local MongoDB instance
 - **Google Maps API Key** (required for routing)
 - **Google AI API Key** (required for Gemini LLM)
+- **OpenWeather API Key** (required for weather data and travel advice)
 - **Optional**: Serper API Key (for web search functionality)
 - **Optional**: Langfuse account (for LLM observability and tracing)
 
@@ -129,6 +132,7 @@ BACKEND/
    # Required API Keys
    GOOGLE_MAPS_API_KEY=your_google_maps_api_key
    GOOGLE_API_KEY=your_google_api_key
+   OPENWEATHER_API_KEY=your_openweather_api_key
    
    # Optional API Keys (leave empty if not using)
    SERPER_API_KEY=your_serper_api_key
@@ -144,7 +148,7 @@ BACKEND/
    - MongoDB Atlas connection string format: `mongodb+srv://username:password@cluster.mongodb.net/`
    - Backend will run without SERPER_API_KEY (web search disabled)
    - Backend will run without Langfuse keys (observability disabled)
-   - GOOGLE_MAPS_API_KEY and GOOGLE_API_KEY are required for core functionality
+   - GOOGLE_MAPS_API_KEY, GOOGLE_API_KEY, and OPENWEATHER_API_KEY are required for core functionality
 
 ### Running the Application
 
@@ -377,6 +381,23 @@ curl -X POST "http://localhost:8000/api/v1/chatbot/chatbot/ask" \
   -d '{"question": "How do I use public transport?"}'
 ```
 
+### Test Weather API
+```bash
+# Current weather
+curl http://localhost:8000/api/v1/weather/current/Colombo
+
+# Weather forecast
+curl http://localhost:8000/api/v1/weather/forecast/Colombo
+
+# Travel weather advice
+curl http://localhost:8000/api/v1/weather/travel-advice/Colombo
+
+# Weather by coordinates
+curl -X POST "http://localhost:8000/api/v1/weather/coordinates" \
+  -H "Content-Type: application/json" \
+  -d '{"lat": 6.9271, "lng": 79.8612}'
+```
+
 ### Test Travel Agent
 ```bash
 curl -X POST "http://localhost:8000/api/v1/travel/plan-route" \
@@ -432,7 +453,8 @@ source venv/bin/activate  # Linux/Mac
 ### ✅ **AI Features (Fully Operational)**
 - **🤖 RAG Chatbot**: ChromaDB vector database initialized with transit guide
 - **🧠 Multi-Agent Travel Planning**: LangGraph workflow with specialized agents
-- **🛣️ Google Maps Integration**: Real-time routing and directions
+- **🌤️ Weather Integration**: OpenWeather API with travel advice generation
+- **🛣️ Google Maps Integration**: Real-time routing and directions (legacy API limitations)
 - **📊 Disruption Monitoring**: Active traffic/transit disruption tracking
 - **👤 User Preferences**: Learning and recommendation system
 
@@ -443,9 +465,18 @@ source venv/bin/activate  # Linux/Mac
 
 ### 🎯 **API Endpoints Status**
 - **Core APIs**: ✅ All operational
+- **Weather APIs**: ✅ Current weather, forecasts, travel advice, coordinates
 - **Chatbot APIs**: ✅ Q&A, health checks, reinitialize
-- **Travel Agent APIs**: ✅ Route planning, disruptions, preferences
-- **Legacy APIs**: ✅ Google Maps direct integration
+- **Travel Agent APIs**: ⚠️ Route planning (Google Maps API issues), disruptions, preferences
+- **Legacy APIs**: ⚠️ Google Maps direct integration (legacy API limitations)
 
 ### 🚀 **Production Ready**
-Backend is fully operational with core functionality working. Optional features can be enabled by adding the respective API keys to the `.env` file.
+Backend is fully operational with core functionality including weather integration. The system now provides comprehensive travel planning with real-time weather data and travel advice. Optional features (web search, LLM observability) can be enabled by adding the respective API keys to the `.env` file.
+
+### 🌤️ **Weather Integration Highlights**
+- **Real-time weather data** for any city using OpenWeather API
+- **Travel advice generation** based on current weather conditions
+- **5-day weather forecasts** for trip planning
+- **Coordinate-based weather lookup** for precise location data
+- **Automated weather consideration** in multi-agent travel planning
+- **Weather health checks** and API status monitoring

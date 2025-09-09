@@ -2,83 +2,139 @@ import requests
 import os
 from dotenv import load_dotenv
 from typing import List, Optional
+import json
 
 load_dotenv()
 
 API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
-BASE_URL = "https://maps.googleapis.com/maps/api/directions/json"
+# Updated to use Routes API v2
+BASE_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
 def get_optimized_route(origin: str, destination: str, mode: str, departure_time: int, transit_mode_preference: Optional[str] = None):
     """
-    Fetches the complete, optimized route from the Google Maps Directions API
+    Fetches the complete, optimized route from the Google Routes API v2
     for a specified travel mode.
     """
 
-    api_mode = mode
-    if mode == "three_wheeler":
-        api_mode = "driving" # Map tuk-tuk requests to the driving mode
-
-    params = {
-        'origin': f"{origin}, Sri Lanka",
-        'destination': f"{destination}, Sri Lanka",
-        'mode': api_mode, # Pass the selected travel mode
-        'departure_time': departure_time,
-        'key': API_KEY
+    # Map travel modes to Routes API format
+    travel_mode_mapping = {
+        "driving": "DRIVE",
+        "three_wheeler": "DRIVE",  # Map tuk-tuk to driving
+        "motorcycle": "DRIVE",    # Map motorcycle to driving
+        "transit": "TRANSIT",
+        "walking": "WALK",
+        "bicycling": "BICYCLE"
     }
-    # If the mode is transit and a preference is set, add it
-    if api_mode == 'transit' and transit_mode_preference:
-        params['transit_mode'] = transit_mode_preference # This tells Google to prefer train or bus
+    
+    api_mode = travel_mode_mapping.get(mode, "DRIVE")
 
-    # Google's 'motorcycle' mode is not available in all regions. 
-    # The API will gracefully fall back to 'driving' if it's not supported.
-    if mode == "motorcycle":
-        params['mode'] = 'driving' # Fallback for now, but API might support it
+    # Routes API v2 uses JSON payload instead of query parameters
+    request_payload = {
+        "origin": {
+            "address": f"{origin}, Sri Lanka"
+        },
+        "destination": {
+            "address": f"{destination}, Sri Lanka"
+        },
+        "travelMode": api_mode,
+        "routingPreference": "TRAFFIC_AWARE",
+        "computeAlternativeRoutes": False,
+        "routeModifiers": {
+            "avoidTolls": False,
+            "avoidHighways": False,
+            "avoidFerries": False
+        },
+        "languageCode": "en-US",
+        "units": "IMPERIAL"
+    }
+
+    # Add departure time if provided
+    if departure_time:
+        request_payload["departureTime"] = f"{departure_time}s"
+
+    # Add transit preferences
+    if api_mode == "TRANSIT" and transit_mode_preference:
+        transit_modes = []
+        if transit_mode_preference.lower() == "bus":
+            transit_modes = ["BUS"]
+        elif transit_mode_preference.lower() == "train":
+            transit_modes = ["RAIL"]
+        
+        if transit_modes:
+            request_payload["transitPreferences"] = {
+                "allowedTravelModes": transit_modes
+            }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': API_KEY,
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.legs.steps.navigationInstruction,routes.legs.steps.localizedValues,routes.legs.steps.transitDetails'
+    }
 
     try:
-        response = requests.get(BASE_URL, params=params)
+        response = requests.post(BASE_URL, 
+                               headers=headers, 
+                               data=json.dumps(request_payload))
         response.raise_for_status()
         data = response.json()
 
-        if data['status'] == 'OK':
-            route = data['routes'][0]['legs'][0]
+        if 'routes' in data and len(data['routes']) > 0:
+            route = data['routes'][0]
+            leg = route['legs'][0] if 'legs' in route and len(route['legs']) > 0 else {}
             
             steps = []
-            for step in route['steps']:
-                step_data = {
-                    "html_instructions": step['html_instructions'],
-                    "distance": step['distance']['text'],
-                    "duration": step['duration']['text'],
-                    "travel_mode": step['travel_mode'],
-                    "transit_details": None
-                }
-                
-                # If the step is public transit, parse the extra details
-                if step['travel_mode'] == 'TRANSIT' and 'transit_details' in step:
-                    td = step['transit_details']
-                    step_data["transit_details"] = {
-                        "arrival_stop": td['arrival_stop']['name'],
-                        "departure_stop": td['departure_stop']['name'],
-                        "line_name": td['line']['name'] if 'name' in td['line'] else td['line'].get('short_name', 'N/A'),
-                        "vehicle_type": td['line']['vehicle']['name'],
-                        "num_stops": td['num_stops'],
-                        "departure_time": td.get('departure_time', {}).get('text') if 'departure_time' in td else None
+            if 'steps' in leg:
+                for step in leg['steps']:
+                    step_data = {
+                        "html_instructions": step.get('navigationInstruction', {}).get('instructions', 'Continue'),
+                        "distance": step.get('localizedValues', {}).get('distance', {}).get('text', 'N/A'),
+                        "duration": step.get('localizedValues', {}).get('staticDuration', {}).get('text', 'N/A'),
+                        "travel_mode": step.get('travelMode', 'UNKNOWN'),
+                        "transit_details": None
                     }
-                steps.append(step_data)
+                    
+                    # Parse transit details if available
+                    if 'transitDetails' in step:
+                        td = step['transitDetails']
+                        step_data["transit_details"] = {
+                            "arrival_stop": td.get('stopDetails', {}).get('arrivalStop', {}).get('name', 'N/A'),
+                            "departure_stop": td.get('stopDetails', {}).get('departureStop', {}).get('name', 'N/A'),
+                            "line_name": td.get('transitLine', {}).get('name', 'N/A'),
+                            "vehicle_type": td.get('transitLine', {}).get('vehicle', {}).get('name', {}).get('text', 'N/A'),
+                            "num_stops": td.get('stopCount', 0),
+                            "departure_time": td.get('localizedValues', {}).get('departureTime', {}).get('text')
+                        }
+                    steps.append(step_data)
 
+            # Calculate basic route info
+            distance_km = route.get('distanceMeters', 0) / 1000
+            duration_text = route.get('duration', '0s').replace('s', ' seconds')
+            
             result = {
-                "origin": route['start_address'],
-                "destination": route['end_address'],
-                "distance_text": route['distance']['text'],
-                "duration_text": route['duration']['text'],
-                "start_time": route.get('departure_time', {}).get('text'),
-                "end_time": route.get('arrival_time', {}).get('text'),
+                "origin": f"{origin}, Sri Lanka",
+                "destination": f"{destination}, Sri Lanka", 
+                "distance_text": f"{distance_km:.1f} km",
+                "duration_text": duration_text,
+                "start_time": None,
+                "end_time": None,
                 "steps": steps
             }
             return result, None
         else:
-            error_message = data.get('error_message', f"Could not find a route for mode '{mode}'. Status: {data['status']}")
+            error_message = f"No routes found for mode '{mode}' from {origin} to {destination}"
             return None, error_message
 
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred during the API request: {e}")
-        return None, "An error occurred while communicating with the Google Maps API."
+        print(f"Google Routes API request failed: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                error_data = e.response.json()
+                error_msg = error_data.get('error', {}).get('message', str(e))
+                print(f"API Error Details: {error_msg}")
+                return None, f"Google Routes API error: {error_msg}"
+            except:
+                pass
+        return None, f"Google Routes API communication error: {str(e)}"
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return None, f"Unexpected error processing route: {str(e)}"
