@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     SERPER_API_KEY: str = ""
     OPENWEATHER_API_KEY: str = ""
     
+    # LangChain/LangSmith Configuration
+    LANGCHAIN_API_KEY: str = ""
+    LANGCHAIN_TRACING_V2: bool = False
+    LANGCHAIN_ENDPOINT: str = ""
+    LANGCHAIN_PROJECT: str = ""
+    
     # Langfuse Configuration
     LANGFUSE_PUBLIC_KEY: str = ""
     LANGFUSE_SECRET_KEY: str = ""
