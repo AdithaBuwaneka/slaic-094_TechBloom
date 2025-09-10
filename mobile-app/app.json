@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Transit Companion",
+    "slug": "transit-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "transit-companion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "projectId": "e1a4f41f-5aac-4cb8-8fea-360e6850b164",
     "ios": {
       "supportsTablet": true
     },
@@ -33,7 +34,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
