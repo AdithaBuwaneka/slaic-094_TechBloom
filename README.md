@@ -26,7 +26,11 @@ The **Smart Transit Companion** revolutionizes how Sri Lankans navigate their da
 
 ## 🏗️ **System Architecture**
 
-![System Architecture](./System_Architecture.png)
+<div align="center">
+  <img src="./System_Architecture.png" alt="Smart Transit Companion - System Architecture" width="100%">
+</div>
+
+> **System Architecture Overview**: Complete system showing Frontend Applications, Security Layer, FastAPI Backend, 10 AI Agents, Data Layer, Real-time Services, and Sri Lankan Transit API Integrations.
 
 ### **🤖 Multi-Agent AI Core**
 ```
