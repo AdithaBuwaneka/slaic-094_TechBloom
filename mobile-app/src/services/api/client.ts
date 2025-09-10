@@ -109,13 +109,32 @@ class APIClient {
     while (attempt < maxAttempts) {
       try {
         const config = await this.prepareRequest(endpoint, options);
+        console.log(`API Request: ${config.method} ${config.url}`);
+        
+        // Create AbortController for timeout (compatible with older environments)
+        let controller: AbortController | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+        
+        try {
+          if (typeof AbortController !== 'undefined') {
+            controller = new AbortController();
+            timeoutId = setTimeout(() => controller?.abort(), config.timeout);
+          }
+        } catch (e) {
+          // AbortController not supported, continue without timeout
+          console.warn('AbortController not supported, requests will not have timeout');
+        }
         
         const response = await fetch(config.url, {
           method: config.method,
           headers: config.headers,
           body: config.body,
-          signal: AbortSignal.timeout(config.timeout),
+          signal: controller?.signal,
         });
+        
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
 
         const responseData = await this.handleResponse<T>(response);
         
@@ -235,6 +254,9 @@ class APIClient {
     if (error instanceof TypeError && error.message.includes('fetch')) {
       errorCode = ERROR_CODES.NETWORK_ERROR;
       message = 'Network connection failed. Please check your internet connection.';
+    } else if (error instanceof TypeError && error.message.includes('AbortSignal')) {
+      errorCode = ERROR_CODES.UNKNOWN_ERROR;
+      message = 'AbortSignal compatibility issue - using fallback timeout';
     } else if (error.name === 'AbortError' || error.name === 'TimeoutError') {
       errorCode = ERROR_CODES.TIMEOUT_ERROR;
       message = 'Request timed out. Please try again.';

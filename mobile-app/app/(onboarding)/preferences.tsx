@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { authService } from '../../src/services/api/authService';
 
 interface Preferences {
   transitModes: string[];
@@ -83,13 +84,39 @@ export default function PreferencesSetup() {
 
   const handleSavePreferences = async () => {
     try {
-      // TODO: Send preferences to backend API
       console.log('Saving preferences:', preferences);
       
-      // Navigate to main app
-      router.replace('/(main)/(tabs)/home');
+      // Convert to backend format
+      const backendPreferences = {
+        preferred_transit_modes: preferences.transitModes,
+        max_walking_distance: preferences.maxWalkingDistance,
+        budget_preference: preferences.budgetPreference,
+        time_vs_cost_weight: preferences.timeVsCost,
+        comfort_preference: preferences.comfort,
+        accessibility_needs: preferences.accessibility,
+        avoid_preferences: [], // Default empty array
+        notification_preferences: {
+          email_notifications: true,
+          push_notifications: preferences.notifications.delays || preferences.notifications.offers || preferences.notifications.reminders,
+          sms_notifications: false,
+          delay_alerts: preferences.notifications.delays,
+          fare_alerts: preferences.notifications.offers,
+          reminder_notifications: preferences.notifications.reminders
+        }
+      };
+      
+      const response = await authService.setupPreferences(backendPreferences);
+      
+      if (response.success) {
+        console.log('Preferences saved successfully!');
+        router.replace('/(main)/(tabs)/home');
+      } else {
+        console.error('Failed to save preferences:', response.error);
+        Alert.alert('Error', 'Failed to save preferences. Please try again.');
+      }
     } catch (error) {
       console.error('Failed to save preferences:', error);
+      Alert.alert('Error', 'Failed to save preferences. Please try again.');
     }
   };
 

@@ -128,14 +128,14 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [mode, setMode] = useState<ThemeMode>('auto');
+  const [mode, setMode] = useState<ThemeMode>('light');
   const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme()
   );
 
-  // Determine if we should use dark theme
-  const isDark = mode === 'dark' || (mode === 'auto' && systemColorScheme === 'dark');
-  const theme = isDark ? darkTheme : lightTheme;
+  // Force light mode only - no dark mode
+  const isDark = false;
+  const theme = lightTheme;
 
   // Load saved theme preference on app start
   useEffect(() => {

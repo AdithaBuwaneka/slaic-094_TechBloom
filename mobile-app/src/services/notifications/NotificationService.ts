@@ -2,21 +2,34 @@
 // NOTIFICATION SERVICE - Expo Push Notifications Integration
 // =============================================================================
 
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { mobileService } from '../api/mobileService';
 
-// Configure notification handling
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Check if we're in Expo Go (which doesn't support notifications in SDK 53+)
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Conditionally import notifications only if not in Expo Go
+let Notifications: any = null;
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+    
+    // Configure notification handling only if notifications are available
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.log('Notifications not available in this environment');
+  }
+}
 
 export interface NotificationData {
   type: 'route_update' | 'disruption' | 'fare_deal' | 'reminder' | 'community';
@@ -40,6 +53,18 @@ class NotificationService {
     try {
       if (!Device.isDevice) {
         console.log('Notifications only work on physical devices');
+        return false;
+      }
+
+      // Check if we're in Expo Go
+      if (isExpoGo) {
+        console.log('Notifications not supported in Expo Go (SDK 53+). Use development build instead.');
+        return false;
+      }
+
+      // Check if notifications module is available
+      if (!Notifications) {
+        console.log('Notifications module not available');
         return false;
       }
 
@@ -80,7 +105,10 @@ class NotificationService {
 
   private async getExpoPushToken(): Promise<string | null> {
     try {
-      const projectId = process.env.EXPO_PROJECT_ID || 'your-expo-project-id';
+      // Get project ID from app configuration
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || 
+                       Constants.expoConfig?.projectId || 
+                       'e1a4f41f-5aac-4cb8-8fea-360e6850b164';
       
       const token = await Notifications.getExpoPushTokenAsync({
         projectId,
@@ -126,6 +154,8 @@ class NotificationService {
   // =============================================================================
 
   private setupNotificationListeners(): void {
+    if (!Notifications) return;
+    
     // Handle notifications received while app is running
     this.notificationListener = Notifications.addNotificationReceivedListener(
       this.handleNotificationReceived
@@ -245,10 +275,15 @@ class NotificationService {
   async scheduleLocalNotification(
     title: string,
     body: string,
-    trigger: Notifications.NotificationTriggerInput,
+    trigger: any,
     data?: Record<string, any>
   ): Promise<string | null> {
     try {
+      if (!Notifications) {
+        console.log('Notifications not available');
+        return null;
+      }
+      
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -269,6 +304,7 @@ class NotificationService {
 
   async cancelLocalNotification(notificationId: string): Promise<boolean> {
     try {
+      if (!Notifications) return false;
       await Notifications.cancelScheduledNotificationAsync(notificationId);
       return true;
     } catch (error) {
@@ -279,6 +315,7 @@ class NotificationService {
 
   async cancelAllLocalNotifications(): Promise<boolean> {
     try {
+      if (!Notifications) return false;
       await Notifications.cancelAllScheduledNotificationsAsync();
       return true;
     } catch (error) {
@@ -289,6 +326,7 @@ class NotificationService {
 
   async getBadgeCount(): Promise<number> {
     try {
+      if (!Notifications) return 0;
       return await Notifications.getBadgeCountAsync();
     } catch (error) {
       console.error('Error getting badge count:', error);
@@ -298,6 +336,7 @@ class NotificationService {
 
   async setBadgeCount(count: number): Promise<boolean> {
     try {
+      if (!Notifications) return false;
       await Notifications.setBadgeCountAsync(count);
       return true;
     } catch (error) {
@@ -316,6 +355,8 @@ class NotificationService {
 
   async setupNotificationCategories(): Promise<void> {
     try {
+      if (!Notifications) return;
+      
       await Notifications.setNotificationCategoryAsync('route_update', [
         {
           identifier: 'view_route',
@@ -398,6 +439,8 @@ class NotificationService {
   // =============================================================================
 
   cleanup(): void {
+    if (!Notifications) return;
+    
     if (this.notificationListener) {
       Notifications.removeNotificationSubscription(this.notificationListener);
     }

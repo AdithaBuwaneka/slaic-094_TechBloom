@@ -8,9 +8,11 @@ import { Platform } from 'react-native';
 export const API_CONFIG = {
   // Base URLs for different environments
   BASE_URL: __DEV__ 
-    ? Platform.OS === 'ios' 
-      ? 'http://localhost:8000'  // iOS Simulator
-      : 'http://10.0.2.2:8000'   // Android Emulator
+    ? Platform.OS === 'web'
+      ? 'http://localhost:8000'  // Web development
+      : Platform.OS === 'ios' 
+        ? 'http://localhost:8000'  // iOS Simulator
+        : 'http://10.0.2.2:8000'   // Android Emulator
     : 'https://your-production-domain.com',  // Production
   
   // API Version
