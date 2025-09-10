@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteOption } from '../../../src/types';
+import { useRoutes } from '../../../src/contexts/AppContext';
 
 
 export default function Routes() {
+  const { loadRouteHistoryFromBackend } = useRoutes();
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const [activeRoutes, setActiveRoutes] = useState<RouteOption[]>([]);
   const [recentRoutes, setRecentRoutes] = useState<RouteOption[]>([]);
@@ -20,11 +22,30 @@ export default function Routes() {
   const loadRecentRoutes = async () => {
     try {
       setIsLoading(true);
+      
+      // Load from local storage first (faster)
       const storedRoutes = await AsyncStorage.getItem('recent_routes');
+      let localRoutes: RouteOption[] = [];
       if (storedRoutes) {
-        const routes: RouteOption[] = JSON.parse(storedRoutes);
-        setRecentRoutes(routes.slice(0, 5)); // Show last 5 routes
+        localRoutes = JSON.parse(storedRoutes);
+        setRecentRoutes(localRoutes.slice(0, 5)); // Show last 5 routes
       }
+
+      // Then try to load from backend (more complete data)
+      try {
+        const backendRoutes = await loadRouteHistoryFromBackend();
+        if (backendRoutes.length > 0) {
+          // Merge backend routes with local routes, preferring backend data
+          const mergedRoutes = [...backendRoutes, ...localRoutes.filter(local => 
+            !backendRoutes.some(backend => backend.route_id === local.route_id)
+          )];
+          setRecentRoutes(mergedRoutes.slice(0, 5));
+          console.log('Loaded routes from backend and local storage:', mergedRoutes.length);
+        }
+      } catch (backendError) {
+        console.warn('Failed to load routes from backend, using local data only:', backendError);
+      }
+      
     } catch (error) {
       console.error('Error loading recent routes:', error);
     } finally {

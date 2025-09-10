@@ -363,6 +363,118 @@ class TravelService {
       carbon_saved: Math.max(0, avgAlternative.carbon - route.summary.carbon_footprint),
     };
   }
+
+  // =============================================================================
+  // ROUTE HISTORY MANAGEMENT
+  // =============================================================================
+
+  async saveRouteToBackend(route: RouteOption, userId: string): Promise<APIResponse<any>> {
+    try {
+      console.log('Saving route to backend database:', route.route_id);
+      
+      const routeData = {
+        user_id: userId,
+        route_id: route.route_id,
+        source: route.steps[0]?.start_location?.name || 'Unknown',
+        destination: route.steps[route.steps.length - 1]?.end_location?.name || 'Unknown',
+        route_data: route,
+        created_at: new Date().toISOString(),
+        metadata: {
+          agent_count: Object.keys(route.agent_analysis || {}).length,
+          processing_time: route.summary?.duration_minutes || 0,
+          fare: route.summary?.estimated_fare || 0,
+          carbon_footprint: route.summary?.carbon_footprint || 0
+        }
+      };
+
+      const response = await apiClient.post<any>(
+        ENDPOINTS.TRAVEL.SAVE_ROUTE,
+        routeData
+      );
+
+      if (response.success) {
+        console.log('Route saved to backend successfully:', response.data);
+      } else {
+        console.error('Failed to save route to backend:', response.error);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error saving route to backend:', error);
+      return {
+        success: false,
+        error: {
+          error_code: 'SAVE_ROUTE_ERROR',
+          message: 'Failed to save route to backend',
+          details: { originalError: error },
+          timestamp: new Date().toISOString()
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  async getRouteHistoryFromBackend(userId: string, limit: number = 10): Promise<APIResponse<RouteOption[]>> {
+    try {
+      console.log('Fetching route history from backend for user:', userId);
+      
+      const response = await apiClient.get<{ routes: RouteOption[] }>(
+        `${ENDPOINTS.TRAVEL.ROUTE_HISTORY}?user_id=${userId}&limit=${limit}`
+      );
+
+      if (response.success && response.data) {
+        console.log('Route history fetched from backend:', response.data.routes.length, 'routes');
+        return {
+          ...response,
+          data: response.data.routes
+        };
+      }
+
+      return response as APIResponse<RouteOption[]>;
+    } catch (error) {
+      console.error('Error fetching route history from backend:', error);
+      return {
+        success: false,
+        error: {
+          error_code: 'FETCH_HISTORY_ERROR',
+          message: 'Failed to fetch route history from backend',
+          details: { originalError: error },
+          timestamp: new Date().toISOString()
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  async deleteRouteFromBackend(routeId: string, userId: string): Promise<APIResponse<any>> {
+    try {
+      console.log('Deleting route from backend:', routeId);
+      
+      const response = await apiClient.delete<any>(
+        `${ENDPOINTS.TRAVEL.DELETE_ROUTE}/${routeId}?user_id=${userId}`
+      );
+
+      if (response.success) {
+        console.log('Route deleted from backend successfully');
+      } else {
+        console.error('Failed to delete route from backend:', response.error);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error deleting route from backend:', error);
+      return {
+        success: false,
+        error: {
+          error_code: 'DELETE_ROUTE_ERROR',
+          message: 'Failed to delete route from backend',
+          details: { originalError: error },
+          timestamp: new Date().toISOString()
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
 }
 
 export const travelService = new TravelService();

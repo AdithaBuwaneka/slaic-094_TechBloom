@@ -8,24 +8,26 @@ import { Platform } from 'react-native';
 import { mobileService } from '../api/mobileService';
 
 // Check if we're in Expo Go (which doesn't support notifications in SDK 53+)
-const isExpoGo = Constants.appOwnership === 'expo';
+const isExpoGo = (Constants as any).appOwnership === 'expo';
 
 // Conditionally import notifications only if not in Expo Go
-let Notifications: any = null;
+let Notifications: typeof import('expo-notifications') | null = null;
 if (!isExpoGo) {
   try {
     Notifications = require('expo-notifications');
     
     // Configure notification handling only if notifications are available
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-        shouldShowBanner: true,
-        shouldShowList: true,
-      }),
-    });
+    if (Notifications) {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+    }
   } catch (error) {
     console.log('Notifications not available in this environment');
   }
@@ -105,9 +107,13 @@ class NotificationService {
 
   private async getExpoPushToken(): Promise<string | null> {
     try {
+      if (!Notifications) {
+        console.log('Notifications not available');
+        return null;
+      }
+
       // Get project ID from app configuration
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId || 
-                       Constants.expoConfig?.projectId || 
+      const projectId = (Constants.expoConfig as any)?.extra?.eas?.projectId || 
                        'e1a4f41f-5aac-4cb8-8fea-360e6850b164';
       
       const token = await Notifications.getExpoPushTokenAsync({
@@ -133,7 +139,9 @@ class NotificationService {
         device_info: {
           model: Device.modelName || 'Unknown',
           os_version: Device.osVersion || 'Unknown',
-          app_build: Constants.expoConfig?.runtimeVersion || '1',
+          app_build: typeof Constants.expoConfig?.runtimeVersion === 'string' 
+                     ? Constants.expoConfig.runtimeVersion 
+                     : '1',
         }
       };
 
@@ -167,7 +175,7 @@ class NotificationService {
     );
   }
 
-  private handleNotificationReceived = (notification: Notifications.Notification) => {
+  private handleNotificationReceived = (notification: any) => {
     console.log('Notification received:', notification);
     
     const { type, routeId } = (notification.request.content.data as any) || {};
@@ -194,7 +202,7 @@ class NotificationService {
     }
   };
 
-  private handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+  private handleNotificationResponse = (response: any) => {
     console.log('Notification tapped:', response);
     
     const { type, routeId, screen } = (response.notification.request.content.data as any) || {};
@@ -208,7 +216,7 @@ class NotificationService {
   // =============================================================================
 
   private handleRouteUpdateNotification(
-    notification: Notifications.Notification, 
+    notification: any, 
     routeId?: string
   ): void {
     console.log('Route update notification:', routeId);
@@ -216,22 +224,22 @@ class NotificationService {
     // Store notification for user to see in notification history
   }
 
-  private handleDisruptionNotification(notification: Notifications.Notification): void {
+  private handleDisruptionNotification(notification: any): void {
     console.log('Disruption notification');
     // Disruption will trigger UI alerts and update community reports
   }
 
-  private handleFareDealNotification(notification: Notifications.Notification): void {
+  private handleFareDealNotification(notification: any): void {
     console.log('Fare deal notification');
     // Navigate to deals section when implemented
   }
 
-  private handleReminderNotification(notification: Notifications.Notification): void {
+  private handleReminderNotification(notification: any): void {
     console.log('Reminder notification');
     // Show reminder alert for scheduled journeys
   }
 
-  private handleCommunityNotification(notification: Notifications.Notification): void {
+  private handleCommunityNotification(notification: any): void {
     console.log('Community notification');
     // Navigate to community tab to show new reports
   }

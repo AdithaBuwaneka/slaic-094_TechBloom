@@ -3,7 +3,13 @@
 // =============================================================================
 
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withSpring 
+} from 'react-native-reanimated';
 import { SriLankanTravelMode } from '../../src/types';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -34,12 +40,12 @@ export default function AnimatedTransitModes({
   onModeChange,
   isLoading = false
 }: Props) {
-  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const slideAnimation = useSharedValue(0);
   const scaleAnimations = useRef(
     modeTabs.reduce((acc, tab) => {
-      acc[tab.mode] = new Animated.Value(1);
+      acc[tab.mode] = useSharedValue(1);
       return acc;
-    }, {} as Record<SriLankanTravelMode, Animated.Value>)
+    }, {} as Record<SriLankanTravelMode, any>)
   ).current;
 
   const selectedIndex = modeTabs.findIndex(tab => tab.mode === selectedMode);
@@ -47,22 +53,18 @@ export default function AnimatedTransitModes({
 
   useEffect(() => {
     // Animate the selection indicator
-    Animated.spring(slideAnimation, {
-      toValue: selectedIndex * tabWidth,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 8,
-    }).start();
+    slideAnimation.value = withSpring(selectedIndex * tabWidth, {
+      damping: 15,
+      stiffness: 150,
+    });
 
     // Scale animation for selected tab
     Object.keys(scaleAnimations).forEach(mode => {
       const isSelected = mode === selectedMode;
-      Animated.spring(scaleAnimations[mode as SriLankanTravelMode], {
-        toValue: isSelected ? 1.1 : 1,
-        useNativeDriver: true,
-        tension: 150,
-        friction: 8,
-      }).start();
+      scaleAnimations[mode as SriLankanTravelMode].value = withSpring(isSelected ? 1.1 : 1, {
+        damping: 15,
+        stiffness: 200,
+      });
     });
   }, [selectedMode, selectedIndex, tabWidth, slideAnimation, scaleAnimations]);
 
@@ -71,22 +73,23 @@ export default function AnimatedTransitModes({
 
     // Quick press animation
     const pressAnimation = scaleAnimations[mode];
-    Animated.sequence([
-      Animated.timing(pressAnimation, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(pressAnimation, {
-        toValue: mode === selectedMode ? 1.1 : 1,
-        useNativeDriver: true,
-        tension: 150,
-        friction: 8,
-      })
-    ]).start();
+    pressAnimation.value = withTiming(0.95, { duration: 100 });
+    
+    setTimeout(() => {
+      pressAnimation.value = withSpring(mode === selectedMode ? 1.1 : 1, {
+        damping: 15,
+        stiffness: 200,
+      });
+    }, 100);
 
     onModeChange(mode);
   };
+
+  const animatedSlideStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: slideAnimation.value }],
+    };
+  });
 
   return (
     <View className="mx-4 my-4">
@@ -95,16 +98,18 @@ export default function AnimatedTransitModes({
         {/* Animated Selection Indicator */}
         <Animated.View
           className="absolute top-2 bottom-2 rounded-xl"
-          style={{
-            width: tabWidth - 4,
-            backgroundColor: modeTabs[selectedIndex]?.color || '#3B82F6',
-            transform: [{ translateX: slideAnimation }],
-            shadowColor: modeTabs[selectedIndex]?.color || '#3B82F6',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 4,
-          }}
+          style={[
+            animatedSlideStyle,
+            {
+              width: tabWidth - 4,
+              backgroundColor: modeTabs[selectedIndex]?.color || '#3B82F6',
+              shadowColor: modeTabs[selectedIndex]?.color || '#3B82F6',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 4,
+            }
+          ]}
         />
 
         {/* Mode Tabs */}
@@ -112,13 +117,19 @@ export default function AnimatedTransitModes({
           {modeTabs.map((tab, index) => {
             const isSelected = tab.mode === selectedMode;
             
+            const animatedScaleStyle = useAnimatedStyle(() => {
+              return {
+                transform: [{ scale: scaleAnimations[tab.mode].value }],
+              };
+            });
+            
             return (
               <Animated.View
                 key={tab.mode}
-                style={{
-                  flex: 1,
-                  transform: [{ scale: scaleAnimations[tab.mode] }],
-                }}
+                style={[
+                  { flex: 1 },
+                  animatedScaleStyle
+                ]}
               >
                 <TouchableOpacity
                   className={`py-3 px-2 items-center justify-center relative z-10 ${
@@ -172,16 +183,7 @@ export default function AnimatedTransitModes({
       </View>
 
       {/* Selected Mode Info */}
-      <Animated.View
-        className="mt-3 px-2"
-        style={{
-          opacity: slideAnimation.interpolate({
-            inputRange: [0, (modeTabs.length - 1) * tabWidth],
-            outputRange: [1, 1],
-            extrapolate: 'clamp',
-          }),
-        }}
-      >
+      <Animated.View className="mt-3 px-2">
         <ModeDescription mode={selectedMode} />
       </Animated.View>
     </View>
@@ -193,14 +195,10 @@ export default function AnimatedTransitModes({
 // =============================================================================
 
 function ModeDescription({ mode }: { mode: SriLankanTravelMode }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useSharedValue(0);
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    fadeAnim.value = withTiming(1, { duration: 300 });
   }, [mode, fadeAnim]);
 
   const getModeDescription = () => {
@@ -259,18 +257,17 @@ function ModeDescription({ mode }: { mode: SriLankanTravelMode }) {
 
   const modeInfo = getModeDescription();
 
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{
+        translateY: fadeAnim.value * -10 + 10
+      }]
+    };
+  });
+
   return (
-    <Animated.View
-      style={{
-        opacity: fadeAnim,
-        transform: [{
-          translateY: fadeAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [10, 0]
-          })
-        }]
-      }}
-    >
+    <Animated.View style={animatedStyle}>
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
           <Text className="text-base font-semibold text-gray-800">
@@ -321,31 +318,30 @@ export function FloatingModeSwitcher({
   onModeChange,
   position = 'bottom'
 }: FloatingModeSwitcherProps) {
-  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const slideAnimation = useSharedValue(0);
 
   useEffect(() => {
-    Animated.spring(slideAnimation, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 8,
-    }).start();
+    slideAnimation.value = withSpring(1, {
+      damping: 15,
+      stiffness: 150,
+    });
   }, [slideAnimation]);
+
+  const animatedFloatingStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{
+        translateY: (1 - slideAnimation.value) * (position === 'top' ? -50 : 50)
+      }],
+      opacity: slideAnimation.value,
+    };
+  });
 
   return (
     <Animated.View
       className={`absolute left-4 right-4 ${
         position === 'top' ? 'top-4' : 'bottom-4'
       } z-50`}
-      style={{
-        transform: [{
-          translateY: slideAnimation.interpolate({
-            inputRange: [0, 1],
-            outputRange: [position === 'top' ? -50 : 50, 0]
-          })
-        }],
-        opacity: slideAnimation,
-      }}
+      style={animatedFloatingStyle}
     >
       <View className="bg-white rounded-2xl shadow-lg border border-gray-100 p-2">
         <View className="flex-row justify-around">

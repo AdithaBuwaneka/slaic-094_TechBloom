@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
   useSharedValue, 
@@ -255,13 +255,17 @@ export default function MultiAgentAnimation({
     );
   }, []);
 
-  const animatedPulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }]
-  }));
+  const animatedPulseStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: pulseScale.value }]
+    };
+  });
 
-  const animatedProgressStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%`
-  }));
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progressWidth.value}%`
+    };
+  });
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -298,7 +302,11 @@ export default function MultiAgentAnimation({
             </View>
 
             {/* Agents List */}
-            <View className="flex-1 p-4">
+            <ScrollView 
+              className="flex-1 p-4" 
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{ flexGrow: 1 }}
+            >
               {isComplete ? (
                 <View className="flex-1 justify-center items-center">
                   <Text className="text-6xl mb-4">🎉</Text>
@@ -382,7 +390,7 @@ export default function MultiAgentAnimation({
                   ))}
                 </View>
               )}
-            </View>
+            </ScrollView>
 
             {/* Footer Stats */}
             <View className="bg-gray-50 p-4 rounded-b-lg border-t border-gray-200">

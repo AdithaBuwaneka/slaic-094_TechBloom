@@ -3,9 +3,11 @@
 // =============================================================================
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, RouteOption, DisruptionAlert, CommunityReport } from '../types';
 import { authService } from '../services/api/authService';
 import { apiClient } from '../services/api/client';
+import { travelService } from '../services/api/travelService';
 import { notificationService } from '../services/notifications/NotificationService';
 import { webSocketService } from '../services/websocket/WebSocketService';
 import { initializeAPI } from '../services/api';
@@ -44,8 +46,9 @@ interface AppActions {
   
   // Route management
   setCurrentRoute: (route: RouteOption) => void;
-  addToRouteHistory: (route: RouteOption) => void;
+  addToRouteHistory: (route: RouteOption) => Promise<void>;
   clearRouteHistory: () => void;
+  loadRouteHistoryFromBackend: () => Promise<RouteOption[]>;
   
   // Real-time updates
   updateDisruptions: (disruptions: DisruptionAlert[]) => void;
@@ -305,15 +308,62 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
-  const addToRouteHistory = (route: RouteOption) => {
+  const addToRouteHistory = async (route: RouteOption) => {
+    const updatedHistory = [route, ...state.routeHistory.filter(r => r.route_id !== route.route_id)].slice(0, 10);
+    
     setState(prev => ({
       ...prev,
-      routeHistory: [route, ...prev.routeHistory.filter(r => r.route_id !== route.route_id)].slice(0, 10),
+      routeHistory: updatedHistory,
     }));
+
+    // Save to AsyncStorage (local storage)
+    try {
+      await AsyncStorage.setItem('recent_routes', JSON.stringify(updatedHistory));
+      console.log('Route saved to local storage');
+    } catch (error) {
+      console.error('Error saving route to local storage:', error);
+    }
+
+    // Save to backend database
+    if (state.user?.user_id) {
+      try {
+        const backendResponse = await travelService.saveRouteToBackend(route, state.user.user_id);
+        if (backendResponse.success) {
+          console.log('Route saved to backend database successfully');
+        } else {
+          console.warn('Failed to save route to backend:', backendResponse.error?.message);
+        }
+      } catch (error) {
+        console.error('Error saving route to backend:', error);
+      }
+    } else {
+      console.warn('No user logged in, skipping backend save');
+    }
   };
 
   const clearRouteHistory = () => {
     setState(prev => ({ ...prev, routeHistory: [] }));
+  };
+
+  const loadRouteHistoryFromBackend = async (): Promise<RouteOption[]> => {
+    if (!state.user?.user_id) {
+      console.warn('No user logged in, cannot fetch backend route history');
+      return [];
+    }
+
+    try {
+      const response = await travelService.getRouteHistoryFromBackend(state.user.user_id, 10);
+      if (response.success && response.data) {
+        console.log('Loaded route history from backend:', response.data.length, 'routes');
+        return response.data;
+      } else {
+        console.warn('Failed to load route history from backend:', response.error?.message);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error loading route history from backend:', error);
+      return [];
+    }
   };
 
   // =============================================================================
@@ -395,6 +445,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setCurrentRoute,
     addToRouteHistory,
     clearRouteHistory,
+    loadRouteHistoryFromBackend,
     updateDisruptions,
     updateCommunityReports,
     setLanguage,
@@ -433,7 +484,8 @@ export function useRoutes() {
     routeHistory, 
     setCurrentRoute, 
     addToRouteHistory, 
-    clearRouteHistory 
+    clearRouteHistory,
+    loadRouteHistoryFromBackend
   } = useApp();
   
   return {
@@ -442,6 +494,7 @@ export function useRoutes() {
     setCurrentRoute,
     addToRouteHistory,
     clearRouteHistory,
+    loadRouteHistoryFromBackend,
   };
 }
 

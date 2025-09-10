@@ -51,9 +51,8 @@ class WebSocketService {
       
       // Get token from secure storage if not provided
       if (!token && userId) {
-        const { getStoredToken } = await import('../api/client');
-        const apiClient = (await import('../api/client')).apiClient;
-        token = await apiClient.getStoredToken();
+        const { apiClient } = await import('../api/client');
+        token = await apiClient.getStoredToken() ?? undefined;
       }
       
       if (!token) {

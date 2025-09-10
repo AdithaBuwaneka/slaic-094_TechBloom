@@ -59,6 +59,9 @@ export const ENDPOINTS = {
     TEST_SEARCH: '/travel/test-search',
     TEST_LLM: '/travel/test-llm-summarizer',
     SEARCH_ROUTE_INFO: '/travel/search-route-info',
+    ROUTE_HISTORY: '/travel/route-history',
+    SAVE_ROUTE: '/travel/save-route',
+    DELETE_ROUTE: '/travel/delete-route',
   },
   
   // Mobile App Specific

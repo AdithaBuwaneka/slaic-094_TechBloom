@@ -21,6 +21,16 @@ interface SriLankanMode {
 
 const sriLankanModes: SriLankanMode[] = [
   {
+    mode: SriLankanTravelMode.TRANSIT,
+    name: 'Mixed Transit',
+    sinhala: 'මිශ්‍ර ප්‍රවාහනය',
+    tamil: 'கலப்பு போக்குவரத்து',
+    emoji: '🚊',
+    color: '#6366F1',
+    description: 'Multi-modal transport',
+    features: ['Best routes', 'Cost optimized', 'Smart combinations']
+  },
+  {
     mode: SriLankanTravelMode.BUS,
     name: 'Bus',
     sinhala: 'බස්',
@@ -93,7 +103,7 @@ const sriLankanModes: SriLankanMode[] = [
 ];
 
 interface Props {
-  selectedMode: SriLankanTravelMode | null;
+  selectedMode: SriLankanTravelMode;
   onModeSelect: (mode: SriLankanTravelMode) => void;
   language: 'en' | 'si' | 'ta';
   isLoading?: boolean;
@@ -168,10 +178,9 @@ export default function SriLankanModeSelector({
         {sriLankanModes.map((mode) => (
           <Animated.View
             key={mode.mode}
+            className="w-[48%] mb-4"
             style={{
               transform: [{ scale: animatedValues[mode.mode] }],
-              width: screenWidth / 2 - 24, // Two columns with padding
-              marginBottom: 16,
             }}
           >
             <TouchableOpacity
@@ -251,39 +260,12 @@ export default function SriLankanModeSelector({
       </View>
 
       {/* Selected Mode Details */}
-      {selectedMode && (
-        <Animated.View
-          className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200"
-          style={{
-            transform: [{
-              translateY: new Animated.Value(20)
-            }]
-          }}
-        >
-          {(() => {
-            const selectedModeData = sriLankanModes.find(m => m.mode === selectedMode);
-            if (!selectedModeData) return null;
+      {selectedMode && (() => {
+        const selectedModeData = sriLankanModes.find(m => m.mode === selectedMode);
+        if (!selectedModeData) return null;
 
-            // Animate the details panel
-            const detailsAnimation = new Animated.Value(0);
-            Animated.timing(detailsAnimation, {
-              toValue: 1,
-              duration: 300,
-              useNativeDriver: true,
-            }).start();
-
-            return (
-              <Animated.View
-                style={{
-                  opacity: detailsAnimation,
-                  transform: [{
-                    translateY: detailsAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [20, 0]
-                    })
-                  }]
-                }}
-              >
+        return (
+          <View className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <View className="flex-row items-center mb-3">
                   <Text className="text-2xl mr-3">{selectedModeData.emoji}</Text>
                   <View className="flex-1">
@@ -314,11 +296,9 @@ export default function SriLankanModeSelector({
                     ))}
                   </View>
                 </View>
-              </Animated.View>
-            );
-          })()}
-        </Animated.View>
-      )}
+              </View>
+          );
+      })()}
 
       {/* Loading State */}
       {isLoading && (

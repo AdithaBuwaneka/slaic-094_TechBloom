@@ -66,12 +66,62 @@ export default function Home() {
       const response = await travelService.planRoute(requestWithUser);
       
       if (response.success && response.data) {
-        // Store the planned route
-        const bestRoute = response.data.response.recommended_routes[0];
-        if (bestRoute) {
-          setCurrentRoute(bestRoute);
-          addToRouteHistory(bestRoute);
+        console.log('Route planning response:', response.data);
+        // Store the planned route with safety checks for the correct API structure
+        if (response.data.response) {
+          const apiResponse = response.data.response;
+          
+          // Check for routes in the actual API structure
+          if (apiResponse.best_route) {
+            console.log('Found best route:', apiResponse.best_route);
+            setCurrentRoute(apiResponse.best_route);
+            await addToRouteHistory(apiResponse.best_route);
+          } else if (apiResponse.all_routes && apiResponse.all_routes.length > 0) {
+            console.log('Found routes in all_routes:', apiResponse.all_routes);
+            const bestRoute = apiResponse.all_routes[0];
+            setCurrentRoute(bestRoute);
+            await addToRouteHistory(bestRoute);
+          } else {
+            console.warn('No routes found. Total routes found:', apiResponse.total_routes_found);
+            
+            // Create a mock route for testing purposes
+            const mockRoute: any = {
+              route_id: `mock_${Date.now()}`,
+              title: `${requestData.source} → ${requestData.destination}`,
+              duration: '2h 30m',
+              fare: 'Rs. 350',
+              modes: [requestData.mode],
+              carbonFootprint: '2.1 kg CO₂',
+              aiRecommendation: 'AI optimized route with cost efficiency',
+              agentsUsed: response.data.agents_used || [],
+              source: requestData.source,
+              destination: requestData.destination,
+              mode: requestData.mode,
+              steps: [
+                { step: 1, instruction: `Start from ${requestData.source}`, duration: '0m', fare: 'Rs. 0' },
+                { step: 2, instruction: `Travel via ${requestData.mode}`, duration: '2h 30m', fare: 'Rs. 350' },
+                { step: 3, instruction: `Arrive at ${requestData.destination}`, duration: '0m', fare: 'Rs. 0' }
+              ]
+            };
+            
+            console.log('Created mock route for testing:', mockRoute);
+            setCurrentRoute(mockRoute);
+            await addToRouteHistory(mockRoute);
+            
+            Alert.alert(
+              'Mock Route Created', 
+              `Created a test route for ${requestData.source} to ${requestData.destination}. Check the Routes tab to see it.`,
+              [
+                { text: 'OK' },
+                { text: 'View Routes', onPress: () => console.log('Navigate to routes tab') }
+              ]
+            );
+          }
+        } else {
+          console.warn('No response data found');
         }
+      } else {
+        console.warn('Route planning failed:', response);
       }
     } catch (error) {
       console.error('Route planning error:', error);
@@ -167,7 +217,9 @@ export default function Home() {
                    routeRequest.mode === SriLankanTravelMode.UBER ? '🚗' :
                    routeRequest.mode === SriLankanTravelMode.DRIVING ? '🚙' :
                    routeRequest.mode === SriLankanTravelMode.TWO_WHEELER ? '🏍️' :
-                   '🚶'}
+                   routeRequest.mode === SriLankanTravelMode.TRANSIT ? '🚊' :
+                   routeRequest.mode === SriLankanTravelMode.WALKING ? '🚶' : 
+                   '🚌'}
                 </Text>
                 <View>
                   <Text className="text-base font-medium text-gray-800">
@@ -177,7 +229,9 @@ export default function Home() {
                      routeRequest.mode === SriLankanTravelMode.UBER ? 'Uber/PickMe' :
                      routeRequest.mode === SriLankanTravelMode.DRIVING ? 'Own Vehicle' :
                      routeRequest.mode === SriLankanTravelMode.TWO_WHEELER ? 'Motorbike' :
-                     'Walking'}
+                     routeRequest.mode === SriLankanTravelMode.TRANSIT ? 'Mixed Transit' :
+                     routeRequest.mode === SriLankanTravelMode.WALKING ? 'Walking' :
+                     'Transit'}
                   </Text>
                   <Text className="text-sm text-gray-600">Tap to change mode</Text>
                 </View>
@@ -257,8 +311,8 @@ export default function Home() {
 
       {/* Sri Lankan Mode Selector Modal */}
       {showModeSelector && (
-        <View className="absolute inset-0 bg-black bg-opacity-50 flex-1 justify-center px-4">
-          <View className="bg-white rounded-2xl max-h-[80%] overflow-hidden">
+        <View className="absolute inset-0 bg-black/50 justify-center px-4">
+          <View className="bg-white rounded-2xl max-h-[80%]">
             <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
               <Text className="text-lg font-bold text-gray-900">Select Travel Mode</Text>
               <TouchableOpacity
@@ -268,7 +322,7 @@ export default function Home() {
                 <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
-            <ScrollView className="flex-1">
+            <ScrollView className="max-h-[400px]" showsVerticalScrollIndicator={false}>
               <SriLankanModeSelector
                 selectedMode={routeRequest.mode}
                 onModeSelect={handleModeSelect}
