@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MultiAgentAnimation from '../../components/MultiAgentAnimation';
@@ -14,6 +15,7 @@ export default function Home() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { currentRoute, setCurrentRoute, addToRouteHistory } = useApp();
+  const router = useRouter();
   
   const [routeRequest, setRouteRequest] = useState<RouteRequestType>({
     user_id: user?.user_id || '',
@@ -87,6 +89,7 @@ export default function Home() {
             // Create a mock route for testing purposes
             const mockRoute: any = {
               route_id: `mock_${Date.now()}`,
+              id: `mock_${Date.now()}`, // Add id for compatibility with routes display
               title: `${requestWithUser.source} → ${requestWithUser.destination}`,
               duration: '2h 30m',
               fare: 'Rs. 350',
@@ -97,25 +100,17 @@ export default function Home() {
               source: requestWithUser.source,
               destination: requestWithUser.destination,
               mode: requestWithUser.mode,
+              disruptions: [], // Add empty disruptions array
               steps: [
-                { step: 1, instruction: `Start from ${requestWithUser.source}`, duration: '0m', fare: 'Rs. 0' },
-                { step: 2, instruction: `Travel via ${requestWithUser.mode}`, duration: '2h 30m', fare: 'Rs. 350' },
-                { step: 3, instruction: `Arrive at ${requestWithUser.destination}`, duration: '0m', fare: 'Rs. 0' }
+                { step: 1, instruction: `Start from ${requestWithUser.source}`, duration: '0m', fare: 'Rs. 0', icon: '🚶', description: `Start from ${requestWithUser.source}` },
+                { step: 2, instruction: `Travel via ${requestWithUser.mode}`, duration: '2h 30m', fare: 'Rs. 350', icon: '🚌', description: `Travel via ${requestWithUser.mode}` },
+                { step: 3, instruction: `Arrive at ${requestWithUser.destination}`, duration: '0m', fare: 'Rs. 0', icon: '📍', description: `Arrive at ${requestWithUser.destination}` }
               ]
             };
             
             console.log('Created mock route for testing:', mockRoute);
             setCurrentRoute(mockRoute);
             await addToRouteHistory(mockRoute);
-            
-            Alert.alert(
-              'Mock Route Created', 
-              `Created a test route for ${requestWithUser.source} to ${requestWithUser.destination}. Check the Routes tab to see it.`,
-              [
-                { text: 'OK' },
-                { text: 'View Routes', onPress: () => console.log('Navigate to routes tab') }
-              ]
-            );
           }
         } else {
           console.warn('No response data found');
@@ -137,7 +132,10 @@ export default function Home() {
     Alert.alert(
       '🎉 Route Planning Complete!', 
       `Found ${results.routes.length} optimized route(s) using ${results.agentSummary.totalAgents} AI agents. Check the Routes tab for details.`,
-      [{ text: 'View Routes', onPress: () => console.log('Navigate to routes') }]
+      [
+        { text: 'OK' },
+        { text: 'View Routes', onPress: () => router.push('/(main)/(tabs)/routes') }
+      ]
     );
   };
 

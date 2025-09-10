@@ -138,6 +138,12 @@ export interface RouteOption {
   carbonFootprint: string;
   aiRecommendation: string;
   agentsUsed: string[];
+  
+  // Backend saved fields
+  source?: string;
+  destination?: string;
+  origin?: string; // Alternative field for source
+  route_data?: RouteOption;
 }
 
 export interface RouteSummary {

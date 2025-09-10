@@ -370,12 +370,28 @@ class TravelService {
   async saveRouteToBackend(route: RouteOption, userId: string): Promise<APIResponse<any>> {
     try {
       console.log('Saving route to backend database:', route.route_id);
+      console.log('Route object structure:', JSON.stringify(route, null, 2));
+      
+      const extractedSource = route.source || 
+                              route.origin ||
+                              (route.title ? route.title.split(' → ')[0]?.trim() : null) || 
+                              (route.steps?.[0]?.start_location?.name) || 
+                              'Route Start';
+      
+      const extractedDestination = route.destination || 
+                                   (route as any).destination ||
+                                   (route.title ? route.title.split(' → ')[1]?.trim() : null) || 
+                                   (route.steps?.[route.steps.length - 1]?.end_location?.name) || 
+                                   'Route End';
+      
+      console.log('Extracted source:', extractedSource);
+      console.log('Extracted destination:', extractedDestination);
       
       const routeData = {
         user_id: userId,
         route_id: route.route_id,
-        source: route.steps[0]?.start_location?.name || 'Unknown',
-        destination: route.steps[route.steps.length - 1]?.end_location?.name || 'Unknown',
+        source: extractedSource,
+        destination: extractedDestination,
         route_data: route,
         created_at: new Date().toISOString(),
         metadata: {
