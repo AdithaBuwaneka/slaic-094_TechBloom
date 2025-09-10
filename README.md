@@ -26,7 +26,103 @@ The **Smart Transit Companion** revolutionizes how Sri Lankans navigate their da
 
 ## 🏗️ **System Architecture**
 
-![System Architecture](./System_Architecture.png)
+```mermaid
+flowchart TD
+    subgraph "Frontend Layer"
+        MobileApp["📱 Mobile App<br/>React Native + Expo"]
+        AdminDash["🖥️ Admin Dashboard<br/>Next.js 15 + React 19"]
+    end
+    
+    subgraph "Security & API"
+        Auth["🔐 JWT Authentication"]
+        RateLimit["⏱️ Rate Limiting"]
+        FastAPI["⚡ FastAPI Backend"]
+    end
+    
+    subgraph "AI Core - 10 Agents"
+        LangGraph["🧠 LangGraph Orchestrator"]
+        Agent1["1️⃣ Input Processing"]
+        Agent2["2️⃣ Mode Router"]
+        Agent3["3️⃣ Standard Routes"]
+        Agent4["4️⃣ Transit Aggregation"]
+        Agent5["5️⃣ Fare Calculation"]
+        Agent6["6️⃣ Fare Optimization"]
+        Agent7["7️⃣ User Preferences"]
+        Agent8["8️⃣ Local Knowledge"]
+        Agent9["9️⃣ Disruption Monitor"]
+        Agent10["🔟 Route Optimization"]
+    end
+    
+    subgraph "AI Services"
+        RAG["💬 RAG Chatbot"]
+        Vector["🗂️ ChromaDB"]
+        Gemini["🤖 Google Gemini"]
+    end
+    
+    subgraph "Data Layer"
+        MongoDB["🍃 MongoDB Atlas"]
+        Redis["🔴 Redis Cache"]
+    end
+    
+    subgraph "Real-time"
+        WebSocket["🔄 WebSocket"]
+        Push["📢 Push Notifications"]
+    end
+    
+    subgraph "Sri Lankan APIs"
+        Railway["🚂 Sri Lanka Railways"]
+        Bus["🚌 NTC Bus Systems"]
+        TukTuk["🛺 Tuk-tuk Services"]
+        Ride["🚗 Uber/PickMe"]
+    end
+    
+    subgraph "External APIs"
+        Maps["🗺️ Google Maps"]
+        Weather["🌤️ Weather API"]
+    end
+
+    %% Main Flow
+    MobileApp --> Auth
+    AdminDash --> Auth
+    Auth --> RateLimit
+    RateLimit --> FastAPI
+    FastAPI --> LangGraph
+    
+    %% Agent Flow
+    LangGraph --> Agent1
+    Agent1 --> Agent2
+    Agent2 --> Agent3
+    Agent2 --> Agent4
+    Agent3 --> Agent5
+    Agent4 --> Agent5
+    Agent5 --> Agent6
+    Agent6 --> Agent7
+    Agent7 --> Agent8
+    Agent8 --> Agent9
+    Agent9 --> Agent10
+    Agent10 --> FastAPI
+    
+    %% AI Services
+    FastAPI <--> RAG
+    RAG <--> Vector
+    LangGraph <--> Gemini
+    
+    %% Data
+    FastAPI <--> MongoDB
+    FastAPI <--> Redis
+    
+    %% Real-time
+    FastAPI <--> WebSocket
+    FastAPI <--> Push
+    
+    %% External APIs
+    Agent3 <--> Maps
+    Agent4 <--> Railway
+    Agent4 <--> Bus
+    Agent4 <--> TukTuk
+    Agent4 <--> Ride
+    Agent8 <--> Weather
+```
 
 ### **🤖 Multi-Agent AI Core**
 ```
