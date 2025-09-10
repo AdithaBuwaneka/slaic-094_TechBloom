@@ -12,6 +12,11 @@ from app.api.v1.chatbot_routes import router as chatbot_router
 from app.api.v1.weather_routes import router as weather_router
 from app.api.v1.sri_lanka_routes import router as sri_lanka_router  # NEW: Sri Lankan data sources
 from app.api.v1.community_routes import router as community_router  # NEW: Community data reporting
+from app.api.v1.auth_routes import router as auth_router  # NEW: Authentication system
+from app.api.v1.user_preferences_routes import router as user_preferences_router  # NEW: User preferences
+from app.api.v1.admin_routes import router as admin_router  # NEW: Admin dashboard
+from app.api.v1.mobile_routes import router as mobile_router  # NEW: Mobile app endpoints
+from app.api.v1.websocket_routes import router as websocket_router  # NEW: WebSocket real-time features
 
 router = APIRouter()
 
@@ -118,3 +123,18 @@ router.include_router(sri_lanka_router, prefix="/sri-lanka", tags=["Sri Lankan T
 
 # Include the community data routes
 router.include_router(community_router, prefix="/community", tags=["Community Data"])
+
+# Include the authentication routes
+router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+# Include the user preferences routes
+router.include_router(user_preferences_router, prefix="/user-preferences", tags=["User Preferences"])
+
+# Include the admin routes
+router.include_router(admin_router, prefix="/admin", tags=["Admin Dashboard"])
+
+# Include the mobile app routes
+router.include_router(mobile_router, prefix="/mobile", tags=["Mobile App"])
+
+# Include the WebSocket routes
+router.include_router(websocket_router, prefix="/ws", tags=["Real-time WebSocket"])

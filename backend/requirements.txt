@@ -7,6 +7,23 @@ async-timeout==5.0.1
 attrs==25.3.0
 backoff==2.2.1
 bcrypt==4.3.0
+
+# NEW DEPENDENCIES FOR 100% COMPLETE BACKEND
+
+# Push Notifications
+exponent-server-sdk==2.0.0
+
+# Redis for Rate Limiting and Caching
+redis==5.0.1
+
+# WebSocket Support (already included with FastAPI)
+websockets==15.0.1
+
+# Additional Security
+python-jose[cryptography]==3.3.0
+
+# Updated LangChain packages
+langchain-chroma>=0.1.0
 beautifulsoup4==4.13.5
 black==23.11.0
 cachetools==5.5.2
@@ -99,6 +116,7 @@ python-decouple==3.8
 python-dotenv==1.0.0
 python-jose==3.3.0
 python-multipart==0.0.6
+PyJWT==2.8.0
 PyYAML==6.0.2
 redis==5.0.1
 requests==2.32.5

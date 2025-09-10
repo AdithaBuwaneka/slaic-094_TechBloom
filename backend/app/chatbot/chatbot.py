@@ -5,7 +5,10 @@ from pathlib import Path
 from app.core.config import settings
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from typing import Optional

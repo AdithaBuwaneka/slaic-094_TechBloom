@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.services.workflow import run_travel_agent
 from app.core.database import db
+from app.core.auth_middleware import get_current_active_user, get_optional_user
 from bson import ObjectId
 import json
 
@@ -61,7 +62,10 @@ class DisruptionResponse(BaseModel):
     timestamp: datetime
 
 @router.post("/plan-route", response_model=TravelResponse)
-async def plan_travel_route(request: TravelRequest):
+async def plan_travel_route(
+    request: TravelRequest,
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
     """
     Plan a travel route using the multi-agent system.
     
