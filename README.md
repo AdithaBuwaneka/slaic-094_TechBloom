@@ -26,7 +26,7 @@ The **Smart Transit Companion** revolutionizes how Sri Lankans navigate their da
 
 ## 🏗️ **System Architecture**
 
-![System Architecture](https://raw.githubusercontent.com/your-username/your-repo-name/main/System_Architecture.png)
+![System Architecture](https://raw.githubusercontent.com/AdithaBuwaneka/slaic-094_TechBloom/main/System_Architecture.png)
 
 > **System Architecture Overview**: Complete system showing Frontend Applications, Security Layer, FastAPI Backend, 10 AI Agents, Data Layer, Real-time Services, and Sri Lankan Transit API Integrations.
 
@@ -142,48 +142,279 @@ Ai_Challenge/
 
 ---
 
-## 🚦 **Quick Start Guide**
+## 🚦 **How to Run the Complete System**
 
-### **Prerequisites**
+### **📋 Prerequisites**
+Before running the Smart Transit Companion system, ensure you have the following installed:
+
 - **Node.js 18+** with npm/yarn
 - **Python 3.11+** with pip
-- **MongoDB** (local or Atlas)
-- **Redis** (optional, for enhanced caching)
-- **Google Cloud API Keys** (Maps, Gemini)
+- **MongoDB** (local installation or MongoDB Atlas cloud)
+- **Redis** (optional but recommended for caching)
+- **Git** for cloning the repository
 
-### **🚀 1. Backend Setup**
+### **📥 1. Clone the Repository**
+```bash
+git clone https://github.com/AdithaBuwaneka/slaic-094_TechBloom.git
+cd slaic-094_TechBloom
+```
+
+### **🚀 2. Backend Setup (FastAPI with 10 AI Agents)**
+
+#### **Install Python Dependencies**
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env
-# Configure API keys in .env file
+```
+
+#### **Environment Configuration**
+Create a `.env` file in the `backend` directory with the following configuration:
+
+```bash
+# MongoDB Configuration
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DB_NAME=transit_companion
+
+# Redis Configuration (Optional - falls back to memory if not available)
+REDIS_URL=redis://localhost:6379
+
+# JWT Configuration
+JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Google API Keys (Required for full functionality)
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+GOOGLE_GENERATIVE_AI_API_KEY=your-google-gemini-api-key
+
+# Additional LLM APIs (Optional but recommended)
+GROQ_API_KEY=your-groq-api-key
+LANGFUSE_SECRET_KEY=your-langfuse-secret-key
+LANGFUSE_PUBLIC_KEY=your-langfuse-public-key
+
+# External APIs (Optional)
+OPENWEATHER_API_KEY=your-openweather-api-key
+SERPER_API_KEY=your-serper-api-key
+
+# Application Configuration
+DEBUG=False
+CORS_ORIGINS=["http://localhost:3000", "http://localhost:19006"]
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+```
+
+#### **Create Admin User**
+```bash
 python create_admin.py
+# Creates admin user with credentials:
+# Email: admin@example.com
+# Password: admin123456
+```
+
+#### **Start Backend Server**
+```bash
 python run.py
 # Backend runs on http://localhost:8000
+# API docs available at http://localhost:8000/docs
 ```
 
-### **🖥️ 2. Admin Dashboard Setup**
+### **🖥️ 3. Admin Dashboard Setup (Next.js)**
+
+#### **Install Dependencies**
 ```bash
-cd admin-dashboard
+cd ../admin-dashboard
 npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1" > .env.local
+```
+
+#### **Environment Configuration**
+Create a `.env.local` file in the `admin-dashboard` directory:
+
+```bash
+# Backend API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+
+# Feature Flags (Optional)
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+```
+
+#### **Start Dashboard**
+```bash
 npm run dev
 # Dashboard runs on http://localhost:3000
-# Login: admin@example.com / admin123456
+# Login credentials:
+# Email: admin@example.com
+# Password: admin123456
 ```
 
-### **📱 3. Mobile App Setup**
+### **📱 4. Mobile App Setup (React Native + Expo)**
+
+#### **Install Dependencies**
 ```bash
-cd mobile-app
+cd ../mobile-app
 npm install
-npx expo start
-# Follow Expo instructions to run on device/simulator
 ```
 
-### **🎯 4. Access the System**
+#### **Install Expo CLI (if not already installed)**
+```bash
+npm install -g @expo/cli
+```
+
+#### **Start Mobile App**
+```bash
+npx expo start
+# Follow Expo instructions to run on:
+# - iOS Simulator (Mac only)
+# - Android Emulator
+# - Physical device via Expo Go app
+# - Web browser
+```
+
+#### **Device-Specific Configuration**
+The mobile app will automatically detect and connect to the backend:
+- **iOS Simulator**: `http://localhost:8000`
+- **Android Emulator**: `http://10.0.2.2:8000`
+- **Physical Device**: Update IP in `src/services/api/config.ts` if needed
+
+### **🎯 5. Access the Complete System**
+
+#### **Backend API**
+- **Base URL**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
-- **Admin Dashboard**: http://localhost:3000
-- **Mobile App**: Through Expo Go or device build
+- **Health Check**: http://localhost:8000/health
+
+#### **Admin Dashboard**
+- **URL**: http://localhost:3000
+- **Login**: admin@example.com / admin123456
+- **Features**: User management, analytics, AI agent monitoring, push notifications
+
+#### **Mobile App**
+- **Expo DevTools**: Follow instructions in terminal
+- **Features**: Route planning, AI chat, community reports, real-time updates
+
+### **🔑 Required API Keys for Full Functionality**
+
+#### **Essential APIs (Required)**
+1. **Google Maps API Key**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable Maps JavaScript API, Geocoding API, Places API
+   - Create API key and add to `.env`
+
+2. **Google Gemini API Key**
+   - Go to [Google AI Studio](https://aistudio.google.com/)
+   - Generate API key for Gemini 2.0 Flash
+   - Add to `.env` file
+
+#### **Optional APIs (Enhanced Features)**
+3. **Groq API Key** - For additional LLM support
+4. **Langfuse Keys** - For LLM observability
+5. **OpenWeather API** - For weather integration
+6. **Serper API** - For web search capabilities
+
+### **🗄️ Database Setup**
+
+#### **MongoDB Setup Options**
+
+**Option 1: Local MongoDB**
+```bash
+# Install MongoDB locally
+# macOS: brew install mongodb-community
+# Ubuntu: sudo apt install mongodb
+# Windows: Download from MongoDB website
+
+# Start MongoDB service
+mongod
+# Use connection string: mongodb://localhost:27017
+```
+
+**Option 2: MongoDB Atlas (Recommended)**
+```bash
+# 1. Create free account at https://www.mongodb.com/atlas
+# 2. Create a cluster
+# 3. Get connection string
+# 4. Update MONGODB_URL in .env file
+# Example: mongodb+srv://username:password@cluster.mongodb.net/
+```
+
+#### **Redis Setup (Optional)**
+```bash
+# Install Redis locally
+# macOS: brew install redis
+# Ubuntu: sudo apt install redis-server
+# Windows: Download from Redis website
+
+# Start Redis service
+redis-server
+# Use connection string: redis://localhost:6379
+```
+
+### **🔧 Troubleshooting Common Issues**
+
+#### **Backend Issues**
+```bash
+# Port already in use
+# Kill process: sudo lsof -t -i tcp:8000 | xargs kill -9
+
+# MongoDB connection failed
+# Check if MongoDB is running: mongod --version
+
+# Redis connection failed (non-critical)
+# App will fall back to memory cache
+```
+
+#### **Admin Dashboard Issues**
+```bash
+# Build errors
+# Clear Next.js cache: rm -rf .next
+
+# API connection failed
+# Verify backend is running on port 8000
+```
+
+#### **Mobile App Issues**
+```bash
+# Expo cache issues
+# Clear cache: npx expo r -c
+
+# Metro bundler issues
+# Reset: npx expo start --clear
+
+# Device connection issues
+# Ensure devices are on same network
+```
+
+### **📊 System Health Verification**
+
+Once all components are running, verify the system:
+
+1. **Backend Health**: http://localhost:8000/health
+2. **Admin Dashboard**: Login successfully
+3. **Mobile App**: Can create account and plan routes
+4. **AI Agents**: Test route planning to see all 10 agents working
+5. **Database**: Check MongoDB collections are created
+6. **Real-time**: Test push notifications and live updates
+
+### **🚀 Production Deployment Notes**
+
+For production deployment:
+- Use environment variables for all sensitive data
+- Set up proper MongoDB Atlas cluster
+- Configure Redis cluster
+- Use proper domain names instead of localhost
+- Enable HTTPS/TLS
+- Set up monitoring and logging
+- Configure backup strategies
+
+### **📱 Mobile App Testing**
+
+Test the complete mobile app functionality:
+- **Authentication**: Register and login
+- **Route Planning**: Test multi-agent system
+- **AI Chat**: Interact with RAG chatbot
+- **Community**: Submit and view reports
+- **Real-time**: Receive push notifications
+- **Offline**: Test cached route functionality
 
 ---
 
