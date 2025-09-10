@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { communityService } from '../../../src/services/api/communityService';
@@ -40,6 +40,8 @@ export default function Community() {
 
   const [reports, setReports] = useState<CommunityReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<CommunityReport | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Load reports from backend on component mount
   useEffect(() => {
@@ -318,7 +320,16 @@ export default function Community() {
                       </Text>
                     </TouchableOpacity>
                     
-                    <View className="flex-row space-x-3">
+                    <View className="flex-row items-center space-x-3">
+                      <TouchableOpacity
+                        className="bg-blue-100 px-3 py-1 rounded-full"
+                        onPress={() => {
+                          setSelectedReport(report);
+                          setShowReportModal(true);
+                        }}
+                      >
+                        <Text className="text-blue-700 text-xs font-medium">View Details</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity>
                         <Ionicons name="share-outline" size={16} color="#6b7280" />
                       </TouchableOpacity>
@@ -443,6 +454,188 @@ export default function Community() {
           </View>
         )}
       </ScrollView>
+
+      {/* Community Report Details Modal */}
+      <Modal
+        visible={showReportModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView className="flex-1 bg-gray-50">
+          <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200">
+            <Text className="text-xl font-bold text-gray-800">Report Details</Text>
+            <TouchableOpacity onPress={() => setShowReportModal(false)}>
+              <Ionicons name="close" size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView className="flex-1">
+            {selectedReport && (
+              <View className="p-4">
+                {/* Report Header */}
+                <View className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                  <View className="flex-row items-start mb-3">
+                    <Text className="text-3xl mr-3">
+                      {reportTypes.find(t => t.id === selectedReport.type)?.icon}
+                    </Text>
+                    <View className="flex-1">
+                      <Text className="text-xl font-bold text-gray-800 mb-1">
+                        {selectedReport.title}
+                      </Text>
+                      <View className="flex-row items-center space-x-2">
+                        <View className={`px-3 py-1 rounded-full ${getSeverityColor(selectedReport.severity)}`}>
+                          <Text className="text-sm font-semibold capitalize">{selectedReport.severity}</Text>
+                        </View>
+                        <View className="bg-gray-100 px-3 py-1 rounded-full">
+                          <Text className="text-sm font-medium text-gray-700 capitalize">{selectedReport.status}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Report Details */}
+                <View className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                  <Text className="text-lg font-semibold text-gray-800 mb-3">📝 Report Details</Text>
+                  
+                  <View className="space-y-4">
+                    <View>
+                      <Text className="text-base font-medium text-gray-700 mb-1">Description</Text>
+                      <Text className="text-base text-gray-800 leading-6">{selectedReport.description}</Text>
+                    </View>
+                    
+                    <View>
+                      <Text className="text-base font-medium text-gray-700 mb-1">Location</Text>
+                      <View className="flex-row items-center">
+                        <Ionicons name="location" size={16} color="#6b7280" />
+                        <Text className="text-base text-gray-800 ml-2">{selectedReport.location}</Text>
+                      </View>
+                    </View>
+                    
+                    <View>
+                      <Text className="text-base font-medium text-gray-700 mb-1">Category</Text>
+                      <View className="flex-row items-center">
+                        <Text className="text-lg mr-2">
+                          {reportTypes.find(t => t.id === selectedReport.type)?.icon}
+                        </Text>
+                        <Text className="text-base text-gray-800">
+                          {reportTypes.find(t => t.id === selectedReport.type)?.label}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View>
+                      <Text className="text-base font-medium text-gray-700 mb-1">Reported</Text>
+                      <View className="flex-row items-center">
+                        <Ionicons name="time" size={16} color="#6b7280" />
+                        <Text className="text-base text-gray-800 ml-2">
+                          {getTimeAgo(selectedReport.timestamp)} • {selectedReport.timestamp.toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Community Impact */}
+                <View className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                  <Text className="text-lg font-semibold text-gray-800 mb-3">👥 Community Impact</Text>
+                  
+                  <View className="flex-row justify-between items-center">
+                    <View className="flex-row items-center">
+                      <Ionicons 
+                        name={selectedReport.userVoted ? "thumbs-up" : "thumbs-up-outline"} 
+                        size={20} 
+                        color={selectedReport.userVoted ? "#2563eb" : "#6b7280"} 
+                      />
+                      <Text className={`ml-2 text-base font-medium ${
+                        selectedReport.userVoted ? 'text-blue-600' : 'text-gray-700'
+                      }`}>
+                        {selectedReport.votes} people found this helpful
+                      </Text>
+                    </View>
+                    
+                    <TouchableOpacity
+                      className={`px-4 py-2 rounded-lg ${
+                        selectedReport.userVoted ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                      onPress={() => {
+                        handleVote(selectedReport.id);
+                        setSelectedReport(prev => prev ? {
+                          ...prev,
+                          votes: prev.userVoted ? prev.votes - 1 : prev.votes + 1,
+                          userVoted: !prev.userVoted
+                        } : null);
+                      }}
+                    >
+                      <Text className={`font-medium ${
+                        selectedReport.userVoted ? 'text-white' : 'text-gray-700'
+                      }`}>
+                        {selectedReport.userVoted ? 'Helpful ✓' : 'Mark Helpful'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Safety Tips or Related Info */}
+                {selectedReport.type === 'safety' && (
+                  <View className="bg-red-50 rounded-lg p-4 mb-4">
+                    <Text className="text-lg font-semibold text-red-800 mb-2">🛡️ Safety Tips</Text>
+                    <View className="space-y-1">
+                      <Text className="text-sm text-red-700">• Report serious safety issues to authorities immediately</Text>
+                      <Text className="text-sm text-red-700">• Avoid the area if possible until resolved</Text>
+                      <Text className="text-sm text-red-700">• Consider alternative routes</Text>
+                    </View>
+                  </View>
+                )}
+
+                {selectedReport.type === 'traffic' && (
+                  <View className="bg-orange-50 rounded-lg p-4 mb-4">
+                    <Text className="text-lg font-semibold text-orange-800 mb-2">🚦 Traffic Info</Text>
+                    <Text className="text-sm text-orange-700">
+                      Consider using alternative routes or public transport to avoid delays. 
+                      Check real-time traffic updates before traveling.
+                    </Text>
+                  </View>
+                )}
+
+                {selectedReport.type === 'accessibility' && (
+                  <View className="bg-blue-50 rounded-lg p-4 mb-4">
+                    <Text className="text-lg font-semibold text-blue-800 mb-2">♿ Accessibility</Text>
+                    <Text className="text-sm text-blue-700">
+                      This report helps improve accessibility for everyone. Contact transport authorities 
+                      if you need immediate assistance with accessibility features.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Actions */}
+                <View className="flex-row space-x-3 mt-4">
+                  <TouchableOpacity className="flex-1 bg-blue-600 py-3 rounded-lg">
+                    <View className="flex-row items-center justify-center">
+                      <Ionicons name="share-outline" size={18} color="white" />
+                      <Text className="text-white font-semibold text-base ml-2">Share Report</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity className="flex-1 bg-gray-200 py-3 rounded-lg">
+                    <View className="flex-row items-center justify-center">
+                      <Ionicons name="flag-outline" size={18} color="#6b7280" />
+                      <Text className="text-gray-700 font-semibold text-base ml-2">Report Issue</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Close Button */}
+                <TouchableOpacity
+                  className="bg-gray-100 py-3 rounded-lg mt-3"
+                  onPress={() => setShowReportModal(false)}
+                >
+                  <Text className="text-gray-700 text-center font-semibold text-base">Close</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
