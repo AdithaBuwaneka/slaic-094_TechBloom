@@ -137,6 +137,7 @@ class APIClient {
         }
 
         const responseData = await this.handleResponse<T>(response);
+        console.log(`API Response: ${response.status} ${response.statusText}`, responseData);
         
         // Apply response interceptors
         let finalResponse = responseData;

@@ -13,6 +13,8 @@ import {
   CommunityReport,
   UserPreferences
 } from '../../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { webSocketService } from '../websocket/WebSocketService';
 
 class TravelService {
   // =============================================================================
@@ -287,13 +289,37 @@ class TravelService {
   // =============================================================================
 
   async subscribeToRouteUpdates(routeId: string, callback: (update: any) => void): Promise<void> {
-    // TODO: Implement WebSocket subscription for real-time route updates
-    console.log('Subscribed to route updates:', routeId);
+    try {
+      // Subscribe to route-specific updates via WebSocket
+      const subscriptionId = webSocketService.subscribeToRouteUpdates(routeId, callback);
+      
+      // Store subscription for cleanup
+      await AsyncStorage.setItem(`route_subscription_${routeId}`, subscriptionId);
+      
+      console.log('Subscribed to route updates:', routeId, 'subscription:', subscriptionId);
+    } catch (error) {
+      console.error('Error subscribing to route updates:', error);
+      throw error;
+    }
   }
 
   async unsubscribeFromRouteUpdates(routeId: string): Promise<void> {
-    // TODO: Implement WebSocket unsubscription
-    console.log('Unsubscribed from route updates:', routeId);
+    try {
+      // Get stored subscription ID
+      const subscriptionId = await AsyncStorage.getItem(`route_subscription_${routeId}`);
+      
+      if (subscriptionId) {
+        // Unsubscribe from WebSocket
+        webSocketService.unsubscribe(subscriptionId);
+        
+        // Remove stored subscription
+        await AsyncStorage.removeItem(`route_subscription_${routeId}`);
+        
+        console.log('Unsubscribed from route updates:', routeId, 'subscription:', subscriptionId);
+      }
+    } catch (error) {
+      console.error('Error unsubscribing from route updates:', error);
+    }
   }
 
   // =============================================================================

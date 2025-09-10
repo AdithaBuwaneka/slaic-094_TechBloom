@@ -129,11 +129,11 @@ class NotificationService {
       const deviceInfo = {
         device_token: this.expoPushToken,
         platform: Platform.OS as 'ios' | 'android',
-        app_version: '1.0.0', // TODO: Get from app.json
+        app_version: Constants.expoConfig?.version || '1.0.0',
         device_info: {
           model: Device.modelName || 'Unknown',
           os_version: Device.osVersion || 'Unknown',
-          app_build: '1', // TODO: Get from build config
+          app_build: Constants.expoConfig?.runtimeVersion || '1',
         }
       };
 

@@ -10,6 +10,8 @@ import {
   OfflineData, 
   APIResponse 
 } from '../../types';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class MobileService {
   // =============================================================================
@@ -245,7 +247,7 @@ class MobileService {
       apiClient.post('/mobile/analytics/usage', {
         ...usageData,
         timestamp: new Date().toISOString(),
-        app_version: '1.0.0', // TODO: Get from app config
+        app_version: Constants.expoConfig?.version || '1.0.0',
         platform: 'mobile'
       });
     } catch (error) {

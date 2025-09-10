@@ -34,7 +34,7 @@ class WebSocketService {
   // CONNECTION MANAGEMENT
   // =============================================================================
 
-  async connect(userId?: string): Promise<boolean> {
+  async connect(userId?: string, token?: string): Promise<boolean> {
     if (this.ws?.readyState === WebSocket.OPEN) {
       console.log('WebSocket already connected');
       return true;
@@ -49,7 +49,18 @@ class WebSocketService {
       this.isConnecting = true;
       this.userId = userId || null;
       
-      const wsUrl = `${API_CONFIG.WS_URL}${userId ? `?user_id=${userId}` : ''}`;
+      // Get token from secure storage if not provided
+      if (!token && userId) {
+        const { getStoredToken } = await import('../api/client');
+        const apiClient = (await import('../api/client')).apiClient;
+        token = await apiClient.getStoredToken();
+      }
+      
+      if (!token) {
+        throw new Error('Authentication token required for WebSocket connection');
+      }
+      
+      const wsUrl = `${API_CONFIG.WS_URL}?token=${encodeURIComponent(token)}`;
       console.log('Connecting to WebSocket:', wsUrl);
 
       // Use native WebSocket (React Native has built-in WebSocket support)

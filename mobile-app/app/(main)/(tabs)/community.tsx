@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { communityService } from '../../../src/services/api/communityService';
+import { useAuth } from '../../../src/contexts/AppContext';
 
 interface CommunityReport {
   id: string;
@@ -17,7 +19,9 @@ interface CommunityReport {
 }
 
 export default function Community() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'reports' | 'create'>('reports');
+  const [isLoading, setIsLoading] = useState(false);
   const [newReport, setNewReport] = useState({
     type: 'traffic' as const,
     title: '',
@@ -74,6 +78,24 @@ export default function Community() {
 
   const [reports, setReports] = useState<CommunityReport[]>(sampleReports);
 
+  // Load reports from backend on component mount
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      const response = await communityService.getReports();
+      if (response.success && response.data) {
+        // Convert backend format to local format if needed
+        setReports(response.data.reports || sampleReports);
+      }
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      // Keep using sample data as fallback
+    }
+  };
+
   const handleVote = (reportId: string) => {
     setReports(prev => prev.map(report => 
       report.id === reportId 
@@ -86,35 +108,65 @@ export default function Community() {
     ));
   };
 
-  const handleSubmitReport = () => {
+  const handleSubmitReport = async () => {
     if (!newReport.title || !newReport.description || !newReport.location) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    const report: CommunityReport = {
-      id: Date.now().toString(),
-      type: newReport.type,
-      title: newReport.title,
-      description: newReport.description,
-      location: newReport.location,
-      timestamp: new Date(),
-      votes: 1,
-      userVoted: true,
-      severity: newReport.severity,
-      status: 'active'
-    };
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to submit reports');
+      return;
+    }
 
-    setReports(prev => [report, ...prev]);
-    setNewReport({
-      type: 'traffic',
-      title: '',
-      description: '',
-      location: '',
-      severity: 'medium'
-    });
-    setActiveTab('reports');
-    Alert.alert('Success', 'Your report has been submitted successfully!');
+    setIsLoading(true);
+    try {
+      // Submit report to backend
+      const reportData = {
+        type: newReport.type,
+        title: newReport.title,
+        description: newReport.description,
+        location: newReport.location,
+        severity: newReport.severity,
+        user_id: user.user_id
+      };
+
+      const response = await communityService.submitReport(reportData);
+      
+      if (response.success) {
+        // Create local report from backend response
+        const report: CommunityReport = {
+          id: response.data?.report_id || Date.now().toString(),
+          type: newReport.type,
+          title: newReport.title,
+          description: newReport.description,
+          location: newReport.location,
+          timestamp: new Date(),
+          votes: 1,
+          userVoted: true,
+          severity: newReport.severity,
+          status: 'active'
+        };
+
+        setReports(prev => [report, ...prev]);
+        setNewReport({
+          type: 'traffic',
+          title: '',
+          description: '',
+          location: '',
+          severity: 'medium'
+        });
+        setActiveTab('reports');
+        Alert.alert('Success', 'Your report has been submitted successfully!');
+      } else {
+        Alert.alert('Error', response.error?.message || 'Failed to submit report');
+      }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getSeverityColor = (severity: string) => {
@@ -370,11 +422,12 @@ export default function Community() {
 
               {/* Submit Button */}
               <TouchableOpacity
-                className="bg-blue-600 rounded-lg py-3"
+                className={`bg-blue-600 rounded-lg py-3 ${isLoading ? 'opacity-70' : ''}`}
                 onPress={handleSubmitReport}
+                disabled={isLoading}
               >
                 <Text className="text-white text-center text-lg font-semibold">
-                  Submit Report
+                  {isLoading ? 'Submitting...' : 'Submit Report'}
                 </Text>
               </TouchableOpacity>
 

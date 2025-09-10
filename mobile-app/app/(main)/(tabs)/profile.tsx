@@ -5,16 +5,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import ThemeToggle, { ThemePreview } from '../../components/ThemeToggle';
 import { useTheme, ThemeMode } from '../../../src/contexts/ThemeContext';
+import { useAuth } from '../../../src/contexts/AppContext';
 
 export default function Profile() {
   const { theme, mode, setTheme, isDark } = useTheme();
-  const [user, setUser] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+94 77 123 4567',
-    preferredLanguage: 'en',
-    memberSince: 'January 2024'
-  });
+  const { user: authUser, logout } = useAuth();
+  
+  // Use real user data from authentication context
+  const user = {
+    name: authUser?.name || 'User',
+    email: authUser?.email || 'user@example.com',
+    phone: authUser?.profile?.phone || 'Not provided',
+    preferredLanguage: authUser?.travel_preferences?.preferred_language || 'en',
+    memberSince: authUser?.created_at ? new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'
+  };
 
   const [preferences, setPreferences] = useState({
     notifications: {
@@ -79,7 +83,10 @@ export default function Profile() {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => router.replace('/(auth)/login')
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          }
         }
       ]
     );

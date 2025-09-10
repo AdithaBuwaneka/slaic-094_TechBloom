@@ -107,7 +107,9 @@ export default function Home() {
         <View className="px-6 py-8" style={{ backgroundColor: theme.primary }}>
           <View className="flex-row justify-between items-center mb-4">
             <View>
-              <Text className="text-white text-2xl font-bold">Good morning!</Text>
+              <Text className="text-white text-2xl font-bold">
+                Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
+              </Text>
               <Text className="text-blue-100 text-base">Where would you like to go?</Text>
             </View>
             <TouchableOpacity className="p-2 bg-blue-500 rounded-full">

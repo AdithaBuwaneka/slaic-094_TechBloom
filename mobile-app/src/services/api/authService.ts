@@ -76,26 +76,23 @@ class AuthService {
 
   async refreshToken(): Promise<APIResponse<AuthResponse>> {
     try {
-      // TODO: Implement with SecureStore
-      // const refreshToken = await SecureStore.getItemAsync('refresh_token');
+      const refreshToken = await SecureStore.getItemAsync('refresh_token');
       
-      // if (!refreshToken) {
-      //   throw new Error('No refresh token available');
-      // }
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
 
-      // const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REFRESH, {
-      //   refresh_token: refreshToken
-      // });
+      const response = await apiClient.post<AuthResponse>(ENDPOINTS.AUTH.REFRESH, {
+        refresh_token: refreshToken
+      });
 
-      // if (response.success && response.data) {
-      //   await this.storeTokens(response.data);
-      //   await apiClient.setAuthToken(response.data.access_token);
-      // }
+      if (response.success && response.data) {
+        await this.storeTokens(response.data);
+        await apiClient.setAuthToken(response.data.access_token);
+        console.log('Token refreshed successfully');
+      }
 
-      // return response;
-      
-      // Placeholder implementation
-      throw new Error('Refresh token not implemented');
+      return response;
     } catch (error) {
       console.error('Token refresh error:', error);
       throw error;

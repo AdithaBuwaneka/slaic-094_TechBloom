@@ -10,9 +10,7 @@ export const API_CONFIG = {
   BASE_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'http://localhost:8000'  // Web development
-      : Platform.OS === 'ios' 
-        ? 'http://localhost:8000'  // iOS Simulator
-        : 'http://10.0.2.2:8000'   // Android Emulator
+      : 'http://10.226.68.83:8000'  // Expo Go - use actual computer IP
     : 'https://your-production-domain.com',  // Production
   
   // API Version
@@ -30,9 +28,9 @@ export const API_CONFIG = {
   
   // WebSocket URL
   WS_URL: __DEV__ 
-    ? Platform.OS === 'ios'
+    ? Platform.OS === 'web'
       ? 'ws://localhost:8000/api/v1/ws/realtime'
-      : 'ws://10.0.2.2:8000/api/v1/ws/realtime'
+      : 'ws://10.226.68.83:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL
     : 'wss://your-production-domain.com/api/v1/ws/realtime',
 };
 

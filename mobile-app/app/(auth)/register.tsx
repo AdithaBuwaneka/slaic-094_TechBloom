@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { authService } from '../../src/services/api/authService';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,9 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    // Prevent double submission
+    if (loading) return;
+    
     if (!formData.name || !formData.email || !formData.password) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -32,17 +36,36 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // TODO: Implement API registration call
       console.log('Registration attempt:', formData);
       
-      // Simulate successful registration
-      setTimeout(() => {
+      // Prepare registration data for backend
+      const registrationData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        preferred_language: formData.language
+      };
+      
+      // Call the backend API
+      console.log('Calling authService.register with:', registrationData);
+      const response = await authService.register(registrationData);
+      console.log('Registration API response:', response);
+      
+      if (response.success) {
+        console.log('Registration successful:', response.data);
         setLoading(false);
+        // Navigate to onboarding welcome page
         router.replace('/(onboarding)/welcome');
-      }, 1500);
+      } else {
+        setLoading(false);
+        console.log('Registration failed:', response.error);
+        Alert.alert('Registration Failed', response.error?.message || 'Please try again.');
+      }
     } catch (error) {
       setLoading(false);
-      Alert.alert('Error', 'Registration failed. Please try again.');
+      console.error('Registration error:', error);
+      Alert.alert('Error', 'Registration failed. Please check your connection and try again.');
     }
   };
 
@@ -52,51 +75,61 @@ export default function Register() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 py-4">
-        {/* Header */}
-        <View className="items-center mb-6">
-          <Text className="text-2xl font-bold text-blue-600 mb-2">
-            Create Account
-          </Text>
-          <Text className="text-base text-gray-600 text-center">
-            Join the smart transit revolution in Sri Lanka
-          </Text>
-        </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView 
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="flex-1 justify-center px-6 py-8 min-h-full">
+            {/* Header */}
+            <View className="items-center mb-8">
+              <Text className="text-3xl font-bold text-blue-600 mb-3">
+                Create Account
+              </Text>
+              <Text className="text-base text-gray-600 text-center">
+                Join the smart transit revolution in Sri Lanka
+              </Text>
+            </View>
 
-        {/* Registration Form */}
-        <View className="space-y-4">
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-2">Full Name *</Text>
-            <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
-              placeholder="Enter your full name"
-              value={formData.name}
-              onChangeText={(value) => updateForm('name', value)}
-            />
-          </View>
+            {/* Registration Form */}
+            <View className="w-full max-w-sm mx-auto">
+              <View className="mb-4">
+                <Text className="text-sm font-medium text-gray-700 mb-2">Full Name *</Text>
+                <TextInput
+                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChangeText={(value) => updateForm('name', value)}
+                />
+              </View>
 
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-2">Email *</Text>
-            <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChangeText={(value) => updateForm('email', value)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+              <View className="mb-4">
+                <Text className="text-sm font-medium text-gray-700 mb-2">Email *</Text>
+                <TextInput
+                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChangeText={(value) => updateForm('email', value)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
-          <View>
-            <Text className="text-sm font-medium text-gray-700 mb-2">Phone Number</Text>
-            <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
-              placeholder="+94 771234567"
-              value={formData.phone}
-              onChangeText={(value) => updateForm('phone', value)}
-              keyboardType="phone-pad"
-            />
-          </View>
+              <View className="mb-4">
+                <Text className="text-sm font-medium text-gray-700 mb-2">Phone Number</Text>
+                <TextInput
+                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  placeholder="+94 771234567"
+                  value={formData.phone}
+                  onChangeText={(value) => updateForm('phone', value)}
+                  keyboardType="phone-pad"
+                />
+              </View>
 
           <View>
             <Text className="text-sm font-medium text-gray-700 mb-2">Password *</Text>
@@ -160,14 +193,16 @@ export default function Register() {
 
           <TouchableOpacity
             className="mt-4"
-            onPress={() => router.back()}
+            onPress={() => router.push('/(auth)/login')}
           >
             <Text className="text-blue-600 text-center text-base">
               Already have an account? Sign In
             </Text>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

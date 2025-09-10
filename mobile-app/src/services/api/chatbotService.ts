@@ -11,6 +11,7 @@ import {
   ChatContext,
   APIResponse 
 } from '../../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ChatbotService {
   // =============================================================================
@@ -68,14 +69,13 @@ class ChatbotService {
 
   async getConversationHistory(limit: number = 20): Promise<ChatMessage[]> {
     try {
-      // TODO: Implement with AsyncStorage
-      // const historyKey = 'chat_history';
-      // const storedHistory = await AsyncStorage.getItem(historyKey);
-      // 
-      // if (storedHistory) {
-      //   const messages: ChatMessage[] = JSON.parse(storedHistory);
-      //   return messages.slice(-limit);
-      // }
+      const historyKey = 'chat_history';
+      const storedHistory = await AsyncStorage.getItem(historyKey);
+      
+      if (storedHistory) {
+        const messages: ChatMessage[] = JSON.parse(storedHistory);
+        return messages.slice(-limit);
+      }
       
       return [];
     } catch (error) {
@@ -86,24 +86,22 @@ class ChatbotService {
 
   async saveMessage(message: ChatMessage): Promise<void> {
     try {
-      // TODO: Implement with AsyncStorage
-      // const historyKey = 'chat_history';
-      // const existingHistory = await AsyncStorage.getItem(historyKey);
-      // 
-      // let messages: ChatMessage[] = [];
-      // if (existingHistory) {
-      //   messages = JSON.parse(existingHistory);
-      // }
-      // 
-      // messages.push(message);
-      // 
-      // // Keep only last 100 messages to prevent storage bloat
-      // if (messages.length > 100) {
-      //   messages = messages.slice(-100);
-      // }
-      // 
-      // await AsyncStorage.setItem(historyKey, JSON.stringify(messages));
+      const historyKey = 'chat_history';
+      const existingHistory = await AsyncStorage.getItem(historyKey);
       
+      let messages: ChatMessage[] = [];
+      if (existingHistory) {
+        messages = JSON.parse(existingHistory);
+      }
+      
+      messages.push(message);
+      
+      // Keep only last 100 messages to prevent storage bloat
+      if (messages.length > 100) {
+        messages = messages.slice(-100);
+      }
+      
+      await AsyncStorage.setItem(historyKey, JSON.stringify(messages));
       console.log('Message saved to history');
     } catch (error) {
       console.error('Error saving message:', error);
@@ -112,10 +110,8 @@ class ChatbotService {
 
   async clearConversationHistory(): Promise<void> {
     try {
-      // TODO: Implement with AsyncStorage
-      // await AsyncStorage.removeItem('chat_history');
-      // await AsyncStorage.removeItem('chat_context');
-      
+      await AsyncStorage.removeItem('chat_history');
+      await AsyncStorage.removeItem('chat_context');
       console.log('Conversation history cleared');
     } catch (error) {
       console.error('Error clearing conversation history:', error);
@@ -128,18 +124,16 @@ class ChatbotService {
 
   async updateChatContext(context: Partial<ChatContext>): Promise<void> {
     try {
-      // TODO: Implement with AsyncStorage
-      // const contextKey = 'chat_context';
-      // const existingContext = await AsyncStorage.getItem(contextKey);
-      // 
-      // let currentContext: ChatContext = {};
-      // if (existingContext) {
-      //   currentContext = JSON.parse(existingContext);
-      // }
-      // 
-      // const updatedContext = { ...currentContext, ...context };
-      // await AsyncStorage.setItem(contextKey, JSON.stringify(updatedContext));
+      const contextKey = 'chat_context';
+      const existingContext = await AsyncStorage.getItem(contextKey);
       
+      let currentContext: ChatContext = {};
+      if (existingContext) {
+        currentContext = JSON.parse(existingContext);
+      }
+      
+      const updatedContext = { ...currentContext, ...context };
+      await AsyncStorage.setItem(contextKey, JSON.stringify(updatedContext));
       console.log('Chat context updated:', context);
     } catch (error) {
       console.error('Error updating chat context:', error);
@@ -148,12 +142,9 @@ class ChatbotService {
 
   async getChatContext(): Promise<ChatContext | null> {
     try {
-      // TODO: Implement with AsyncStorage
-      // const contextKey = 'chat_context';
-      // const storedContext = await AsyncStorage.getItem(contextKey);
-      // return storedContext ? JSON.parse(storedContext) : null;
-      
-      return null;
+      const contextKey = 'chat_context';
+      const storedContext = await AsyncStorage.getItem(contextKey);
+      return storedContext ? JSON.parse(storedContext) : null;
     } catch (error) {
       console.error('Error getting chat context:', error);
       return null;
@@ -285,8 +276,8 @@ class ChatbotService {
     const context: ChatContext = {
       user_location: {
         name: area,
-        latitude: 0, // TODO: Get actual coordinates
-        longitude: 0
+        latitude: 6.9271, // Default to Colombo coordinates
+        longitude: 79.8612
       }
     };
 

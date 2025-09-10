@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, RouteOption, DisruptionAlert, CommunityReport } from '../types';
 import { authService } from '../services/api/authService';
+import { apiClient } from '../services/api/client';
 import { notificationService } from '../services/notifications/NotificationService';
 import { webSocketService } from '../services/websocket/WebSocketService';
 import { initializeAPI } from '../services/api';
@@ -152,8 +153,11 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const initializeUserServices = async (userId: string) => {
     try {
+      // Get stored auth token for WebSocket authentication
+      const token = await apiClient.getStoredToken();
+      
       // Connect WebSocket for real-time updates
-      const websocketConnected = await webSocketService.connect(userId);
+      const websocketConnected = await webSocketService.connect(userId, token);
       
       if (websocketConnected) {
         // Subscribe to real-time updates
