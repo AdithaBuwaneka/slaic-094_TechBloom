@@ -72,7 +72,7 @@ async def report_traffic(
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.submit_traffic_report(
+        result = await community_service.submit_traffic_report(
             location=report.location,
             severity=report.severity,
             description=report.description,
@@ -102,7 +102,7 @@ async def report_delay(
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.submit_delay_report(
+        result = await community_service.submit_delay_report(
             route=report.route,
             mode=report.mode,
             delay_minutes=report.delay_minutes,
@@ -133,7 +133,7 @@ async def update_fare(
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.submit_fare_update(
+        result = await community_service.submit_fare_update(
             route=update.route,
             mode=update.mode,
             fare_amount=update.fare_amount,
@@ -164,7 +164,7 @@ async def report_accessibility(
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.submit_accessibility_report(
+        result = await community_service.submit_accessibility_report(
             location=report.location,
             facility_type=report.facility_type,
             status=report.status,
@@ -196,7 +196,7 @@ async def get_community_reports(
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.get_recent_reports(
+        result = await community_service.get_recent_reports(
             report_type=report_type,
             location=location,
             limit=limit
@@ -219,7 +219,7 @@ async def get_community_stats(lang: Optional[str] = "en"):
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
             
-        result = community_service.get_community_stats()
+        result = await community_service.get_community_stats()
         
         if result["status"] == "error":
             raise HTTPException(status_code=500, detail=result["error"])

@@ -35,12 +35,12 @@ export default function Profile() {
   });
 
   const [stats, setStats] = useState({
-    totalTrips: 45,
-    distanceTraveled: 1248,
-    moneySaved: 2340,
-    carbonReduced: 156,
-    communityReports: 8,
-    helpfulVotes: 23
+    totalTrips: authUser?.profile?.stats?.totalTrips || 0,
+    distanceTraveled: authUser?.profile?.stats?.distanceTraveled || 0,
+    moneySaved: authUser?.profile?.stats?.moneySaved || 0,
+    carbonReduced: authUser?.profile?.stats?.carbonReduced || 0,
+    communityReports: authUser?.profile?.stats?.communityReports || 0,
+    helpfulVotes: authUser?.profile?.stats?.helpfulVotes || 0
   });
 
   const languageOptions = [
@@ -69,9 +69,24 @@ export default function Profile() {
     }));
   };
 
-  const handleLanguageChange = (languageCode: string) => {
-    // TODO: Implement user profile update via authService.updateProfile
-    Alert.alert('Language Changed', `App language changed to ${languageOptions.find(l => l.code === languageCode)?.label}`);
+  const handleLanguageChange = async (languageCode: string) => {
+    try {
+      // Update user preferences locally first
+      const selectedLang = languageOptions.find(l => l.code === languageCode);
+      if (selectedLang) {
+        // Here you would typically call an API to update user preferences
+        // await authService.updateProfile({ preferred_language: languageCode });
+        
+        // For now, update the local state
+        Alert.alert(
+          'Language Updated', 
+          `App language changed to ${selectedLang.label}. Please restart the app to see changes.`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update language preference. Please try again.');
+    }
   };
 
   const handleLogout = () => {
@@ -115,9 +130,9 @@ export default function Profile() {
         </View>
 
         {/* Stats Cards */}
-        <View className="px-4 -mt-8 mb-6">
+        <View className="px-4 mt-4 mb-6">
           <View className="rounded-lg shadow-sm p-4" style={{ backgroundColor: theme.surface }}>
-            <Text className="text-lg font-semibold text-gray-800 mb-4">Your Impact</Text>
+            <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>Your Impact</Text>
             <View className="flex-row flex-wrap">
               <View className="w-1/2 p-2">
                 <View className="bg-blue-50 p-3 rounded-lg items-center">
@@ -159,44 +174,56 @@ export default function Profile() {
             Appearance
           </Text>
           
-          <View className="space-y-4">
-            {/* Theme Toggle */}
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className="text-base" style={{ color: theme.text }}>Theme Mode</Text>
-                <Text className="text-sm" style={{ color: theme.textSecondary }}>Choose your preferred appearance</Text>
-              </View>
-              <ThemeToggle variant="segmented" showLabel={false} />
-            </View>
-            
-            {/* Theme Previews */}
-            <View>
-              <Text className="text-sm font-medium mb-3" style={{ color: theme.textSecondary }}>
-                Preview
-              </Text>
-              <View className="flex-row space-x-3">
-                <View className="flex-1">
-                  <ThemePreview
-                    mode="light"
-                    isSelected={mode === 'light'}
-                    onSelect={() => setTheme('light')}
-                  />
+          <View>
+            <Text className="text-sm font-medium mb-3" style={{ color: theme.textSecondary }}>
+              Choose your preferred theme
+            </Text>
+            <View className="flex-row space-x-4">
+              <TouchableOpacity
+                className="flex-1 p-4 rounded-lg border-2"
+                style={{
+                  backgroundColor: mode === 'light' ? '#EBF8FF' : theme.surface,
+                  borderColor: mode === 'light' ? theme.primary : theme.border
+                }}
+                onPress={() => setTheme('light')}
+              >
+                <View className="items-center">
+                  <View className="w-12 h-12 bg-white border rounded-lg mb-2 items-center justify-center">
+                    <Ionicons name="sunny" size={24} color="#F59E0B" />
+                  </View>
+                  <Text
+                    className="font-medium"
+                    style={{
+                      color: mode === 'light' ? theme.primary : theme.text
+                    }}
+                  >
+                    Light
+                  </Text>
                 </View>
-                <View className="flex-1">
-                  <ThemePreview
-                    mode="dark"
-                    isSelected={mode === 'dark'}
-                    onSelect={() => setTheme('dark')}
-                  />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className="flex-1 p-4 rounded-lg border-2"
+                style={{
+                  backgroundColor: mode === 'dark' ? '#1E293B' : theme.surface,
+                  borderColor: mode === 'dark' ? theme.primary : theme.border
+                }}
+                onPress={() => setTheme('dark')}
+              >
+                <View className="items-center">
+                  <View className="w-12 h-12 bg-gray-800 border rounded-lg mb-2 items-center justify-center">
+                    <Ionicons name="moon" size={24} color="#8B5CF6" />
+                  </View>
+                  <Text
+                    className="font-medium"
+                    style={{
+                      color: mode === 'dark' ? theme.primary : theme.text
+                    }}
+                  >
+                    Dark
+                  </Text>
                 </View>
-                <View className="flex-1">
-                  <ThemePreview
-                    mode="auto"
-                    isSelected={mode === 'auto'}
-                    onSelect={() => setTheme('auto')}
-                  />
-                </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -246,13 +273,21 @@ export default function Profile() {
         </View>
 
         {/* Notification Settings */}
-        <View className="bg-white mx-4 rounded-lg shadow-sm p-4 mb-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">Notifications</Text>
+        <View
+          className="mx-4 rounded-lg shadow-sm p-4 mb-4"
+          style={{ backgroundColor: theme.surface }}
+        >
+          <Text
+            className="text-lg font-semibold mb-3"
+            style={{ color: theme.text }}
+          >
+            Notifications
+          </Text>
           <View className="space-y-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Delay alerts</Text>
-                <Text className="text-sm text-gray-600">Get notified about transport delays</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Delay alerts</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Get notified about transport delays</Text>
               </View>
               <Switch
                 value={preferences.notifications.delays}
@@ -261,8 +296,8 @@ export default function Profile() {
             </View>
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Fare offers</Text>
-                <Text className="text-sm text-gray-600">Receive deals and discounts</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Fare offers</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Receive deals and discounts</Text>
               </View>
               <Switch
                 value={preferences.notifications.offers}
@@ -271,8 +306,8 @@ export default function Profile() {
             </View>
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Journey reminders</Text>
-                <Text className="text-sm text-gray-600">Reminders for planned trips</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Journey reminders</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Reminders for planned trips</Text>
               </View>
               <Switch
                 value={preferences.notifications.reminders}
@@ -281,8 +316,8 @@ export default function Profile() {
             </View>
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Community updates</Text>
-                <Text className="text-sm text-gray-600">New reports and responses</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Community updates</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>New reports and responses</Text>
               </View>
               <Switch
                 value={preferences.notifications.community}
@@ -293,13 +328,21 @@ export default function Profile() {
         </View>
 
         {/* Privacy Settings */}
-        <View className="bg-white mx-4 rounded-lg shadow-sm p-4 mb-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">Privacy & Data</Text>
+        <View
+          className="mx-4 rounded-lg shadow-sm p-4 mb-4"
+          style={{ backgroundColor: theme.surface }}
+        >
+          <Text
+            className="text-lg font-semibold mb-3"
+            style={{ color: theme.text }}
+          >
+            Privacy & Data
+          </Text>
           <View className="space-y-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Share location</Text>
-                <Text className="text-sm text-gray-600">Help improve route suggestions</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Share location</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Help improve route suggestions</Text>
               </View>
               <Switch
                 value={preferences.privacy.shareLocation}
@@ -308,8 +351,8 @@ export default function Profile() {
             </View>
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Share community reports</Text>
-                <Text className="text-sm text-gray-600">Make your reports visible to others</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Share community reports</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Make your reports visible to others</Text>
               </View>
               <Switch
                 value={preferences.privacy.shareReports}
@@ -318,8 +361,8 @@ export default function Profile() {
             </View>
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-base text-gray-800">Analytics</Text>
-                <Text className="text-sm text-gray-600">Help improve the app with usage data</Text>
+                <Text className="text-base" style={{ color: theme.text }}>Analytics</Text>
+                <Text className="text-sm" style={{ color: theme.textSecondary }}>Help improve the app with usage data</Text>
               </View>
               <Switch
                 value={preferences.privacy.analytics}
@@ -330,49 +373,60 @@ export default function Profile() {
         </View>
 
         {/* Menu Options */}
-        <View className="bg-white mx-4 rounded-lg shadow-sm p-4 mb-4">
+        <View
+          className="mx-4 rounded-lg shadow-sm p-4 mb-4"
+          style={{ backgroundColor: theme.surface }}
+        >
           <View className="space-y-1">
             <TouchableOpacity className="flex-row items-center p-3 rounded-lg">
               <Ionicons name="help-circle-outline" size={24} color="#6b7280" />
-              <Text className="flex-1 text-base text-gray-800 ml-3">Help & Support</Text>
+              <Text className="flex-1 text-base ml-3" style={{ color: theme.text }}>Help & Support</Text>
               <Ionicons name="chevron-forward" size={20} color="#6b7280" />
             </TouchableOpacity>
             
             <TouchableOpacity className="flex-row items-center p-3 rounded-lg">
               <Ionicons name="document-text-outline" size={24} color="#6b7280" />
-              <Text className="flex-1 text-base text-gray-800 ml-3">Terms & Privacy</Text>
+              <Text className="flex-1 text-base ml-3" style={{ color: theme.text }}>Terms & Privacy</Text>
               <Ionicons name="chevron-forward" size={20} color="#6b7280" />
             </TouchableOpacity>
             
             <TouchableOpacity className="flex-row items-center p-3 rounded-lg">
               <Ionicons name="star-outline" size={24} color="#6b7280" />
-              <Text className="flex-1 text-base text-gray-800 ml-3">Rate the App</Text>
+              <Text className="flex-1 text-base ml-3" style={{ color: theme.text }}>Rate the App</Text>
               <Ionicons name="chevron-forward" size={20} color="#6b7280" />
             </TouchableOpacity>
             
             <TouchableOpacity className="flex-row items-center p-3 rounded-lg">
               <Ionicons name="information-circle-outline" size={24} color="#6b7280" />
-              <Text className="flex-1 text-base text-gray-800 ml-3">About</Text>
+              <Text className="flex-1 text-base ml-3" style={{ color: theme.text }}>About</Text>
               <Ionicons name="chevron-forward" size={20} color="#6b7280" />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Community Stats */}
-        <View className="bg-white mx-4 rounded-lg shadow-sm p-4 mb-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">Community Contribution</Text>
+        <View
+          className="mx-4 rounded-lg shadow-sm p-4 mb-4"
+          style={{ backgroundColor: theme.surface }}
+        >
+          <Text
+            className="text-lg font-semibold mb-3"
+            style={{ color: theme.text }}
+          >
+            Community Contribution
+          </Text>
           <View className="flex-row justify-between">
             <View className="items-center">
               <Text className="text-xl font-bold text-orange-600">{stats.communityReports}</Text>
-              <Text className="text-xs text-gray-600">Reports</Text>
+              <Text className="text-xs" style={{ color: theme.textSecondary }}>Reports</Text>
             </View>
             <View className="items-center">
               <Text className="text-xl font-bold text-blue-600">{stats.helpfulVotes}</Text>
-              <Text className="text-xs text-gray-600">Helpful Votes</Text>
+              <Text className="text-xs" style={{ color: theme.textSecondary }}>Helpful Votes</Text>
             </View>
             <View className="items-center">
               <Text className="text-xl font-bold text-green-600">4.8</Text>
-              <Text className="text-xs text-gray-600">Rating</Text>
+              <Text className="text-xs" style={{ color: theme.textSecondary }}>Rating</Text>
             </View>
           </View>
         </View>

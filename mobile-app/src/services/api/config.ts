@@ -95,10 +95,13 @@ export const ENDPOINTS = {
   // Community Features
   COMMUNITY: {
     TRAFFIC: '/community/traffic',
-    DELAYS: '/community/delays',
+    DELAYS: '/community/delays', 
     FARES: '/community/fares',
     ACCESSIBILITY: '/community/accessibility',
     SAFETY: '/community/safety',
+    REPORTS: '/community/reports',
+    STATS: '/community/stats',
+    HEALTH: '/community/health',
   },
   
   // Weather Integration

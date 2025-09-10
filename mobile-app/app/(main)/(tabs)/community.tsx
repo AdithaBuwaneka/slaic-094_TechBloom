@@ -54,20 +54,20 @@ export default function Community() {
       const response = await communityService.getAllReports({ limit: 20 });
       if (response.success && response.data) {
         // Convert backend format to local format if needed
-        const backendReports = response.data.reports || [];
+        const backendReports = response.data.data?.reports || response.data.reports || [];
         
         // Map backend reports to local format
         const mappedReports = backendReports.map(report => ({
-          id: report.id,
+          id: report.report_id || report._id,
           type: report.type,
-          title: report.title,
+          title: report.title || `${report.type.charAt(0).toUpperCase() + report.type.slice(1)} Report - ${report.location}`,
           description: report.description,
           location: report.location,
-          timestamp: new Date(report.reported_at || new Date()),
+          timestamp: new Date(report.reported_at || report.timestamp || new Date()),
           votes: report.votes || 0,
           userVoted: report.user_voted || false,
-          severity: report.severity,
-          status: report.status
+          severity: report.severity || 'medium',
+          status: report.status || 'active'
         }));
         
         setReports(mappedReports);

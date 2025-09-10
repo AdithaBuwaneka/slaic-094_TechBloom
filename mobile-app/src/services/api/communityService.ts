@@ -290,7 +290,7 @@ class CommunityService {
       });
     }
 
-    const endpoint = `/community/reports${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const endpoint = `${ENDPOINTS.COMMUNITY.REPORTS}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiClient.get(endpoint);
   }
 
@@ -384,7 +384,7 @@ class CommunityService {
       resolution_time_avg: number;
     }[];
   }>> {
-    return apiClient.get('/community/stats');
+    return apiClient.get(ENDPOINTS.COMMUNITY.STATS);
   }
 
   // =============================================================================
