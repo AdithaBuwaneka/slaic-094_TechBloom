@@ -69,7 +69,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Add middleware (order matters - first added = outermost)
 app.add_middleware(ErrorHandlerMiddleware)
-# app.add_middleware(RateLimitMiddleware)  # Temporarily disabled for testing
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
