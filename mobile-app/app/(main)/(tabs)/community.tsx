@@ -76,7 +76,8 @@ export default function Community() {
     }
   ];
 
-  const [reports, setReports] = useState<CommunityReport[]>(sampleReports);
+  const [reports, setReports] = useState<CommunityReport[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load reports from backend on component mount
   useEffect(() => {
@@ -85,14 +86,35 @@ export default function Community() {
 
   const loadReports = async () => {
     try {
-      const response = await communityService.getReports();
+      setIsLoading(true);
+      const response = await communityService.getAllReports({ limit: 20 });
       if (response.success && response.data) {
         // Convert backend format to local format if needed
-        setReports(response.data.reports || sampleReports);
+        const backendReports = response.data.reports || [];
+        
+        // Map backend reports to local format
+        const mappedReports = backendReports.map(report => ({
+          id: report.id,
+          type: report.type,
+          title: report.title,
+          description: report.description,
+          location: report.location,
+          timestamp: new Date(report.reported_at || new Date()),
+          votes: report.votes || 0,
+          userVoted: report.user_voted || false,
+          severity: report.severity,
+          status: report.status
+        }));
+        
+        setReports(mappedReports);
+      } else {
+        setReports([]);
       }
     } catch (error) {
       console.error('Error loading reports:', error);
-      // Keep using sample data as fallback
+      setReports([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 

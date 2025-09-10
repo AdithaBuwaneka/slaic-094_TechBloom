@@ -230,6 +230,41 @@ class CommunityService {
   // GENERAL COMMUNITY FEATURES
   // =============================================================================
 
+  async submitReport(reportData: {
+    type: 'traffic' | 'delay' | 'fare' | 'accessibility';
+    title: string;
+    description: string;
+    location: string;
+    severity: 'low' | 'medium' | 'high';
+    user_id: string;
+  }): Promise<APIResponse<{
+    report_id: string;
+    status: string;
+    message: string;
+  }>> {
+    const report = {
+      ...reportData,
+      location_coords: {
+        latitude: 6.9271, // Default to Colombo
+        longitude: 79.8612
+      },
+      metadata: {
+        submitted_via: 'mobile_app',
+        app_version: '1.0.0'
+      }
+    };
+
+    // Route to appropriate endpoint based on type
+    const endpointMap = {
+      'traffic': ENDPOINTS.COMMUNITY.TRAFFIC,
+      'delay': ENDPOINTS.COMMUNITY.DELAYS,
+      'fare': ENDPOINTS.COMMUNITY.FARES,
+      'accessibility': ENDPOINTS.COMMUNITY.ACCESSIBILITY
+    };
+
+    return apiClient.post(endpointMap[reportData.type], report);
+  }
+
   async getAllReports(filters?: {
     type?: CommunityReport['type'];
     severity?: CommunityReport['severity'];

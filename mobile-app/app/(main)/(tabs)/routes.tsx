@@ -1,20 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
-interface RouteOption {
-  id: string;
-  title: string;
-  duration: string;
-  fare: string;
-  modes: string[];
-  steps: RouteStep[];
-  aiRecommendation: string;
-  disruptions: string[];
-  carbonFootprint: string;
-  agentsUsed: string[];
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RouteOption } from '../../src/types';
 
 interface RouteStep {
   mode: string;
@@ -26,8 +15,30 @@ interface RouteStep {
 export default function Routes() {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const [activeRoutes, setActiveRoutes] = useState<RouteOption[]>([]);
+  const [recentRoutes, setRecentRoutes] = useState<RouteOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample route data (in real app, this would come from API)
+  // Load recent routes from AsyncStorage on component mount
+  useEffect(() => {
+    loadRecentRoutes();
+  }, []);
+
+  const loadRecentRoutes = async () => {
+    try {
+      setIsLoading(true);
+      const storedRoutes = await AsyncStorage.getItem('recent_routes');
+      if (storedRoutes) {
+        const routes: RouteOption[] = JSON.parse(storedRoutes);
+        setRecentRoutes(routes.slice(0, 5)); // Show last 5 routes
+      }
+    } catch (error) {
+      console.error('Error loading recent routes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Backup sample routes (only used for UI demonstration)
   const sampleRoutes: RouteOption[] = [
     {
       id: '1',
@@ -171,7 +182,12 @@ export default function Routes() {
         <View className="px-4 mt-4">
           <Text className="text-lg font-semibold text-gray-800 mb-3">Recent Route Options</Text>
           
-          {sampleRoutes.length === 0 ? (
+          {isLoading ? (
+            <View className="bg-white p-6 rounded-lg shadow-sm items-center">
+              <Text className="text-4xl mb-2">🔄</Text>
+              <Text className="text-lg font-medium text-gray-800">Loading recent routes...</Text>
+            </View>
+          ) : recentRoutes.length === 0 ? (
             <View className="bg-white p-6 rounded-lg shadow-sm items-center">
               <Text className="text-4xl mb-2">🗺️</Text>
               <Text className="text-lg font-medium text-gray-800 mb-2">No routes planned yet</Text>
@@ -184,7 +200,7 @@ export default function Routes() {
             </View>
           ) : (
             <View className="space-y-4">
-              {sampleRoutes.map((route) => (
+              {recentRoutes.map((route) => (
                 <View key={route.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                   <TouchableOpacity
                     className="p-4"

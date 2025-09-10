@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authService } from '../../src/services/api/authService';
+import { useAuth } from '../../src/contexts/AppContext';
 
 export default function Register() {
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,20 +48,19 @@ export default function Register() {
         preferred_language: formData.language
       };
       
-      // Call the backend API
-      console.log('Calling authService.register with:', registrationData);
-      const response = await authService.register(registrationData);
-      console.log('Registration API response:', response);
+      // Call the AppContext register function (which sets user state)
+      console.log('Calling register with:', registrationData);
+      const success = await register(registrationData);
       
-      if (response.success) {
-        console.log('Registration successful:', response.data);
-        setLoading(false);
+      setLoading(false);
+      
+      if (success) {
+        console.log('Registration successful');
         // Navigate to onboarding welcome page
         router.replace('/(onboarding)/welcome');
       } else {
-        setLoading(false);
-        console.log('Registration failed:', response.error);
-        Alert.alert('Registration Failed', response.error?.message || 'Please try again.');
+        console.log('Registration failed');
+        Alert.alert('Registration Failed', 'Please try again.');
       }
     } catch (error) {
       setLoading(false);
