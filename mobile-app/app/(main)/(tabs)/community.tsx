@@ -7,7 +7,7 @@ import { useAuth } from '../../../src/contexts/AppContext';
 
 interface CommunityReport {
   id: string;
-  type: 'traffic' | 'delay' | 'fare' | 'accessibility';
+  type: 'traffic' | 'delay' | 'fare' | 'accessibility' | 'safety';
   title: string;
   description: string;
   location: string;
@@ -15,13 +15,12 @@ interface CommunityReport {
   votes: number;
   userVoted: boolean;
   severity: 'low' | 'medium' | 'high';
-  status: 'active' | 'resolved';
+  status: 'active' | 'resolved' | 'verified';
 }
 
 export default function Community() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'reports' | 'create'>('reports');
-  const [isLoading, setIsLoading] = useState(false);
   const [newReport, setNewReport] = useState({
     type: 'traffic' as const,
     title: '',
@@ -34,47 +33,10 @@ export default function Community() {
     { id: 'traffic', label: 'Traffic Conditions', icon: '🚦', color: 'bg-red-100 text-red-700' },
     { id: 'delay', label: 'Transit Delays', icon: '⏰', color: 'bg-orange-100 text-orange-700' },
     { id: 'fare', label: 'Fare Updates', icon: '💰', color: 'bg-green-100 text-green-700' },
-    { id: 'accessibility', label: 'Accessibility', icon: '♿', color: 'bg-blue-100 text-blue-700' }
+    { id: 'accessibility', label: 'Accessibility', icon: '♿', color: 'bg-blue-100 text-blue-700' },
+    { id: 'safety', label: 'Safety Issues', icon: '🛡️', color: 'bg-purple-100 text-purple-700' }
   ];
 
-  const sampleReports: CommunityReport[] = [
-    {
-      id: '1',
-      type: 'traffic',
-      title: 'Heavy traffic on Galle Road',
-      description: 'Unusual traffic congestion near Bambalapitiya junction due to road work',
-      location: 'Galle Road, Bambalapitiya',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      votes: 15,
-      userVoted: false,
-      severity: 'high',
-      status: 'active'
-    },
-    {
-      id: '2',
-      type: 'delay',
-      title: 'Train delays on Main Line',
-      description: 'All trains running 20-30 minutes late due to signal issue near Ragama',
-      location: 'Main Line Railway',
-      timestamp: new Date(Date.now() - 45 * 60 * 1000),
-      votes: 23,
-      userVoted: true,
-      severity: 'medium',
-      status: 'active'
-    },
-    {
-      id: '3',
-      type: 'fare',
-      title: 'Bus fare increase Route 138',
-      description: 'Fare increased from Rs. 25 to Rs. 30 for Colombo-Nugegoda route',
-      location: 'Route 138',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      votes: 8,
-      userVoted: false,
-      severity: 'low',
-      status: 'active'
-    }
-  ];
 
   const [reports, setReports] = useState<CommunityReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -291,7 +253,27 @@ export default function Community() {
 
             {/* Reports */}
             <View className="space-y-4">
-              {reports.map((report) => (
+              {isLoading ? (
+                <View className="bg-white rounded-lg shadow-sm p-6 items-center">
+                  <Text className="text-4xl mb-2">🔄</Text>
+                  <Text className="text-lg font-medium text-gray-800">Loading community reports...</Text>
+                </View>
+              ) : reports.length === 0 ? (
+                <View className="bg-white rounded-lg shadow-sm p-6 items-center">
+                  <Text className="text-4xl mb-2">📢</Text>
+                  <Text className="text-lg font-medium text-gray-800 mb-2">No reports yet</Text>
+                  <Text className="text-sm text-gray-600 text-center mb-4">
+                    Be the first to report traffic, delays, or accessibility issues in your area
+                  </Text>
+                  <TouchableOpacity
+                    className="bg-blue-600 px-4 py-2 rounded-lg"
+                    onPress={() => setActiveTab('create')}
+                  >
+                    <Text className="text-white font-medium">Create Report</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                reports.map((report) => (
                 <View key={report.id} className="bg-white rounded-lg shadow-sm p-4">
                   <View className="flex-row items-start justify-between mb-2">
                     <View className="flex-1">
@@ -346,7 +328,8 @@ export default function Community() {
                     </View>
                   </View>
                 </View>
-              ))}
+              ))
+              )}
             </View>
           </View>
         ) : (

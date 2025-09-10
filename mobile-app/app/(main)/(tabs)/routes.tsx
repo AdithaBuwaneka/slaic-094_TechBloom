@@ -3,14 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RouteOption } from '../../src/types';
+import { RouteOption } from '../../../src/types';
 
-interface RouteStep {
-  mode: string;
-  description: string;
-  duration: string;
-  icon: string;
-}
 
 export default function Routes() {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
@@ -38,75 +32,6 @@ export default function Routes() {
     }
   };
 
-  // Backup sample routes (only used for UI demonstration)
-  const sampleRoutes: RouteOption[] = [
-    {
-      id: '1',
-      title: 'Colombo Fort → Kandy',
-      duration: '2h 45m',
-      fare: 'Rs. 280',
-      modes: ['🚂', '🚌'],
-      carbonFootprint: '2.1 kg CO₂',
-      aiRecommendation: 'Fastest option with scenic mountain views',
-      disruptions: [],
-      agentsUsed: [
-        'Route Optimization Agent',
-        'Fare Calculation Agent', 
-        'User Preference Agent',
-        'Disruption Monitoring Agent'
-      ],
-      steps: [
-        {
-          mode: 'walking',
-          description: 'Walk to Colombo Fort Railway Station',
-          duration: '5 min',
-          icon: '🚶'
-        },
-        {
-          mode: 'train',
-          description: 'Intercity Express to Kandy',
-          duration: '2h 30m',
-          icon: '🚂'
-        },
-        {
-          mode: 'walking',
-          description: 'Walk to destination',
-          duration: '10 min',
-          icon: '🚶'
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Colombo → Airport',
-      duration: '45m',
-      fare: 'Rs. 110',
-      modes: ['🚌'],
-      carbonFootprint: '1.8 kg CO₂',
-      aiRecommendation: 'Most economical airport transfer',
-      disruptions: ['Minor delay: 15 mins due to traffic'],
-      agentsUsed: [
-        'Route Optimization Agent',
-        'Fare Optimization Agent',
-        'Disruption Monitoring Agent',
-        'Local Knowledge Agent'
-      ],
-      steps: [
-        {
-          mode: 'walking',
-          description: 'Walk to Bastian Mawatha Bus Stand',
-          duration: '8 min',
-          icon: '🚶'
-        },
-        {
-          mode: 'bus',
-          description: 'Airport Express Bus 187',
-          duration: '45 min',
-          icon: '🚌'
-        }
-      ]
-    }
-  ];
 
   const agentStatuses = [
     { name: 'Input Processing', status: 'completed', icon: '✅' },
@@ -209,7 +134,7 @@ export default function Routes() {
                     <View className="flex-row items-center justify-between mb-2">
                       <Text className="text-lg font-semibold text-gray-800">{route.title}</Text>
                       <View className="flex-row">
-                        {route.modes.map((mode, index) => (
+                        {route.modes.map((mode: string, index: number) => (
                           <Text key={index} className="text-lg ml-1">{mode}</Text>
                         ))}
                       </View>
@@ -238,7 +163,7 @@ export default function Routes() {
                     {route.disruptions.length > 0 && (
                       <View className="bg-orange-50 p-3 rounded-lg mb-3">
                         <Text className="text-sm font-medium text-orange-800">⚠️ Current Disruptions</Text>
-                        {route.disruptions.map((disruption, index) => (
+                        {route.disruptions.map((disruption: string, index: number) => (
                           <Text key={index} className="text-sm text-orange-700">{disruption}</Text>
                         ))}
                       </View>
@@ -267,7 +192,7 @@ export default function Routes() {
                       {/* Route Steps */}
                       <Text className="text-sm font-medium text-gray-800 mb-3">Route Steps</Text>
                       <View className="space-y-3 mb-4">
-                        {route.steps.map((step, index) => (
+                        {route.steps.map((step: any, index: number) => (
                           <View key={index} className="flex-row items-center">
                             <Text className="text-lg mr-3">{step.icon}</Text>
                             <View className="flex-1">
@@ -281,7 +206,7 @@ export default function Routes() {
                       {/* AI Agents Used */}
                       <Text className="text-sm font-medium text-gray-800 mb-2">AI Agents Used</Text>
                       <View className="flex-row flex-wrap">
-                        {route.agentsUsed.map((agent, index) => (
+                        {route.agentsUsed.map((agent: string, index: number) => (
                           <View key={index} className="bg-purple-100 px-2 py-1 rounded-full mr-2 mb-2">
                             <Text className="text-xs text-purple-700">{agent}</Text>
                           </View>

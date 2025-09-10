@@ -16,7 +16,7 @@ export default function Profile() {
     name: authUser?.name || 'User',
     email: authUser?.email || 'user@example.com',
     phone: authUser?.profile?.phone || 'Not provided',
-    preferredLanguage: authUser?.travel_preferences?.preferred_language || 'en',
+    preferredLanguage: authUser?.profile?.preferred_language || 'en',
     memberSince: authUser?.created_at ? new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'
   };
 
@@ -70,7 +70,7 @@ export default function Profile() {
   };
 
   const handleLanguageChange = (languageCode: string) => {
-    setUser(prev => ({ ...prev, preferredLanguage: languageCode }));
+    // TODO: Implement user profile update via authService.updateProfile
     Alert.alert('Language Changed', `App language changed to ${languageOptions.find(l => l.code === languageCode)?.label}`);
   };
 

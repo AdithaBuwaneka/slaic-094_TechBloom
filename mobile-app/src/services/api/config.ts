@@ -95,6 +95,7 @@ export const ENDPOINTS = {
     DELAYS: '/community/delays',
     FARES: '/community/fares',
     ACCESSIBILITY: '/community/accessibility',
+    SAFETY: '/community/safety',
   },
   
   // Weather Integration

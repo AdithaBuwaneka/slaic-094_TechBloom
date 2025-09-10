@@ -121,8 +121,18 @@ export interface RouteOption {
   steps: RouteStep[];
   fare_breakdown: FareBreakdown;
   agent_analysis: AgentAnalysis;
-  disruptions: DisruptionInfo[];
+  disruptions: string[]; // Simplified for UI display
   alternatives: AlternativeOption[];
+  
+  // Display properties for UI compatibility
+  id: string;
+  title: string;
+  duration: string;
+  fare: string;
+  modes: string[];
+  carbonFootprint: string;
+  aiRecommendation: string;
+  agentsUsed: string[];
 }
 
 export interface RouteSummary {

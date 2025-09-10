@@ -231,7 +231,7 @@ class CommunityService {
   // =============================================================================
 
   async submitReport(reportData: {
-    type: 'traffic' | 'delay' | 'fare' | 'accessibility';
+    type: 'traffic' | 'delay' | 'fare' | 'accessibility' | 'safety';
     title: string;
     description: string;
     location: string;
@@ -259,7 +259,8 @@ class CommunityService {
       'traffic': ENDPOINTS.COMMUNITY.TRAFFIC,
       'delay': ENDPOINTS.COMMUNITY.DELAYS,
       'fare': ENDPOINTS.COMMUNITY.FARES,
-      'accessibility': ENDPOINTS.COMMUNITY.ACCESSIBILITY
+      'accessibility': ENDPOINTS.COMMUNITY.ACCESSIBILITY,
+      'safety': ENDPOINTS.COMMUNITY.SAFETY
     };
 
     return apiClient.post(endpointMap[reportData.type], report);
