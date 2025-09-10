@@ -3,9 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, P
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AppContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 export default function Register() {
   const { register } = useAuth();
+  const { theme, isDark } = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -74,7 +76,7 @@ export default function Register() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -88,10 +90,10 @@ export default function Register() {
           <View className="flex-1 justify-center px-6 py-8 min-h-full">
             {/* Header */}
             <View className="items-center mb-8">
-              <Text className="text-3xl font-bold text-blue-600 mb-3">
+              <Text className="text-3xl font-bold mb-3" style={{ color: theme.primary }}>
                 Create Account
               </Text>
-              <Text className="text-base text-gray-600 text-center">
+              <Text className="text-base text-center" style={{ color: theme.textSecondary }}>
                 Join the smart transit revolution in Sri Lanka
               </Text>
             </View>
@@ -99,20 +101,32 @@ export default function Register() {
             {/* Registration Form */}
             <View className="w-full max-w-sm mx-auto">
               <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-2">Full Name *</Text>
+                <Text className="text-sm font-medium mb-2" style={{ color: theme.text }}>Full Name *</Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  className="border rounded-lg px-4 py-4 text-base"
+                  style={{ 
+                    borderColor: theme.border, 
+                    backgroundColor: theme.surface,
+                    color: theme.text 
+                  }}
                   placeholder="Enter your full name"
+                  placeholderTextColor={theme.textSecondary}
                   value={formData.name}
                   onChangeText={(value) => updateForm('name', value)}
                 />
               </View>
 
               <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-2">Email *</Text>
+                <Text className="text-sm font-medium mb-2" style={{ color: theme.text }}>Email *</Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  className="border rounded-lg px-4 py-4 text-base"
+                  style={{ 
+                    borderColor: theme.border, 
+                    backgroundColor: theme.surface,
+                    color: theme.text 
+                  }}
                   placeholder="Enter your email"
+                  placeholderTextColor={theme.textSecondary}
                   value={formData.email}
                   onChangeText={(value) => updateForm('email', value)}
                   keyboardType="email-address"
@@ -121,10 +135,16 @@ export default function Register() {
               </View>
 
               <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-2">Phone Number</Text>
+                <Text className="text-sm font-medium mb-2" style={{ color: theme.text }}>Phone Number</Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg px-4 py-4 text-base bg-gray-50"
+                  className="border rounded-lg px-4 py-4 text-base"
+                  style={{ 
+                    borderColor: theme.border, 
+                    backgroundColor: theme.surface,
+                    color: theme.text 
+                  }}
                   placeholder="+94 771234567"
+                  placeholderTextColor={theme.textSecondary}
                   value={formData.phone}
                   onChangeText={(value) => updateForm('phone', value)}
                   keyboardType="phone-pad"
@@ -132,10 +152,16 @@ export default function Register() {
               </View>
 
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-2">Password *</Text>
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.text }}>Password *</Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+              className="border rounded-lg px-4 py-3 text-base"
+              style={{ 
+                borderColor: theme.border, 
+                backgroundColor: theme.surface,
+                color: theme.text 
+              }}
               placeholder="Create a password (min 6 characters)"
+              placeholderTextColor={theme.textSecondary}
               value={formData.password}
               onChangeText={(value) => updateForm('password', value)}
               secureTextEntry
@@ -143,10 +169,16 @@ export default function Register() {
           </View>
 
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-2">Confirm Password *</Text>
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.text }}>Confirm Password *</Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-4 py-3 text-base"
+              className="border rounded-lg px-4 py-3 text-base"
+              style={{ 
+                borderColor: theme.border, 
+                backgroundColor: theme.surface,
+                color: theme.text 
+              }}
               placeholder="Confirm your password"
+              placeholderTextColor={theme.textSecondary}
               value={formData.confirmPassword}
               onChangeText={(value) => updateForm('confirmPassword', value)}
               secureTextEntry
@@ -155,7 +187,7 @@ export default function Register() {
 
           {/* Language Selection */}
           <View>
-            <Text className="text-sm font-medium text-gray-700 mb-3">Preferred Language</Text>
+            <Text className="text-sm font-medium mb-3" style={{ color: theme.text }}>Preferred Language</Text>
             <View className="flex-row space-x-3">
               {[
                 { code: 'en', label: 'English' },
@@ -164,16 +196,19 @@ export default function Register() {
               ].map((lang) => (
                 <TouchableOpacity
                   key={lang.code}
-                  className={`flex-1 py-3 px-3 rounded-lg border ${
-                    formData.language === lang.code 
-                      ? 'bg-blue-600 border-blue-600' 
-                      : 'bg-gray-100 border-gray-300'
-                  }`}
+                  className="flex-1 py-3 px-3 rounded-lg border"
+                  style={{
+                    backgroundColor: formData.language === lang.code ? theme.primary : theme.surface,
+                    borderColor: formData.language === lang.code ? theme.primary : theme.border
+                  }}
                   onPress={() => updateForm('language', lang.code)}
                 >
-                  <Text className={`text-center text-sm ${
-                    formData.language === lang.code ? 'text-white' : 'text-gray-700'
-                  }`}>
+                  <Text 
+                    className="text-center text-sm"
+                    style={{
+                      color: formData.language === lang.code ? 'white' : theme.text
+                    }}
+                  >
                     {lang.label}
                   </Text>
                 </TouchableOpacity>
@@ -182,7 +217,8 @@ export default function Register() {
           </View>
 
           <TouchableOpacity
-            className={`bg-blue-600 rounded-lg py-3 mt-6 ${loading ? 'opacity-70' : ''}`}
+            className={`rounded-lg py-3 mt-6 ${loading ? 'opacity-70' : ''}`}
+            style={{ backgroundColor: theme.primary }}
             onPress={handleRegister}
             disabled={loading}
           >
@@ -195,7 +231,7 @@ export default function Register() {
             className="mt-4"
             onPress={() => router.push('/(auth)/login')}
           >
-            <Text className="text-blue-600 text-center text-base">
+            <Text className="text-center text-base" style={{ color: theme.primary }}>
               Already have an account? Sign In
             </Text>
           </TouchableOpacity>
