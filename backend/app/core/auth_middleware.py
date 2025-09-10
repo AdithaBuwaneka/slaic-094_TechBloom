@@ -24,8 +24,41 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Invalid token payload"
         )
     
-    # Get user from database
-    user = await db.database.users.find_one({"user_id": user_id})
+    # Debug logging
+    print(f"[AUTH DEBUG] Looking up user_id: {user_id}")
+    print(f"[AUTH DEBUG] Database available: {db.database is not None}")
+    
+    # Get user from database with fresh connection
+    try:
+        # Try direct MongoDB connection to ensure we're using the right database
+        from motor.motor_asyncio import AsyncIOMotorClient
+        from app.core.config import settings
+        
+        client = AsyncIOMotorClient(settings.MONGODB_URL)
+        database = client[settings.DATABASE_NAME]
+        
+        # Debug the query
+        print(f"[AUTH DEBUG] Querying: {{'user_id': '{user_id}'}}")
+        
+        # Also try listing all users to debug
+        all_users = await database.users.find({}).limit(5).to_list(length=5)
+        print(f"[AUTH DEBUG] Total users found: {len(all_users)}")
+        for u in all_users:
+            print(f"[AUTH DEBUG] User in DB: {u['user_id']} | {u['email']} | {u['role']}")
+        
+        user = await database.users.find_one({"user_id": user_id})
+        print(f"[AUTH DEBUG] User lookup result: {user is not None}")
+        if user:
+            print(f"[AUTH DEBUG] User email: {user.get('email')}, role: {user.get('role')}")
+        
+        client.close()
+    except Exception as e:
+        print(f"[AUTH DEBUG] Database query error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database query failed"
+        )
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -41,6 +74,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     # Remove password hash from response
     user.pop("password_hash", None)
     user.pop("_id", None)
+    
+    # Override role with JWT token role (JWT is the source of truth for permissions)
+    user["role"] = payload.get("role", user.get("role"))
     
     return user
 
