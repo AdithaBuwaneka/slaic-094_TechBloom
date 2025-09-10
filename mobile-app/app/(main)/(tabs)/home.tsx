@@ -87,20 +87,20 @@ export default function Home() {
             // Create a mock route for testing purposes
             const mockRoute: any = {
               route_id: `mock_${Date.now()}`,
-              title: `${requestData.source} → ${requestData.destination}`,
+              title: `${requestWithUser.source} → ${requestWithUser.destination}`,
               duration: '2h 30m',
               fare: 'Rs. 350',
-              modes: [requestData.mode],
+              modes: [requestWithUser.mode],
               carbonFootprint: '2.1 kg CO₂',
               aiRecommendation: 'AI optimized route with cost efficiency',
               agentsUsed: response.data.agents_used || [],
-              source: requestData.source,
-              destination: requestData.destination,
-              mode: requestData.mode,
+              source: requestWithUser.source,
+              destination: requestWithUser.destination,
+              mode: requestWithUser.mode,
               steps: [
-                { step: 1, instruction: `Start from ${requestData.source}`, duration: '0m', fare: 'Rs. 0' },
-                { step: 2, instruction: `Travel via ${requestData.mode}`, duration: '2h 30m', fare: 'Rs. 350' },
-                { step: 3, instruction: `Arrive at ${requestData.destination}`, duration: '0m', fare: 'Rs. 0' }
+                { step: 1, instruction: `Start from ${requestWithUser.source}`, duration: '0m', fare: 'Rs. 0' },
+                { step: 2, instruction: `Travel via ${requestWithUser.mode}`, duration: '2h 30m', fare: 'Rs. 350' },
+                { step: 3, instruction: `Arrive at ${requestWithUser.destination}`, duration: '0m', fare: 'Rs. 0' }
               ]
             };
             
@@ -110,7 +110,7 @@ export default function Home() {
             
             Alert.alert(
               'Mock Route Created', 
-              `Created a test route for ${requestData.source} to ${requestData.destination}. Check the Routes tab to see it.`,
+              `Created a test route for ${requestWithUser.source} to ${requestWithUser.destination}. Check the Routes tab to see it.`,
               [
                 { text: 'OK' },
                 { text: 'View Routes', onPress: () => console.log('Navigate to routes tab') }
@@ -190,12 +190,14 @@ export default function Home() {
 
           {/* Destination Input */}
           <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-600 mb-2">To</Text>
-            <View className="flex-row items-center border border-gray-300 rounded-lg">
-              <Ionicons name="flag" size={20} color="#6b7280" className="ml-3" />
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>To</Text>
+            <View className="flex-row items-center border rounded-lg" style={{ borderColor: theme.border }}>
+              <Ionicons name="flag" size={20} color={theme.textTertiary} className="ml-3" />
               <TextInput
                 className="flex-1 px-3 py-3 text-base"
+                style={{ color: theme.text }}
                 placeholder="Enter destination"
+                placeholderTextColor={theme.textTertiary}
                 value={routeRequest.destination}
                 onChangeText={(value) => setRouteRequest(prev => ({ ...prev, destination: value }))}
               />
@@ -204,9 +206,10 @@ export default function Home() {
 
           {/* Transport Mode Selection */}
           <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-600 mb-3">Travel Mode</Text>
+            <Text className="text-sm font-medium mb-3" style={{ color: theme.textSecondary }}>Travel Mode</Text>
             <TouchableOpacity
-              className="border border-gray-300 rounded-lg p-4 flex-row items-center justify-between bg-gray-50"
+              className="border rounded-lg p-4 flex-row items-center justify-between"
+              style={{ borderColor: theme.border, backgroundColor: theme.surface }}
               onPress={() => setShowModeSelector(true)}
             >
               <View className="flex-row items-center">
@@ -222,7 +225,7 @@ export default function Home() {
                    '🚌'}
                 </Text>
                 <View>
-                  <Text className="text-base font-medium text-gray-800">
+                  <Text className="text-base font-medium" style={{ color: theme.text }}>
                     {routeRequest.mode === SriLankanTravelMode.BUS ? 'Bus' :
                      routeRequest.mode === SriLankanTravelMode.TRAIN ? 'Train' :
                      routeRequest.mode === SriLankanTravelMode.TUK_TUK ? 'Tuk Tuk' :
@@ -233,16 +236,17 @@ export default function Home() {
                      routeRequest.mode === SriLankanTravelMode.WALKING ? 'Walking' :
                      'Transit'}
                   </Text>
-                  <Text className="text-sm text-gray-600">Tap to change mode</Text>
+                  <Text className="text-sm" style={{ color: theme.textSecondary }}>Tap to change mode</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+              <Ionicons name="chevron-forward" size={20} color={theme.textTertiary} />
             </TouchableOpacity>
           </View>
 
           {/* Plan Route Button */}
           <TouchableOpacity
-            className={`bg-blue-600 rounded-lg py-3 ${isPlanning ? 'opacity-70' : ''}`}
+            className={`rounded-lg py-3 ${isPlanning ? 'opacity-70' : ''}`}
+            style={{ backgroundColor: theme.primary }}
             onPress={handlePlanRoute}
             disabled={isPlanning}
           >
@@ -254,16 +258,17 @@ export default function Home() {
 
         {/* Quick Destinations */}
         <View className="px-4 mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">Popular Destinations</Text>
+          <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>Popular Destinations</Text>
           <View className="flex-row flex-wrap gap-3">
             {quickDestinations.map((dest, index) => (
               <TouchableOpacity
                 key={index}
-                className="bg-white flex-row items-center px-4 py-3 rounded-lg shadow-sm border border-gray-100"
+                className="flex-row items-center px-4 py-3 rounded-lg shadow-sm border"
+                style={{ backgroundColor: theme.surface, borderColor: theme.border }}
                 onPress={() => selectQuickDestination(dest.name)}
               >
                 <Text className="mr-2">{dest.icon}</Text>
-                <Text className="text-sm font-medium text-gray-700">{dest.name}</Text>
+                <Text className="text-sm font-medium" style={{ color: theme.text }}>{dest.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -271,7 +276,7 @@ export default function Home() {
 
         {/* Features Overview */}
         <View className="px-4 mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">AI-Powered Features</Text>
+          <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>AI-Powered Features</Text>
           <View className="space-y-3">
             {[
               { icon: '🤖', title: '10 AI Agents', description: 'Multi-agent route optimization' },
@@ -279,11 +284,11 @@ export default function Home() {
               { icon: '💰', title: 'Fare Optimization', description: 'Find cheapest combinations' },
               { icon: '🌍', title: 'Multilingual', description: 'English, Sinhala, Tamil support' }
             ].map((feature, index) => (
-              <View key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex-row items-center">
+              <View key={index} className="p-4 rounded-lg shadow-sm border flex-row items-center" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                 <Text className="text-2xl mr-4">{feature.icon}</Text>
                 <View className="flex-1">
-                  <Text className="text-base font-medium text-gray-800">{feature.title}</Text>
-                  <Text className="text-sm text-gray-600">{feature.description}</Text>
+                  <Text className="text-base font-medium" style={{ color: theme.text }}>{feature.title}</Text>
+                  <Text className="text-sm" style={{ color: theme.textSecondary }}>{feature.description}</Text>
                 </View>
               </View>
             ))}
@@ -292,9 +297,9 @@ export default function Home() {
 
         {/* Recent Activity */}
         <View className="px-4 mb-8">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">Recent Routes</Text>
-          <View className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            <Text className="text-gray-500 text-center py-4">
+          <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>Recent Routes</Text>
+          <View className="p-4 rounded-lg shadow-sm border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+            <Text className="text-center py-4" style={{ color: theme.textSecondary }}>
               No recent routes yet. Plan your first journey above!
             </Text>
           </View>
@@ -312,14 +317,14 @@ export default function Home() {
       {/* Sri Lankan Mode Selector Modal */}
       {showModeSelector && (
         <View className="absolute inset-0 bg-black/50 justify-center px-4">
-          <View className="bg-white rounded-2xl max-h-[80%]">
-            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-              <Text className="text-lg font-bold text-gray-900">Select Travel Mode</Text>
+          <View className="rounded-2xl max-h-[80%]" style={{ backgroundColor: theme.surface }}>
+            <View className="flex-row justify-between items-center p-4 border-b" style={{ borderColor: theme.border }}>
+              <Text className="text-lg font-bold" style={{ color: theme.text }}>Select Travel Mode</Text>
               <TouchableOpacity
                 onPress={() => setShowModeSelector(false)}
                 className="p-1"
               >
-                <Ionicons name="close" size={24} color="#6b7280" />
+                <Ionicons name="close" size={24} color={theme.textTertiary} />
               </TouchableOpacity>
             </View>
             <ScrollView className="max-h-[400px]" showsVerticalScrollIndicator={false}>

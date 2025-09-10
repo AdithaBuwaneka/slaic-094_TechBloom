@@ -113,6 +113,11 @@ export interface TravelResponseData {
   disruption_alerts: DisruptionAlert[];
   fare_optimization: FareOptimization;
   local_insights: LocalInsight[];
+  
+  // Backend response structure properties
+  best_route?: RouteOption;
+  all_routes?: RouteOption[];
+  total_routes_found?: number;
 }
 
 export interface RouteOption {

@@ -10,7 +10,6 @@ import {
   RouteOption, 
   DisruptionAlert,
   APIResponse,
-  CommunityReport,
   UserPreferences
 } from '../../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -337,7 +336,7 @@ class TravelService {
       walking: `${route.summary.walking_distance.toFixed(1)} km`,
       carbon: `${route.summary.carbon_footprint.toFixed(1)} kg CO₂`,
       agentRecommendation: route.agent_analysis.recommendations[0] || 'Optimized route',
-      disruptions: route.disruptions.map(d => d.description),
+      disruptions: route.disruptions || [],
       agentsUsed: Object.keys(route.agent_analysis).length
     };
   }
@@ -430,7 +429,16 @@ class TravelService {
         };
       }
 
-      return response as APIResponse<RouteOption[]>;
+      return {
+        success: false,
+        error: {
+          error_code: 'NO_DATA',
+          message: 'No route history data received',
+          details: {},
+          timestamp: new Date().toISOString()
+        },
+        timestamp: new Date().toISOString()
+      };
     } catch (error) {
       console.error('Error fetching route history from backend:', error);
       return {
