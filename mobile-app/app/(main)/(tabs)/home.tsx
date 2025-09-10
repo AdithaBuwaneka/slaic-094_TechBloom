@@ -8,12 +8,14 @@ import SriLankanModeSelector from '../../components/SriLankanModeSelector';
 import { SriLankanTravelMode, RouteRequest as RouteRequestType } from '../../../src/types';
 import { useApp, useAuth } from '../../../src/contexts/AppContext';
 import { useTheme } from '../../../src/contexts/ThemeContext';
+import { useLanguage } from '../../../src/contexts/LanguageContext';
 import { travelService } from '../../../src/services/api/travelService';
 
 
 export default function Home() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const { currentRoute, setCurrentRoute, addToRouteHistory } = useApp();
   const router = useRouter();
   
@@ -158,7 +160,7 @@ export default function Home() {
               <Text className="text-white text-2xl font-bold">
                 Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
               </Text>
-              <Text className="text-blue-100 text-base">Where would you like to go?</Text>
+              <Text className="text-blue-100 text-base">{t('home.subtitle')}</Text>
             </View>
             <TouchableOpacity className="p-2 bg-blue-500 rounded-full">
               <Ionicons name="notifications" size={24} color="white" />
@@ -168,11 +170,11 @@ export default function Home() {
 
         {/* Route Planning Form */}
         <View className="mx-4 -mt-4 rounded-xl shadow-lg p-6 mb-6" style={{ backgroundColor: theme.surface }}>
-          <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>Plan Your Journey</Text>
+          <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>{t('home.planRoute')}</Text>
           
           {/* Source Input */}
           <View className="mb-4">
-            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>From</Text>
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>{t('home.from')}</Text>
             <View className="flex-row items-center border rounded-lg" style={{ borderColor: theme.border }}>
               <Ionicons name="location" size={20} color={theme.textTertiary} className="ml-3" />
               <TextInput
@@ -188,7 +190,7 @@ export default function Home() {
 
           {/* Destination Input */}
           <View className="mb-4">
-            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>To</Text>
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>{t('home.to')}</Text>
             <View className="flex-row items-center border rounded-lg" style={{ borderColor: theme.border }}>
               <Ionicons name="flag" size={20} color={theme.textTertiary} className="ml-3" />
               <TextInput
@@ -249,7 +251,7 @@ export default function Home() {
             disabled={isPlanning}
           >
             <Text className="text-white text-center text-lg font-semibold">
-              {isPlanning ? 'Planning Route...' : '🤖 Plan with AI Agents'}
+              {isPlanning ? t('common.loading') : `🤖 ${t('home.planRoute')}`}
             </Text>
           </TouchableOpacity>
         </View>

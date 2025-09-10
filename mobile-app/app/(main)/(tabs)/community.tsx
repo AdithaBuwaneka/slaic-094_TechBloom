@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { communityService } from '../../../src/services/api/communityService';
 import { useAuth } from '../../../src/contexts/AppContext';
 import { useTheme } from '../../../src/contexts/ThemeContext';
+import { useLanguage } from '../../../src/contexts/LanguageContext';
 
 interface CommunityReport {
   id: string;
@@ -22,6 +23,7 @@ interface CommunityReport {
 export default function Community() {
   const { user } = useAuth();
   const { theme, isDark } = useTheme();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'reports' | 'create'>('reports');
   const [newReport, setNewReport] = useState({
     type: 'traffic' as const,
@@ -184,8 +186,8 @@ export default function Community() {
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
       {/* Header */}
       <View className="px-4 py-4 border-b" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-        <Text className="text-2xl font-bold" style={{ color: theme.text }}>Community Reports</Text>
-        <Text className="text-sm" style={{ color: theme.textSecondary }}>Share and discover real-time transport updates</Text>
+        <Text className="text-2xl font-bold" style={{ color: theme.text }}>{t('community.title')}</Text>
+        <Text className="text-sm" style={{ color: theme.textSecondary }}>{t('community.subtitle')}</Text>
       </View>
 
       {/* Tab Navigation */}
@@ -198,7 +200,7 @@ export default function Community() {
             <Text className={`text-center font-medium ${
               activeTab === 'reports' ? 'text-blue-600' : 'text-gray-600'
             }`}>
-              Latest Reports
+              {t('community.reports')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -208,7 +210,7 @@ export default function Community() {
             <Text className={`text-center font-medium ${
               activeTab === 'create' ? 'text-blue-600' : 'text-gray-600'
             }`}>
-              Report Issue
+              {t('community.create')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -220,17 +222,17 @@ export default function Community() {
           <View className="p-4">
             {/* Stats */}
             <View className="bg-white p-4 rounded-lg shadow-sm mb-4">
-              <Text className="text-lg font-semibold text-gray-800 mb-3">Community Impact</Text>
+              <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>{t('community.impact')}</Text>
               <View className="flex-row justify-between">
                 <View className="items-center">
                   <Text className="text-2xl font-bold text-blue-600">{reports.length}</Text>
-                  <Text className="text-sm text-gray-600">Active Reports</Text>
+                  <Text className="text-sm" style={{ color: theme.textSecondary }}>{t('community.activeReports')}</Text>
                 </View>
                 <View className="items-center">
                   <Text className="text-2xl font-bold text-green-600">
                     {reports.reduce((sum, r) => sum + r.votes, 0)}
                   </Text>
-                  <Text className="text-sm text-gray-600">Total Votes</Text>
+                  <Text className="text-sm" style={{ color: theme.textSecondary }}>{t('community.totalVotes')}</Text>
                 </View>
                 <View className="items-center">
                   <Text className="text-2xl font-bold text-purple-600">4.2k</Text>

@@ -7,10 +7,12 @@ import ThemeToggle, { ThemePreview } from '../../components/ThemeToggle';
 import { useTheme, ThemeMode } from '../../../src/contexts/ThemeContext';
 import { useAuth } from '../../../src/contexts/AppContext';
 import { authService } from '../../../src/services/api/authService';
+import { useLanguage } from '../../../src/contexts/LanguageContext';
 
 export default function Profile() {
   const { theme, mode, setTheme, isDark } = useTheme();
   const { user: authUser, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   
   // Use real user data from authentication context
   const user = {
@@ -75,26 +77,26 @@ export default function Profile() {
       const selectedLang = languageOptions.find(l => l.code === languageCode);
       if (!selectedLang) return;
       
-      // Show loading state
-      Alert.alert('Updating...', 'Changing language preference...');
+      // Update language in context (immediate effect)
+      await setLanguage(languageCode as any);
       
-      // Update user profile via API
-      const response = await authService.updateProfile({ 
-        preferred_language: languageCode 
-      });
-      
-      if (response.success) {
-        Alert.alert(
-          'Language Updated', 
-          `App language changed to ${selectedLang.label}. The change will take effect on next app launch.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        throw new Error(response.error?.message || 'Failed to update language');
+      // Also update user profile via API
+      try {
+        await authService.updateProfile({ 
+          preferred_language: languageCode 
+        });
+      } catch (error) {
+        console.error('Failed to update profile, but language changed locally:', error);
       }
+      
+      Alert.alert(
+        t('common.success'), 
+        `App language changed to ${selectedLang.label}`,
+        [{ text: t('common.ok') }]
+      );
     } catch (error) {
       console.error('Language update error:', error);
-      Alert.alert('Error', 'Failed to update language preference. Please try again.');
+      Alert.alert(t('common.error'), 'Failed to update language preference. Please try again.');
     }
   };
 
@@ -141,7 +143,7 @@ export default function Profile() {
         {/* Stats Cards */}
         <View className="px-4 mt-4 mb-6">
           <View className="rounded-lg shadow-sm p-4" style={{ backgroundColor: theme.surface }}>
-            <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>Your Impact</Text>
+            <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>{t('profile.impact')}</Text>
             <View className="flex-row flex-wrap">
               <View className="w-1/2 p-2">
                 <View className="bg-blue-50 p-3 rounded-lg items-center">
@@ -180,7 +182,7 @@ export default function Profile() {
             className="text-lg font-semibold mb-3"
             style={{ color: theme.text }}
           >
-            Appearance
+            {t('profile.appearance')}
           </Text>
           
           <View>
@@ -246,7 +248,7 @@ export default function Profile() {
             className="text-lg font-semibold mb-3"
             style={{ color: theme.text }}
           >
-            Language / භාෂාව / மொழி
+            {t('profile.language')}
           </Text>
           <View className="space-y-3">
             {languageOptions.map((lang) => (
@@ -254,10 +256,10 @@ export default function Profile() {
                 key={lang.code}
                 className="flex-row items-center p-3 rounded-lg"
                 style={{
-                  backgroundColor: user.preferredLanguage === lang.code 
+                  backgroundColor: language === lang.code 
                     ? (isDark ? theme.primary + '20' : '#EBF8FF')
                     : (isDark ? theme.card : '#F9FAFB'),
-                  borderWidth: user.preferredLanguage === lang.code ? 1 : 0,
+                  borderWidth: language === lang.code ? 1 : 0,
                   borderColor: theme.primary
                 }}
                 onPress={() => handleLanguageChange(lang.code)}
@@ -266,14 +268,14 @@ export default function Profile() {
                 <Text
                   className="flex-1 font-medium"
                   style={{
-                    color: user.preferredLanguage === lang.code 
+                    color: language === lang.code 
                       ? theme.primary 
                       : theme.text
                   }}
                 >
                   {lang.label}
                 </Text>
-                {user.preferredLanguage === lang.code && (
+                {language === lang.code && (
                   <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
                 )}
               </TouchableOpacity>

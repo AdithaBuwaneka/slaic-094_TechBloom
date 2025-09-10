@@ -8,12 +8,14 @@ import { useRoutes } from '../../../src/contexts/AppContext';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../../src/contexts/ThemeContext';
+import { useLanguage } from '../../../src/contexts/LanguageContext';
 
 
 export default function Routes() {
   const { loadRouteHistoryFromBackend } = useRoutes();
   const router = useRouter();
   const { theme, isDark } = useTheme();
+  const { t } = useLanguage();
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const [recentRoutes, setRecentRoutes] = useState<RouteOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,25 +81,25 @@ export default function Routes() {
       <ScrollView className="flex-1">
         {/* Header */}
         <View className="px-4 py-4 border-b" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-          <Text className="text-2xl font-bold" style={{ color: theme.text }}>My Routes</Text>
-          <Text className="text-sm" style={{ color: theme.textSecondary }}>AI-powered route planning results</Text>
+          <Text className="text-2xl font-bold" style={{ color: theme.text }}>{t('routes.title')}</Text>
+          <Text className="text-sm" style={{ color: theme.textSecondary }}>{t('routes.subtitle')}</Text>
         </View>
 
 
 
         {/* Route Options */}
         <View className="px-4 mt-4">
-          <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>Recent Route Options</Text>
+          <Text className="text-lg font-semibold mb-3" style={{ color: theme.text }}>{t('routes.recent')}</Text>
           
           {isLoading ? (
             <View className="p-6 rounded-lg shadow-sm items-center" style={{ backgroundColor: theme.surface }}>
               <Text className="text-4xl mb-2">🔄</Text>
-              <Text className="text-lg font-medium" style={{ color: theme.text }}>Loading recent routes...</Text>
+              <Text className="text-lg font-medium" style={{ color: theme.text }}>{t('routes.loading')}</Text>
             </View>
           ) : recentRoutes.length === 0 ? (
             <View className="p-6 rounded-lg shadow-sm items-center" style={{ backgroundColor: theme.surface }}>
               <Text className="text-4xl mb-2">🗺️</Text>
-              <Text className="text-lg font-medium mb-2" style={{ color: theme.text }}>No routes planned yet</Text>
+              <Text className="text-lg font-medium mb-2" style={{ color: theme.text }}>{t('routes.noRoutes')}</Text>
               <Text className="text-sm text-center mb-4" style={{ color: theme.textSecondary }}>
                 Start planning your journey from the Home tab to see AI-generated route options here
               </Text>

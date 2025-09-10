@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { chatbotService } from '../../../src/services/api/chatbotService';
 import { useTheme } from '../../../src/contexts/ThemeContext';
+import { useLanguage } from '../../../src/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 
 export default function Chat() {
   const { theme, isDark } = useTheme();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -135,9 +137,9 @@ export default function Chat() {
               <Text className="text-white text-lg">🤖</Text>
             </View>
             <View className="flex-1">
-              <Text className="text-white text-lg font-semibold">AI Travel Assistant</Text>
+              <Text className="text-white text-lg font-semibold">{t('chat.title')}</Text>
               <Text className="text-blue-100 text-sm">
-                {isTyping ? 'AI is thinking...' : 'Online - RAG-Enhanced AI Assistant'}
+                {isTyping ? t('chat.thinking') : t('chat.subtitle')}
               </Text>
             </View>
             <TouchableOpacity className="p-2">
@@ -192,7 +194,7 @@ export default function Chat() {
                     <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
                     <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
                   </View>
-                  <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>AI thinking...</Text>
+                  <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>{t('chat.thinking')}</Text>
                 </View>
               </View>
             </View>
@@ -230,7 +232,7 @@ export default function Chat() {
               <TextInput
                 className="flex-1 text-base"
                 style={{ color: theme.text }}
-                placeholder="Ask about routes, fares, schedules..."
+                placeholder={t('chat.placeholder')}
                 placeholderTextColor={theme.textSecondary}
                 value={inputText}
                 onChangeText={setInputText}

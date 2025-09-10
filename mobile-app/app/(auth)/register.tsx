@@ -72,6 +72,7 @@ export default function Register() {
   };
 
   const updateForm = (field: string, value: string) => {
+    console.log(`Updating ${field} to ${value}`);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -187,8 +188,10 @@ export default function Register() {
 
           {/* Language Selection */}
           <View>
-            <Text className="text-sm font-medium mb-3" style={{ color: theme.text }}>Preferred Language</Text>
-            <View className="flex-row space-x-3">
+            <Text className="text-sm font-medium mb-3" style={{ color: theme.text }}>
+              Preferred Language (Current: {formData.language})
+            </Text>
+            <View className="flex-row justify-between gap-3">
               {[
                 { code: 'en', label: 'English' },
                 { code: 'si', label: 'සිංහල' },
@@ -196,17 +199,24 @@ export default function Register() {
               ].map((lang) => (
                 <TouchableOpacity
                   key={lang.code}
-                  className="flex-1 py-3 px-3 rounded-lg border"
+                  className="flex-1 py-3 px-3 rounded-lg border-2"
                   style={{
                     backgroundColor: formData.language === lang.code ? theme.primary : theme.surface,
-                    borderColor: formData.language === lang.code ? theme.primary : theme.border
+                    borderColor: formData.language === lang.code ? theme.primary : theme.border,
+                    elevation: formData.language === lang.code ? 2 : 0,
+                    shadowColor: theme.primary,
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: formData.language === lang.code ? 0.3 : 0,
+                    shadowRadius: 2
                   }}
                   onPress={() => updateForm('language', lang.code)}
+                  activeOpacity={0.7}
                 >
                   <Text 
-                    className="text-center text-sm"
+                    className="text-center text-sm font-medium"
                     style={{
-                      color: formData.language === lang.code ? 'white' : theme.text
+                      color: formData.language === lang.code ? 'white' : theme.text,
+                      fontWeight: formData.language === lang.code ? '600' : '500'
                     }}
                   >
                     {lang.label}
