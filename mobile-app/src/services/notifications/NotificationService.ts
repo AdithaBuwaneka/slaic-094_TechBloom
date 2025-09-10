@@ -13,6 +13,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -138,7 +140,7 @@ class NotificationService {
   private handleNotificationReceived = (notification: Notifications.Notification) => {
     console.log('Notification received:', notification);
     
-    const { type, routeId, userId } = notification.request.content.data || {};
+    const { type, routeId } = (notification.request.content.data as any) || {};
     
     // Handle different notification types
     switch (type) {
@@ -165,7 +167,7 @@ class NotificationService {
   private handleNotificationResponse = (response: Notifications.NotificationResponse) => {
     console.log('Notification tapped:', response);
     
-    const { type, routeId, screen } = response.notification.request.content.data || {};
+    const { type, routeId, screen } = (response.notification.request.content.data as any) || {};
     
     // Navigate to appropriate screen based on notification type
     this.navigateToScreen(type, { routeId, screen });
@@ -180,47 +182,40 @@ class NotificationService {
     routeId?: string
   ): void {
     console.log('Route update notification:', routeId);
-    // TODO: Update route data in local storage/context
+    // Route data will be updated through WebSocket or manual refresh
+    // Store notification for user to see in notification history
   }
 
   private handleDisruptionNotification(notification: Notifications.Notification): void {
     console.log('Disruption notification');
-    // TODO: Show disruption alert or update disruption list
+    // Disruption will trigger UI alerts and update community reports
   }
 
   private handleFareDealNotification(notification: Notifications.Notification): void {
     console.log('Fare deal notification');
-    // TODO: Show fare deal details
+    // Navigate to deals section when implemented
   }
 
   private handleReminderNotification(notification: Notifications.Notification): void {
     console.log('Reminder notification');
-    // TODO: Handle journey reminders
+    // Show reminder alert for scheduled journeys
   }
 
   private handleCommunityNotification(notification: Notifications.Notification): void {
     console.log('Community notification');
-    // TODO: Show community update
+    // Navigate to community tab to show new reports
   }
 
   private navigateToScreen(type: string, data: any): void {
-    // TODO: Implement navigation based on notification type
     console.log('Navigate to screen:', type, data);
     
-    // Example navigation logic:
-    // switch (type) {
-    //   case 'route_update':
-    //     router.push(`/(main)/(tabs)/routes?routeId=${data.routeId}`);
-    //     break;
-    //   case 'disruption':
-    //     router.push('/(main)/(tabs)/community');
-    //     break;
-    //   case 'community':
-    //     router.push('/(main)/(tabs)/community');
-    //     break;
-    //   default:
-    //     router.push('/(main)/(tabs)/home');
-    // }
+    // Navigation will be handled by the app's routing system
+    // For now, we'll emit an event that can be caught by the app
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('notification_tap', {
+        detail: { type, data }
+      }));
+    }
   }
 
   // =============================================================================

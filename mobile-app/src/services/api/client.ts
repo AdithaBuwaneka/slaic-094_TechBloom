@@ -4,13 +4,13 @@
 
 import { API_CONFIG, DEFAULT_HEADERS, ERROR_CODES, HTTP_STATUS } from './config';
 import { APIResponse, APIError } from '../../types';
-// import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';
 
 class APIClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
-  private requestInterceptors: Array<(config: RequestConfig) => RequestConfig> = [];
-  private responseInterceptors: Array<(response: any) => any> = [];
+  private requestInterceptors: ((config: RequestConfig) => RequestConfig)[] = [];
+  private responseInterceptors: ((response: any) => any)[] = [];
 
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL + API_CONFIG.API_VERSION;
@@ -43,9 +43,7 @@ class APIClient {
 
   async getStoredToken(): Promise<string | null> {
     try {
-      // TODO: Implement with SecureStore
-      // return await SecureStore.getItemAsync('access_token');
-      return null;
+      return await SecureStore.getItemAsync('access_token');
     } catch (error) {
       console.error('Error getting stored token:', error);
       return null;
@@ -54,16 +52,18 @@ class APIClient {
 
   async refreshToken(): Promise<boolean> {
     try {
-      // TODO: Implement token refresh logic
-      // const refreshToken = await SecureStore.getItemAsync('refresh_token');
-      // if (!refreshToken) return false;
+      const refreshToken = await SecureStore.getItemAsync('refresh_token');
+      if (!refreshToken) return false;
 
-      // const response = await this.post('/auth/refresh', { refresh_token: refreshToken });
-      // if (response.success) {
-      //   await SecureStore.setItemAsync('access_token', response.data.access_token);
-      //   this.setAuthToken(response.data.access_token);
-      //   return true;
-      // }
+      const response = await this.post<{access_token: string; refresh_token?: string}>('/auth/refresh', { refresh_token: refreshToken });
+      if (response.success && response.data) {
+        await SecureStore.setItemAsync('access_token', response.data.access_token);
+        if (response.data.refresh_token) {
+          await SecureStore.setItemAsync('refresh_token', response.data.refresh_token);
+        }
+        this.setAuthToken(response.data.access_token);
+        return true;
+      }
       return false;
     } catch (error) {
       console.error('Token refresh failed:', error);
@@ -353,11 +353,8 @@ interface RequestConfig {
 export const apiClient = new APIClient();
 
 // Set up automatic token injection
-apiClient.addRequestInterceptor(async (config) => {
-  const token = await apiClient.getStoredToken();
-  if (token && !config.headers['Authorization']) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
+apiClient.addRequestInterceptor((config) => {
+  // Make this synchronous for now, token will be set via setAuthToken when available
   return config;
 });
 

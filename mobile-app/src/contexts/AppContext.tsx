@@ -175,7 +175,7 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const setupWebSocketSubscriptions = () => {
     // Subscribe to disruption alerts
-    webSocketService.subscribeToDisruptions(undefined, (disruption) => {
+    webSocketService.subscribeToDisruptions((disruption) => {
       setState(prev => ({
         ...prev,
         activeDisruptions: [disruption, ...prev.activeDisruptions].slice(0, 10),
@@ -183,7 +183,7 @@ export function AppProvider({ children }: AppProviderProps) {
     });
 
     // Subscribe to community reports
-    webSocketService.subscribeToCommunityReports(undefined, (report) => {
+    webSocketService.subscribeToCommunityReports((report) => {
       setState(prev => ({
         ...prev,
         recentCommunityReports: [report, ...prev.recentCommunityReports].slice(0, 20),

@@ -12,7 +12,7 @@ import {
   TravelPreferences,
   APIResponse 
 } from '../../types';
-// import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';
 
 class AuthService {
   // =============================================================================
@@ -169,10 +169,9 @@ class AuthService {
 
   private async storeTokens(authResponse: AuthResponse): Promise<void> {
     try {
-      // TODO: Implement with SecureStore
-      // await SecureStore.setItemAsync('access_token', authResponse.access_token);
-      // await SecureStore.setItemAsync('refresh_token', authResponse.refresh_token);
-      // await SecureStore.setItemAsync('user_data', JSON.stringify(authResponse.user));
+      await SecureStore.setItemAsync('access_token', authResponse.access_token);
+      await SecureStore.setItemAsync('refresh_token', authResponse.refresh_token);
+      await SecureStore.setItemAsync('user_data', JSON.stringify(authResponse.user));
       
       console.log('Tokens stored successfully');
     } catch (error) {
@@ -183,10 +182,9 @@ class AuthService {
 
   private async clearTokens(): Promise<void> {
     try {
-      // TODO: Implement with SecureStore
-      // await SecureStore.deleteItemAsync('access_token');
-      // await SecureStore.deleteItemAsync('refresh_token');
-      // await SecureStore.deleteItemAsync('user_data');
+      await SecureStore.deleteItemAsync('access_token');
+      await SecureStore.deleteItemAsync('refresh_token');
+      await SecureStore.deleteItemAsync('user_data');
       
       console.log('Tokens cleared successfully');
     } catch (error) {
@@ -196,10 +194,8 @@ class AuthService {
 
   async getStoredUser(): Promise<User | null> {
     try {
-      // TODO: Implement with SecureStore
-      // const userData = await SecureStore.getItemAsync('user_data');
-      // return userData ? JSON.parse(userData) : null;
-      return null;
+      const userData = await SecureStore.getItemAsync('user_data');
+      return userData ? JSON.parse(userData) : null;
     } catch (error) {
       console.error('Error getting stored user:', error);
       return null;
@@ -208,10 +204,8 @@ class AuthService {
 
   async isAuthenticated(): Promise<boolean> {
     try {
-      // TODO: Implement with SecureStore
-      // const token = await SecureStore.getItemAsync('access_token');
-      // return !!token;
-      return false;
+      const token = await SecureStore.getItemAsync('access_token');
+      return !!token;
     } catch (error) {
       console.error('Error checking authentication:', error);
       return false;

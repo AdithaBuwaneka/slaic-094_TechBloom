@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { chatbotService } from '../../../src/services/api/chatbotService';
 
 interface Message {
   id: string;
@@ -57,34 +58,32 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      // TODO: Replace with actual API call to your backend
-      // const response = await fetch('http://your-backend/api/v1/chatbot/ask', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     question: text.trim(),
-      //     temperature: 0.2
-      //   })
-      // });
-      // const data = await response.json();
+      // Call the actual backend chatbot service
+      const response = await chatbotService.askQuestion({
+        question: text.trim(),
+        temperature: 0.7
+      });
 
-      // Simulate API response for now
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      let responseText = '';
+      if (response.success && response.data) {
+        responseText = response.data.answer;
+      } else {
+        responseText = response.error?.message || 'Sorry, I encountered an error. Please try again.';
+      }
       
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: getSimulatedResponse(text),
+        text: responseText,
         isUser: false,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        text: "Sorry, I'm having trouble connecting to the AI service. Please check your internet connection and try again.",
         isUser: false,
         timestamp: new Date(),
       };
@@ -136,7 +135,7 @@ export default function Chat() {
             <View className="flex-1">
               <Text className="text-white text-lg font-semibold">AI Travel Assistant</Text>
               <Text className="text-blue-100 text-sm">
-                {isTyping ? 'Typing...' : 'Online • Powered by 10 AI Agents'}
+                {isTyping ? 'AI is thinking...' : 'Online • RAG-Enhanced AI Assistant'}
               </Text>
             </View>
             <TouchableOpacity className="p-2">
@@ -183,8 +182,8 @@ export default function Chat() {
                 <View className="flex-row items-center">
                   <View className="flex-row space-x-1">
                     <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
-                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
                   </View>
                   <Text className="text-gray-500 text-sm ml-2">AI thinking...</Text>
                 </View>

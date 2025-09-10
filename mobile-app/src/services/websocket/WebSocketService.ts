@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { API_CONFIG } from '../api/config';
+import { Platform } from 'react-native';
 
 export interface WebSocketMessage {
   type: 'route_update' | 'disruption_alert' | 'traffic_update' | 'fare_change' | 'agent_progress' | 'community_report';
@@ -25,7 +26,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectInterval = 5000; // 5 seconds
-  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private heartbeatInterval: any = null;
   private isConnecting = false;
   private userId: string | null = null;
 
@@ -51,6 +52,7 @@ class WebSocketService {
       const wsUrl = `${API_CONFIG.WS_URL}${userId ? `?user_id=${userId}` : ''}`;
       console.log('Connecting to WebSocket:', wsUrl);
 
+      // Use native WebSocket (React Native has built-in WebSocket support)
       this.ws = new WebSocket(wsUrl);
       this.setupEventHandlers();
 
@@ -156,8 +158,8 @@ class WebSocketService {
 
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'ping' }));
+      if (this.isConnected()) {
+        this.sendMessage({ type: 'ping', data: {} });
       }
     }, 30000); // 30 seconds
   }
@@ -257,8 +259,8 @@ class WebSocketService {
   }
 
   subscribeToDisruptions(
-    area?: string,
-    callback: (disruption: any) => void
+    callback: (disruption: any) => void,
+    area?: string
   ): string {
     return this.subscribe('disruption_alert', (message) => {
       callback(message.data);
@@ -275,8 +277,8 @@ class WebSocketService {
   }
 
   subscribeToFareChanges(
-    transportType?: string,
-    callback: (fareChange: any) => void
+    callback: (fareChange: any) => void,
+    transportType?: string
   ): string {
     return this.subscribe('fare_change', (message) => {
       callback(message.data);
@@ -293,8 +295,8 @@ class WebSocketService {
   }
 
   subscribeToCommunityReports(
-    area?: string,
-    callback: (report: any) => void
+    callback: (report: any) => void,
+    area?: string
   ): string {
     return this.subscribe('community_report', (message) => {
       callback(message.data);
@@ -306,13 +308,18 @@ class WebSocketService {
   // =============================================================================
 
   private sendMessage(message: any): boolean {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        ...message,
-        timestamp: new Date().toISOString(),
-        user_id: this.userId
-      }));
-      return true;
+    if (this.isConnected()) {
+      try {
+        this.ws!.send(JSON.stringify({
+          ...message,
+          timestamp: new Date().toISOString(),
+          user_id: this.userId
+        }));
+        return true;
+      } catch (error) {
+        console.error('Error sending WebSocket message:', error);
+        return false;
+      }
     }
     
     console.warn('WebSocket not connected, cannot send message');
@@ -345,20 +352,26 @@ class WebSocketService {
   // =============================================================================
 
   isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+    if (!this.ws) return false;
+    const OPEN = Platform.OS === 'web' ? WebSocket.OPEN : 1;
+    return this.ws.readyState === OPEN;
   }
 
   getConnectionState(): string {
     if (!this.ws) return 'disconnected';
     
+    const states = Platform.OS === 'web' 
+      ? { CONNECTING: WebSocket.CONNECTING, OPEN: WebSocket.OPEN, CLOSING: WebSocket.CLOSING, CLOSED: WebSocket.CLOSED }
+      : { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
+    
     switch (this.ws.readyState) {
-      case WebSocket.CONNECTING:
+      case states.CONNECTING:
         return 'connecting';
-      case WebSocket.OPEN:
+      case states.OPEN:
         return 'connected';
-      case WebSocket.CLOSING:
+      case states.CLOSING:
         return 'closing';
-      case WebSocket.CLOSED:
+      case states.CLOSED:
         return 'closed';
       default:
         return 'unknown';

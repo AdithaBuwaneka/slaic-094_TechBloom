@@ -45,7 +45,7 @@ export default function Welcome() {
           onPress={() => router.push('/(onboarding)/preferences')}
         >
           <Text className="text-white text-center text-lg font-semibold">
-            Let's Get Started
+            Let&apos;s Get Started
           </Text>
         </TouchableOpacity>
 

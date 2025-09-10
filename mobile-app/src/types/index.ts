@@ -39,6 +39,9 @@ export interface TravelPreferences {
   default_departure_buffer: number;
 }
 
+// Alias for backward compatibility
+export type UserPreferences = TravelPreferences;
+
 export interface UsageStats {
   total_trips_planned: number;
   favorite_destinations: string[];
@@ -550,4 +553,4 @@ export type SupportedLanguage = 'en' | 'si' | 'ta';
 // EXPORT ALL TYPES
 // =============================================================================
 
-export * from './index';
+// All types are already exported above - no need to self-reference

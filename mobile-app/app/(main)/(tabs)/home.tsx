@@ -19,8 +19,7 @@ export default function Home() {
     user_id: user?.user_id || '',
     source: '',
     destination: '',
-    mode: SriLankanTravelMode.TRANSIT,
-    preferredTransit: ''
+    mode: SriLankanTravelMode.TRANSIT
   });
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'si' | 'ta'>('en');
@@ -32,25 +31,6 @@ export default function Home() {
     setShowModeSelector(false);
   };
 
-  const handleAgentAnimationComplete = (results: any) => {
-    setIsPlanning(false);
-    setShowAgentAnimation(false);
-    
-    if (results.success) {
-      Alert.alert(
-        '🎉 Route Planning Complete!', 
-        `Found ${results.routes?.length || 0} optimized route(s) using ${results.agentSummary?.totalAgents || 10} AI agents.`,
-        [{ text: 'View Routes', onPress: () => console.log('Navigate to routes') }]
-      );
-    } else {
-      Alert.alert('Planning Failed', 'Unable to find suitable routes. Please try different options.');
-    }
-  };
-
-  const handleCloseAnimation = () => {
-    setShowAgentAnimation(false);
-    setIsPlanning(false);
-  };
 
   const quickDestinations = [
     { name: 'Colombo Fort', icon: '🏛️' },

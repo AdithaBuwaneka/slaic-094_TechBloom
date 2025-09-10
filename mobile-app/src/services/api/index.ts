@@ -3,11 +3,19 @@
 // =============================================================================
 
 // Core API Client
+// Import services for internal use
+import authService from './authService';
+import { apiClient } from './client';
+import { travelService } from './travelService';
+import { mobileService } from './mobileService';
+import { chatbotService } from './chatbotService';
+import { communityService } from './communityService';
+
 export { apiClient, default as APIClient } from './client';
 export * from './config';
 
 // Service Classes
-export { authService, default as AuthService } from './authService';
+export { default as AuthService } from './authService';
 export { travelService, default as TravelService } from './travelService';
 export { mobileService, default as MobileService } from './mobileService';
 export { chatbotService, default as ChatbotService } from './chatbotService';

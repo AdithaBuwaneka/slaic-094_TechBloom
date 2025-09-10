@@ -34,14 +34,14 @@ class MobileService {
   }
 
   async getUserDevices(): Promise<APIResponse<{
-    devices: Array<{
+    devices: {
       device_id: string;
       device_token: string;
       platform: string;
       registered_at: string;
       last_active: string;
       is_active: boolean;
-    }>;
+    }[];
     total_devices: number;
   }>> {
     return apiClient.get(ENDPOINTS.MOBILE.USER_DEVICES);

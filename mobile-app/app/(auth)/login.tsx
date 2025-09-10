@@ -100,7 +100,7 @@ export default function Login() {
             onPress={() => router.push('/(auth)/register')}
           >
             <Text className="text-center text-base" style={{ color: theme.primary }}>
-              Don't have an account? Sign Up
+              Don&apos;t have an account? Sign Up
             </Text>
           </TouchableOpacity>
         </View>

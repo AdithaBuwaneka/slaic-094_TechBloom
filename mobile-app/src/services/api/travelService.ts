@@ -9,9 +9,9 @@ import {
   TravelResponse, 
   RouteOption, 
   DisruptionAlert,
-  UserPreferences,
   APIResponse,
-  CommunityReport
+  CommunityReport,
+  UserPreferences
 } from '../../types';
 
 class TravelService {
@@ -61,7 +61,13 @@ class TravelService {
     timestamp: string;
   }>> {
     try {
-      const response = await apiClient.post(ENDPOINTS.TRAVEL.SELECT_ROUTE, routeSelection);
+      const response = await apiClient.post<{
+        user_id: string;
+        status: string;
+        message: string;
+        updated_preferences: any;
+        timestamp: string;
+      }>(ENDPOINTS.TRAVEL.SELECT_ROUTE, routeSelection);
       
       if (response.success) {
         console.log('Route selection recorded, preferences updated');
