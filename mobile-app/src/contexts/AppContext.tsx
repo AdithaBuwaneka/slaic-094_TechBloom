@@ -1,0 +1,465 @@
+// =============================================================================
+// APP CONTEXT - Global Application State Management
+// =============================================================================
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, RouteOption, DisruptionAlert, CommunityReport } from '../types';
+import { authService } from '../services/api/authService';
+import { notificationService } from '../services/notifications/NotificationService';
+import { webSocketService } from '../services/websocket/WebSocketService';
+import { initializeAPI } from '../services/api';
+
+interface AppState {
+  // Authentication
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  
+  // Navigation
+  currentRoute: RouteOption | null;
+  routeHistory: RouteOption[];
+  
+  // Real-time data
+  activeDisruptions: DisruptionAlert[];
+  recentCommunityReports: CommunityReport[];
+  
+  // App settings
+  isOfflineMode: boolean;
+  language: 'en' | 'si' | 'ta';
+  
+  // Services status
+  services: {
+    notifications: boolean;
+    websocket: boolean;
+    backend: boolean;
+  };
+}
+
+interface AppActions {
+  // Authentication
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (userData: any) => Promise<boolean>;
+  logout: () => Promise<void>;
+  
+  // Route management
+  setCurrentRoute: (route: RouteOption) => void;
+  addToRouteHistory: (route: RouteOption) => void;
+  clearRouteHistory: () => void;
+  
+  // Real-time updates
+  updateDisruptions: (disruptions: DisruptionAlert[]) => void;
+  updateCommunityReports: (reports: CommunityReport[]) => void;
+  
+  // App settings
+  setLanguage: (language: 'en' | 'si' | 'ta') => void;
+  setOfflineMode: (enabled: boolean) => void;
+  
+  // Service management
+  initializeServices: () => Promise<void>;
+  reconnectServices: () => Promise<void>;
+}
+
+type AppContextType = AppState & AppActions;
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export function AppProvider({ children }: AppProviderProps) {
+  const [state, setState] = useState<AppState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    currentRoute: null,
+    routeHistory: [],
+    activeDisruptions: [],
+    recentCommunityReports: [],
+    isOfflineMode: false,
+    language: 'en',
+    services: {
+      notifications: false,
+      websocket: false,
+      backend: false,
+    },
+  });
+
+  // =============================================================================
+  // INITIALIZATION
+  // =============================================================================
+
+  useEffect(() => {
+    initializeApp();
+  }, []);
+
+  const initializeApp = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+
+      // Initialize API services
+      await initializeAPI();
+      
+      // Try to restore authentication
+      const user = await authService.attemptAutoLogin();
+      if (user) {
+        setState(prev => ({
+          ...prev,
+          user,
+          isAuthenticated: true,
+        }));
+        
+        // Initialize user-dependent services
+        await initializeUserServices(user.user_id);
+      }
+
+      // Initialize general services
+      await initializeServices();
+
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        services: {
+          ...prev.services,
+          backend: true,
+        },
+      }));
+
+    } catch (error) {
+      console.error('App initialization error:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const initializeServices = async () => {
+    try {
+      // Initialize notifications
+      const notificationsEnabled = await notificationService.initialize();
+      
+      setState(prev => ({
+        ...prev,
+        services: {
+          ...prev.services,
+          notifications: notificationsEnabled,
+        },
+      }));
+
+      console.log('Services initialized - Notifications:', notificationsEnabled);
+    } catch (error) {
+      console.error('Error initializing services:', error);
+    }
+  };
+
+  const initializeUserServices = async (userId: string) => {
+    try {
+      // Connect WebSocket for real-time updates
+      const websocketConnected = await webSocketService.connect(userId);
+      
+      if (websocketConnected) {
+        // Subscribe to real-time updates
+        setupWebSocketSubscriptions();
+      }
+
+      setState(prev => ({
+        ...prev,
+        services: {
+          ...prev.services,
+          websocket: websocketConnected,
+        },
+      }));
+
+    } catch (error) {
+      console.error('Error initializing user services:', error);
+    }
+  };
+
+  const setupWebSocketSubscriptions = () => {
+    // Subscribe to disruption alerts
+    webSocketService.subscribeToDisruptions(undefined, (disruption) => {
+      setState(prev => ({
+        ...prev,
+        activeDisruptions: [disruption, ...prev.activeDisruptions].slice(0, 10),
+      }));
+    });
+
+    // Subscribe to community reports
+    webSocketService.subscribeToCommunityReports(undefined, (report) => {
+      setState(prev => ({
+        ...prev,
+        recentCommunityReports: [report, ...prev.recentCommunityReports].slice(0, 20),
+      }));
+    });
+
+    // Subscribe to route updates if there's an active route
+    if (state.currentRoute) {
+      webSocketService.subscribeToRouteUpdates(
+        state.currentRoute.route_id,
+        (update) => {
+          console.log('Route update received:', update);
+          // TODO: Update current route with new information
+        }
+      );
+    }
+  };
+
+  // =============================================================================
+  // AUTHENTICATION ACTIONS
+  // =============================================================================
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await authService.login({ email, password });
+      
+      if (response.success && response.data) {
+        const user = response.data.user;
+        setState(prev => ({
+          ...prev,
+          user,
+          isAuthenticated: true,
+        }));
+
+        // Initialize user services
+        await initializeUserServices(user.user_id);
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };
+
+  const register = async (userData: any): Promise<boolean> => {
+    try {
+      const response = await authService.register(userData);
+      
+      if (response.success && response.data) {
+        const user = response.data.user;
+        setState(prev => ({
+          ...prev,
+          user,
+          isAuthenticated: true,
+        }));
+
+        // Initialize user services
+        await initializeUserServices(user.user_id);
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      await authService.logout();
+      
+      // Disconnect WebSocket
+      webSocketService.disconnect();
+      
+      // Reset state
+      setState(prev => ({
+        ...prev,
+        user: null,
+        isAuthenticated: false,
+        currentRoute: null,
+        routeHistory: [],
+        activeDisruptions: [],
+        recentCommunityReports: [],
+        services: {
+          ...prev.services,
+          websocket: false,
+        },
+      }));
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // =============================================================================
+  // ROUTE MANAGEMENT ACTIONS
+  // =============================================================================
+
+  const setCurrentRoute = (route: RouteOption) => {
+    setState(prev => ({ ...prev, currentRoute: route }));
+    
+    // Subscribe to updates for the new route
+    if (state.services.websocket) {
+      webSocketService.subscribeToRouteUpdates(
+        route.route_id,
+        (update) => {
+          console.log('Route update for current route:', update);
+        }
+      );
+    }
+  };
+
+  const addToRouteHistory = (route: RouteOption) => {
+    setState(prev => ({
+      ...prev,
+      routeHistory: [route, ...prev.routeHistory.filter(r => r.route_id !== route.route_id)].slice(0, 10),
+    }));
+  };
+
+  const clearRouteHistory = () => {
+    setState(prev => ({ ...prev, routeHistory: [] }));
+  };
+
+  // =============================================================================
+  // REAL-TIME UPDATE ACTIONS
+  // =============================================================================
+
+  const updateDisruptions = (disruptions: DisruptionAlert[]) => {
+    setState(prev => ({ ...prev, activeDisruptions: disruptions }));
+  };
+
+  const updateCommunityReports = (reports: CommunityReport[]) => {
+    setState(prev => ({ ...prev, recentCommunityReports: reports }));
+  };
+
+  // =============================================================================
+  // APP SETTINGS ACTIONS
+  // =============================================================================
+
+  const setLanguage = (language: 'en' | 'si' | 'ta') => {
+    setState(prev => ({ ...prev, language }));
+    // TODO: Save to AsyncStorage
+  };
+
+  const setOfflineMode = (enabled: boolean) => {
+    setState(prev => ({ ...prev, isOfflineMode: enabled }));
+    
+    if (enabled) {
+      // Disconnect WebSocket to save data
+      webSocketService.disconnect();
+      setState(prev => ({
+        ...prev,
+        services: { ...prev.services, websocket: false },
+      }));
+    } else if (state.user) {
+      // Reconnect WebSocket
+      initializeUserServices(state.user.user_id);
+    }
+  };
+
+  // =============================================================================
+  // SERVICE MANAGEMENT ACTIONS
+  // =============================================================================
+
+  const reconnectServices = async () => {
+    try {
+      // Reconnect WebSocket if user is authenticated
+      if (state.user && !state.isOfflineMode) {
+        const connected = await webSocketService.connect(state.user.user_id);
+        setState(prev => ({
+          ...prev,
+          services: { ...prev.services, websocket: connected },
+        }));
+      }
+
+      // Test backend connection
+      // const backendHealthy = await checkServicesHealth();
+      // setState(prev => ({
+      //   ...prev,
+      //   services: { ...prev.services, backend: backendHealthy.overall },
+      // }));
+
+    } catch (error) {
+      console.error('Error reconnecting services:', error);
+    }
+  };
+
+  // =============================================================================
+  // CONTEXT VALUE
+  // =============================================================================
+
+  const contextValue: AppContextType = {
+    // State
+    ...state,
+    
+    // Actions
+    login,
+    register,
+    logout,
+    setCurrentRoute,
+    addToRouteHistory,
+    clearRouteHistory,
+    updateDisruptions,
+    updateCommunityReports,
+    setLanguage,
+    setOfflineMode,
+    initializeServices,
+    reconnectServices,
+  };
+
+  return (
+    <AppContext.Provider value={contextValue}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+}
+
+// =============================================================================
+// HELPER HOOKS
+// =============================================================================
+
+export function useAuth() {
+  const { user, isAuthenticated, isLoading, login, register, logout } = useApp();
+  return { user, isAuthenticated, isLoading, login, register, logout };
+}
+
+export function useRoutes() {
+  const { 
+    currentRoute, 
+    routeHistory, 
+    setCurrentRoute, 
+    addToRouteHistory, 
+    clearRouteHistory 
+  } = useApp();
+  
+  return {
+    currentRoute,
+    routeHistory,
+    setCurrentRoute,
+    addToRouteHistory,
+    clearRouteHistory,
+  };
+}
+
+export function useRealTimeData() {
+  const {
+    activeDisruptions,
+    recentCommunityReports,
+    updateDisruptions,
+    updateCommunityReports,
+  } = useApp();
+  
+  return {
+    activeDisruptions,
+    recentCommunityReports,
+    updateDisruptions,
+    updateCommunityReports,
+  };
+}
+
+export function useServiceStatus() {
+  const { services, reconnectServices } = useApp();
+  return { services, reconnectServices };
+}
+
+export default AppProvider;
