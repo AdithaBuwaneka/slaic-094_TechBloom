@@ -61,6 +61,27 @@ class DisruptionResponse(BaseModel):
     alternative_routes: List[Dict[str, Any]]
     timestamp: datetime
 
+class SaveRouteRequest(BaseModel):
+    user_id: str = Field(..., description="User ID")
+    route_id: str = Field(..., description="Route ID")
+    source: str = Field(..., description="Source location")
+    destination: str = Field(..., description="Destination location")
+    route_data: Dict[str, Any] = Field(..., description="Complete route data")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    metadata: Optional[Dict[str, Any]] = Field(default={}, description="Additional metadata")
+
+class RouteHistoryResponse(BaseModel):
+    routes: List[Dict[str, Any]]
+    total_count: int
+    user_id: str
+    timestamp: datetime
+
+class SaveRouteResponse(BaseModel):
+    route_id: str
+    status: str
+    message: str
+    timestamp: datetime
+
 @router.post("/plan-route", response_model=TravelResponse)
 async def plan_travel_route(
     request: TravelRequest,
@@ -703,4 +724,170 @@ async def search_route_information(request: TravelRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to search route information: {str(e)}"
+        )
+
+@router.post("/save-route", response_model=SaveRouteResponse)
+async def save_route_to_history(
+    request: SaveRouteRequest,
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
+    """
+    Save a route to user's route history for future reference.
+    """
+    try:
+        # Create route history document
+        route_document = {
+            "user_id": request.user_id,
+            "route_id": request.route_id,
+            "source": request.source,
+            "destination": request.destination,
+            "route_data": request.route_data,
+            "created_at": request.created_at,
+            "metadata": request.metadata,
+            "saved_at": datetime.utcnow()
+        }
+        
+        # Insert into route_history collection
+        result = await db.database.route_history.insert_one(route_document)
+        
+        # Also update user's route history in user_preferences
+        await db.database.user_preferences.update_one(
+            {"user_id": request.user_id},
+            {
+                "$push": {
+                    "route_history": {
+                        "$each": [route_document],
+                        "$slice": -50  # Keep only last 50 routes
+                    }
+                },
+                "$set": {
+                    "updated_at": datetime.utcnow()
+                }
+            },
+            upsert=True
+        )
+        
+        return SaveRouteResponse(
+            route_id=request.route_id,
+            status="success",
+            message="Route saved to history successfully",
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        # Log the error
+        await db.database.error_logs.insert_one({
+            "timestamp": datetime.utcnow(),
+            "user_id": request.user_id,
+            "endpoint": "/save-route",
+            "error": str(e),
+            "request_data": request.dict()
+        })
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save route: {str(e)}"
+        )
+
+@router.get("/route-history", response_model=RouteHistoryResponse)
+async def get_route_history(
+    user_id: str,
+    limit: int = 10,
+    offset: int = 0,
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
+    """
+    Get user's route history from the database.
+    """
+    try:
+        # Query route history collection
+        cursor = db.database.route_history.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).skip(offset).limit(limit)
+        
+        routes = await cursor.to_list(length=limit)
+        total_count = await db.database.route_history.count_documents({"user_id": user_id})
+        
+        # Convert ObjectId to string for JSON serialization
+        for route in routes:
+            if "_id" in route:
+                route["_id"] = str(route["_id"])
+        
+        return RouteHistoryResponse(
+            routes=routes,
+            total_count=total_count,
+            user_id=user_id,
+            timestamp=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        # Log the error
+        await db.database.error_logs.insert_one({
+            "timestamp": datetime.utcnow(),
+            "user_id": user_id,
+            "endpoint": "/route-history",
+            "error": str(e)
+        })
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get route history: {str(e)}"
+        )
+
+@router.delete("/delete-route/{route_id}")
+async def delete_route_from_history(
+    route_id: str,
+    user_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
+    """
+    Delete a specific route from user's history.
+    """
+    try:
+        # Delete from route_history collection
+        delete_result = await db.database.route_history.delete_one({
+            "route_id": route_id,
+            "user_id": user_id
+        })
+        
+        # Also remove from user_preferences.route_history
+        await db.database.user_preferences.update_one(
+            {"user_id": user_id},
+            {
+                "$pull": {
+                    "route_history": {"route_id": route_id}
+                },
+                "$set": {
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        if delete_result.deleted_count == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Route not found in history"
+            )
+        
+        return {
+            "status": "success",
+            "message": "Route deleted from history successfully",
+            "route_id": route_id,
+            "timestamp": datetime.utcnow()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log the error
+        await db.database.error_logs.insert_one({
+            "timestamp": datetime.utcnow(),
+            "user_id": user_id,
+            "endpoint": f"/delete-route/{route_id}",
+            "error": str(e)
+        })
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete route: {str(e)}"
         )

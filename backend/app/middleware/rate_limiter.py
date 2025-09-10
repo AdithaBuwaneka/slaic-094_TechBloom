@@ -142,9 +142,10 @@ class RateLimitMiddleware:
         # Rate limit configurations for different endpoints
         self.rate_limits = {
             # Authentication endpoints
-            "/api/v1/auth/login": {"limit": 5, "window": 300},  # 5 attempts per 5 minutes
-            "/api/v1/auth/register": {"limit": 3, "window": 3600},  # 3 attempts per hour
-            "/api/v1/auth/refresh": {"limit": 10, "window": 300},  # 10 refreshes per 5 minutes
+            "/api/v1/auth/login": {"limit": 10, "window": 300},  # 10 attempts per 5 minutes
+            "/api/v1/auth/register": {"limit": 20, "window": 300},  # 20 attempts per 5 minutes (dev-friendly)
+            "/api/v1/auth/refresh": {"limit": 20, "window": 300},  # 20 refreshes per 5 minutes
+            "/api/v1/auth/setup-preferences": {"limit": 20, "window": 300},  # 20 attempts per 5 minutes
             
             # Travel planning endpoints
             "/api/v1/travel/plan-route": {"limit": 30, "window": 300},  # 30 requests per 5 minutes
