@@ -133,9 +133,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     Appearance.getColorScheme()
   );
 
-  // Force light mode only - no dark mode
-  const isDark = false;
-  const theme = lightTheme;
+  // Calculate current theme based on mode and system preference
+  const isDark = mode === 'dark' || (mode === 'auto' && systemColorScheme === 'dark');
+  const theme = isDark ? darkTheme : lightTheme;
 
   // Load saved theme preference on app start
   useEffect(() => {

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingVi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { chatbotService } from '../../../src/services/api/chatbotService';
+import { useTheme } from '../../../src/contexts/ThemeContext';
 
 interface Message {
   id: string;
@@ -13,6 +14,7 @@ interface Message {
 }
 
 export default function Chat() {
+  const { theme, isDark } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -120,22 +122,22 @@ export default function Chat() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
       <KeyboardAvoidingView 
         className="flex-1" 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
         {/* Header */}
-        <View className="bg-blue-600 px-4 py-3 border-b border-blue-700">
+        <View className="px-4 py-3 border-b" style={{ backgroundColor: theme.primary, borderColor: theme.primaryDark }}>
           <View className="flex-row items-center">
-            <View className="w-10 h-10 bg-blue-500 rounded-full items-center justify-center mr-3">
+            <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: theme.primaryLight }}>
               <Text className="text-white text-lg">🤖</Text>
             </View>
             <View className="flex-1">
               <Text className="text-white text-lg font-semibold">AI Travel Assistant</Text>
               <Text className="text-blue-100 text-sm">
-                {isTyping ? 'AI is thinking...' : 'Online • RAG-Enhanced AI Assistant'}
+                {isTyping ? 'AI is thinking...' : 'Online - RAG-Enhanced AI Assistant'}
               </Text>
             </View>
             <TouchableOpacity className="p-2">
@@ -148,6 +150,7 @@ export default function Chat() {
         <ScrollView 
           ref={scrollViewRef}
           className="flex-1 px-4 py-4"
+          style={{ backgroundColor: theme.background }}
           showsVerticalScrollIndicator={false}
         >
           {messages.map((message) => (
@@ -158,19 +161,23 @@ export default function Chat() {
               <View
                 className={`max-w-[80%] px-4 py-3 rounded-xl ${
                   message.isUser
-                    ? 'bg-blue-600 rounded-br-md'
-                    : 'bg-gray-100 rounded-bl-md'
+                    ? 'rounded-br-md'
+                    : 'rounded-bl-md'
                 }`}
+                style={{
+                  backgroundColor: message.isUser ? theme.primary : theme.surface
+                }}
               >
                 <Text
-                  className={`text-base ${
-                    message.isUser ? 'text-white' : 'text-gray-800'
-                  }`}
+                  className="text-base"
+                  style={{
+                    color: message.isUser ? 'white' : theme.text
+                  }}
                 >
                   {message.text}
                 </Text>
               </View>
-              <Text className="text-xs text-gray-500 mt-1 px-2">
+              <Text className="text-xs mt-1 px-2" style={{ color: theme.textSecondary }}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
@@ -178,14 +185,14 @@ export default function Chat() {
 
           {isTyping && (
             <View className="items-start mb-4">
-              <View className="bg-gray-100 px-4 py-3 rounded-xl rounded-bl-md">
+              <View className="px-4 py-3 rounded-xl rounded-bl-md" style={{ backgroundColor: theme.surface }}>
                 <View className="flex-row items-center">
                   <View className="flex-row space-x-1">
-                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
-                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
-                    <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
                   </View>
-                  <Text className="text-gray-500 text-sm ml-2">AI thinking...</Text>
+                  <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>AI thinking...</Text>
                 </View>
               </View>
             </View>
@@ -195,16 +202,20 @@ export default function Chat() {
         {/* Quick Questions */}
         {messages.length <= 1 && (
           <View className="px-4 pb-2">
-            <Text className="text-sm font-medium text-gray-600 mb-2">Quick questions:</Text>
+            <Text className="text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>Quick questions:</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row space-x-2">
                 {quickQuestions.map((question, index) => (
                   <TouchableOpacity
                     key={index}
-                    className="bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg"
+                    className="border px-3 py-2 rounded-lg"
+                    style={{
+                      backgroundColor: isDark ? theme.primary + '20' : '#EBF8FF',
+                      borderColor: theme.primary
+                    }}
                     onPress={() => sendMessage(question)}
                   >
-                    <Text className="text-blue-700 text-sm">{question}</Text>
+                    <Text className="text-sm" style={{ color: theme.primary }}>{question}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -213,12 +224,14 @@ export default function Chat() {
         )}
 
         {/* Input Area */}
-        <View className="border-t border-gray-200 px-4 py-3">
+        <View className="border-t px-4 py-3" style={{ borderColor: theme.border, backgroundColor: theme.surface }}>
           <View className="flex-row items-center space-x-3">
-            <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+            <View className="flex-1 flex-row items-center rounded-full px-4 py-2" style={{ backgroundColor: theme.background }}>
               <TextInput
                 className="flex-1 text-base"
+                style={{ color: theme.text }}
                 placeholder="Ask about routes, fares, schedules..."
+                placeholderTextColor={theme.textSecondary}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline={false}
@@ -229,21 +242,22 @@ export default function Chat() {
                   onPress={() => setInputText('')}
                   className="ml-2"
                 >
-                  <Ionicons name="close-circle" size={20} color="#6b7280" />
+                  <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
                 </TouchableOpacity>
               )}
             </View>
             <TouchableOpacity
-              className={`w-10 h-10 rounded-full items-center justify-center ${
-                inputText.trim() ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: inputText.trim() ? theme.primary : theme.textTertiary
+              }}
               onPress={() => sendMessage()}
               disabled={!inputText.trim() || isTyping}
             >
               <Ionicons 
                 name="send" 
                 size={18} 
-                color={inputText.trim() ? 'white' : '#6b7280'} 
+                color={inputText.trim() ? 'white' : theme.textSecondary} 
               />
             </TouchableOpacity>
           </View>

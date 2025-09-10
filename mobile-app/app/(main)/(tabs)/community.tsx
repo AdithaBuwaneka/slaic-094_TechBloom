@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { communityService } from '../../../src/services/api/communityService';
 import { useAuth } from '../../../src/contexts/AppContext';
+import { useTheme } from '../../../src/contexts/ThemeContext';
 
 interface CommunityReport {
   id: string;
@@ -20,6 +21,7 @@ interface CommunityReport {
 
 export default function Community() {
   const { user } = useAuth();
+  const { theme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'reports' | 'create'>('reports');
   const [newReport, setNewReport] = useState({
     type: 'traffic' as const,
@@ -179,15 +181,15 @@ export default function Community() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
       {/* Header */}
-      <View className="bg-white px-4 py-4 border-b border-gray-200">
-        <Text className="text-2xl font-bold text-gray-800">Community Reports</Text>
-        <Text className="text-sm text-gray-600">Share and discover real-time transport updates</Text>
+      <View className="px-4 py-4 border-b" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+        <Text className="text-2xl font-bold" style={{ color: theme.text }}>Community Reports</Text>
+        <Text className="text-sm" style={{ color: theme.textSecondary }}>Share and discover real-time transport updates</Text>
       </View>
 
       {/* Tab Navigation */}
-      <View className="bg-white border-b border-gray-200">
+      <View className="border-b" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
         <View className="flex-row">
           <TouchableOpacity
             className={`flex-1 py-3 px-4 ${activeTab === 'reports' ? 'border-b-2 border-blue-600' : ''}`}

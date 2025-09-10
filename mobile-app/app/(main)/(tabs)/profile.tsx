@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import ThemeToggle, { ThemePreview } from '../../components/ThemeToggle';
 import { useTheme, ThemeMode } from '../../../src/contexts/ThemeContext';
 import { useAuth } from '../../../src/contexts/AppContext';
+import { authService } from '../../../src/services/api/authService';
 
 export default function Profile() {
   const { theme, mode, setTheme, isDark } = useTheme();
@@ -71,20 +72,28 @@ export default function Profile() {
 
   const handleLanguageChange = async (languageCode: string) => {
     try {
-      // Update user preferences locally first
       const selectedLang = languageOptions.find(l => l.code === languageCode);
-      if (selectedLang) {
-        // Here you would typically call an API to update user preferences
-        // await authService.updateProfile({ preferred_language: languageCode });
-        
-        // For now, update the local state
+      if (!selectedLang) return;
+      
+      // Show loading state
+      Alert.alert('Updating...', 'Changing language preference...');
+      
+      // Update user profile via API
+      const response = await authService.updateProfile({ 
+        preferred_language: languageCode 
+      });
+      
+      if (response.success) {
         Alert.alert(
           'Language Updated', 
-          `App language changed to ${selectedLang.label}. Please restart the app to see changes.`,
+          `App language changed to ${selectedLang.label}. The change will take effect on next app launch.`,
           [{ text: 'OK' }]
         );
+      } else {
+        throw new Error(response.error?.message || 'Failed to update language');
       }
     } catch (error) {
+      console.error('Language update error:', error);
       Alert.alert('Error', 'Failed to update language preference. Please try again.');
     }
   };
