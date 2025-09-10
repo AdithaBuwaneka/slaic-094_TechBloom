@@ -104,6 +104,9 @@ export function AppProvider({ children }: AppProviderProps) {
       // Initialize API services
       await initializeAPI();
       
+      // Clear any corrupted tokens first
+      await authService.clearCorruptedTokens();
+      
       // Try to restore authentication
       const user = await authService.attemptAutoLogin();
       if (user) {

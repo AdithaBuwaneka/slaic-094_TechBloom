@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,13 +38,83 @@ export default function Profile() {
   });
 
   const [stats, setStats] = useState({
-    totalTrips: authUser?.profile?.stats?.totalTrips || 0,
-    distanceTraveled: authUser?.profile?.stats?.distanceTraveled || 0,
-    moneySaved: authUser?.profile?.stats?.moneySaved || 0,
-    carbonReduced: authUser?.profile?.stats?.carbonReduced || 0,
-    communityReports: authUser?.profile?.stats?.communityReports || 0,
-    helpfulVotes: authUser?.profile?.stats?.helpfulVotes || 0
+    totalTrips: 0,
+    distanceTraveled: 0,
+    moneySaved: 0,
+    carbonReduced: 0,
+    communityReports: 0,
+    helpfulVotes: 0,
+    userRating: 0
   });
+  
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Load user statistics and preferences on component mount
+  useEffect(() => {
+    loadUserStats();
+    loadUserPreferences();
+  }, []);
+
+  const loadUserStats = async () => {
+    try {
+      setStatsLoading(true);
+      
+      // First try to get stats from user context if available
+      if (authUser?.usage_stats) {
+        const userStats = authUser.usage_stats;
+        setStats({
+          totalTrips: userStats.total_trips_planned || 0,
+          distanceTraveled: Math.round(userStats.total_distance_traveled || 0),
+          moneySaved: Math.round(userStats.total_fare_saved || 0),
+          carbonReduced: Math.round((userStats.total_distance_traveled || 0) * 0.125), // Approx 125g CO2 per km saved
+          communityReports: 0, // Will be fetched separately
+          helpfulVotes: 0, // Will be fetched separately
+          userRating: 0 // Will be fetched separately
+        });
+      }
+
+      // Try to fetch fresh stats from API
+      try {
+        const response = await authService.getUserStats();
+        if (response.success && response.data) {
+          const { usage_stats, community_stats, environmental_impact } = response.data;
+          setStats({
+            totalTrips: usage_stats.total_trips_planned || 0,
+            distanceTraveled: Math.round(usage_stats.total_distance_traveled || 0),
+            moneySaved: Math.round(usage_stats.total_fare_saved || 0),
+            carbonReduced: Math.round(environmental_impact.carbon_saved_kg || 0),
+            communityReports: community_stats.total_reports || 0,
+            helpfulVotes: community_stats.helpful_votes_received || 0,
+            userRating: community_stats.user_rating || 0
+          });
+        }
+      } catch (apiError) {
+        console.log('API stats not available, using local data');
+      }
+      
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+      // Keep default values on error
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const loadUserPreferences = async () => {
+    try {
+      const response = await authService.getUserPreferences();
+      if (response.success && response.data) {
+        setPreferences(response.data);
+      }
+    } catch (error: any) {
+      // If endpoint doesn't exist (404), use defaults
+      if (error?.response?.status === 404) {
+        console.log('User preferences endpoint not available, using defaults');
+      } else {
+        console.log('Failed to load user preferences, using defaults:', error);
+      }
+    }
+  };
 
   const languageOptions = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -143,33 +213,61 @@ export default function Profile() {
         {/* Stats Cards */}
         <View className="px-4 mt-4 mb-6">
           <View className="rounded-lg shadow-sm p-4" style={{ backgroundColor: theme.surface }}>
-            <Text className="text-lg font-semibold mb-4" style={{ color: theme.text }}>{t('profile.impact')}</Text>
-            <View className="flex-row flex-wrap">
-              <View className="w-1/2 p-2">
-                <View className="bg-blue-50 p-3 rounded-lg items-center">
-                  <Text className="text-2xl font-bold text-blue-600">{stats.totalTrips}</Text>
-                  <Text className="text-xs text-gray-600 text-center">Total Trips</Text>
-                </View>
-              </View>
-              <View className="w-1/2 p-2">
-                <View className="bg-green-50 p-3 rounded-lg items-center">
-                  <Text className="text-2xl font-bold text-green-600">{stats.distanceTraveled}</Text>
-                  <Text className="text-xs text-gray-600 text-center">km Traveled</Text>
-                </View>
-              </View>
-              <View className="w-1/2 p-2">
-                <View className="bg-purple-50 p-3 rounded-lg items-center">
-                  <Text className="text-2xl font-bold text-purple-600">Rs. {stats.moneySaved}</Text>
-                  <Text className="text-xs text-gray-600 text-center">Money Saved</Text>
-                </View>
-              </View>
-              <View className="w-1/2 p-2">
-                <View className="bg-orange-50 p-3 rounded-lg items-center">
-                  <Text className="text-2xl font-bold text-orange-600">{stats.carbonReduced}</Text>
-                  <Text className="text-xs text-gray-600 text-center">kg CO₂ Reduced</Text>
-                </View>
-              </View>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-semibold" style={{ color: theme.text }}>{t('profile.impact')}</Text>
+              <TouchableOpacity
+                onPress={loadUserStats}
+                className="p-2 rounded-full"
+                style={{ backgroundColor: theme.border }}
+              >
+                <Ionicons name="refresh" size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
             </View>
+            {statsLoading ? (
+              <View className="items-center py-8">
+                <Text className="text-4xl mb-2">📊</Text>
+                <Text className="text-base" style={{ color: theme.textSecondary }}>{t('common.loading')}...</Text>
+              </View>
+            ) : (
+              <View className="flex-row flex-wrap">
+                <View className="w-1/2 p-2">
+                  <View 
+                    className="p-3 rounded-lg items-center"
+                    style={{ backgroundColor: isDark ? '#1E3A8A20' : '#DBEAFE' }}
+                  >
+                    <Text className="text-2xl font-bold text-blue-600">{stats.totalTrips}</Text>
+                    <Text className="text-xs text-center" style={{ color: theme.textSecondary }}>{t('profile.trips') || 'Total Trips'}</Text>
+                  </View>
+                </View>
+                <View className="w-1/2 p-2">
+                  <View 
+                    className="p-3 rounded-lg items-center"
+                    style={{ backgroundColor: isDark ? '#14532D20' : '#DCFCE7' }}
+                  >
+                    <Text className="text-2xl font-bold text-green-600">{stats.distanceTraveled} km</Text>
+                    <Text className="text-xs text-center" style={{ color: theme.textSecondary }}>{t('profile.distance') || 'Distance Traveled'}</Text>
+                  </View>
+                </View>
+                <View className="w-1/2 p-2">
+                  <View 
+                    className="p-3 rounded-lg items-center"
+                    style={{ backgroundColor: isDark ? '#581C8720' : '#F3E8FF' }}
+                  >
+                    <Text className="text-2xl font-bold text-purple-600">Rs. {stats.moneySaved.toLocaleString()}</Text>
+                    <Text className="text-xs text-center" style={{ color: theme.textSecondary }}>{t('profile.saved') || 'Money Saved'}</Text>
+                  </View>
+                </View>
+                <View className="w-1/2 p-2">
+                  <View 
+                    className="p-3 rounded-lg items-center"
+                    style={{ backgroundColor: isDark ? '#9A3C1220' : '#FED7AA' }}
+                  >
+                    <Text className="text-2xl font-bold text-orange-600">{stats.carbonReduced} kg</Text>
+                    <Text className="text-xs text-center" style={{ color: theme.textSecondary }}>{t('profile.carbon') || 'CO₂ Reduced'}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -436,7 +534,9 @@ export default function Profile() {
               <Text className="text-xs" style={{ color: theme.textSecondary }}>Helpful Votes</Text>
             </View>
             <View className="items-center">
-              <Text className="text-xl font-bold text-green-600">4.8</Text>
+              <Text className="text-xl font-bold text-green-600">
+                {stats.userRating > 0 ? stats.userRating.toFixed(1) : 'N/A'}
+              </Text>
               <Text className="text-xs" style={{ color: theme.textSecondary }}>Rating</Text>
             </View>
           </View>
