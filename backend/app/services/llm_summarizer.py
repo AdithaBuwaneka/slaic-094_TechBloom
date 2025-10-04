@@ -24,7 +24,7 @@ class LLMSummarizerService:
         
         # Initialize the model with latest Gemini 2.0
         try:
-            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.model = genai.GenerativeModel('gemini-2.5-pro')
             print("Google Generative AI model initialized successfully")
         except Exception as e:
             print(f" Error initializing Google Generative AI: {str(e)}")

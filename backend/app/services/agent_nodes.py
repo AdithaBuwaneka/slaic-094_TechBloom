@@ -898,7 +898,7 @@ def disruption_monitoring_node(state: TravelState) -> TravelState:
             "destination": state.destination,
             "mode": state.mode,
             "user_id": state.user_id,
-            "llm_model": "gemini-2.0-flash"
+            "llm_model": "gemini-2.5-pro"
         }
     ) as span:
         try:

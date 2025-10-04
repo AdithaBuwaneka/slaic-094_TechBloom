@@ -25,7 +25,7 @@ class IntelligentDisruptionService:
         
         # Initialize the Gemini 2.0 Flash model
         try:
-            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.model = genai.GenerativeModel('gemini-2.5-pro')
             print(" Gemini model initialized successfully for disruption monitoring")
         except Exception as e:
             print(f" Error initializing Gemini : {str(e)}")
@@ -78,7 +78,7 @@ class IntelligentDisruptionService:
                 "reasoning": recommendation_result["reasoning"],
                 "confidence_score": recommendation_result["confidence"],
                 "timestamp": datetime.now().isoformat(),
-                "model_used": "gemini-2.0-flash-exp"
+                "model_used": "gemini-2.5-pro"
             }
             
         except Exception as e:

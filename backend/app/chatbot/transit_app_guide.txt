@@ -1,6 +1,6 @@
 # Smart Transit Companion - User Guide
 
-## What is Smart Transit Companion?
+## What is Smart Transit Companion (An App) ?
 
 Smart Transit Companion is an AI-powered mobile application designed to revolutionize public transportation in Sri Lanka. It's your personal travel assistant that helps you navigate buses, trains, tuk-tuks, and other transport modes efficiently and seamlessly.
 
@@ -230,7 +230,7 @@ The Smart Transit Companion continuously evolves with new features, expanded cov
 - Improved accessibility features
 - Integration with new transport services
 
-## Benefits of Using Smart Transit Companion
+## Benefits of Using Smart Transit Companion = Time Savings , Cost Reduction, Stress Reduction , Improved Accessibility
 
 ### Time Savings
 Reduce travel time by up to 30% through optimized route planning and real-time updates.
@@ -247,4 +247,28 @@ Make public transport accessible to everyone, regardless of language, physical a
 ### Environmental Impact
 Encourage public transport usage, contributing to reduced traffic congestion and environmental sustainability.
 
-This comprehensive guide ensures that users can effectively utilize all features of the Smart Transit Companion app while understanding how the AI agents work together to provide the best possible travel experience in Sri Lanka.
+How To Use Smart Transit Companion App = **The Smart Transit Companion is your AI-powered travel assistant designed specifically for Sri Lankan
+  transportation. To get started, simply download the app and create your account with basic
+  information like name, email, and preferred language (English, Sinhala, or Tamil). Once logged in,
+  use the Home tab to plan your journey by entering your starting point and destination - the app
+  supports all major Sri Lankan locations from Colombo Fort to Jaffna, and even recognizes local
+  landmarks. Select your preferred travel mode including buses, trains, tuk-tuks, or driving, and watch    
+   as our 10 specialized AI agents work together in real-time to find the best routes for you. The
+  system considers factors like current traffic, weather conditions, fare prices, and your personal        
+  preferences to provide optimized recommendations.
+
+  Navigate to the Routes tab to view your journey history and save frequently used routes for quick        
+  access. The Chat tab features an intelligent RAG-powered assistant that can answer questions about       
+  Sri Lankan transportation, provide real-time updates, and offer travel tips in your preferred
+  language. Use the Community tab to report traffic delays, share fare information, or contribute
+  accessibility details to help fellow travelers. The Profile tab allows you to customize your travel      
+  preferences, view your trip statistics including money saved and carbon footprint reduced, and manage    
+   notification settings.
+
+  The app excels in providing real-time updates through push notifications about route disruptions,        
+  weather alerts, and traffic changes. Its multi-agent AI system continuously learns from your travel      
+  patterns to provide increasingly personalized recommendations, while the community-driven data
+  ensures you have the most current information about fares, delays, and route conditions. Whether
+  you're a daily commuter or occasional traveler, the Smart Transit Companion transforms how you
+  navigate Sri Lanka's transportation network with intelligent, culturally-aware, and cost-effective       
+  travel planning**

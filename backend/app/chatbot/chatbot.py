@@ -91,7 +91,7 @@ def initialize_rag_system():
         
         # LLM - Using latest Gemini 2.0 Flash (faster, better, cheaper)
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp", 
+            model="gemini-2.5-pro", 
             temperature=0.2,
             google_api_key=settings.GOOGLE_GEMINI_API_KEY,
             convert_system_message_to_human=True
@@ -144,7 +144,7 @@ async def ask_question(request: QuestionRequest):
                 # Update LLM temperature if different from default
                 if request.temperature != 0.2:
                     llm = ChatGoogleGenerativeAI(
-                        model="gemini-2.0-flash-exp", 
+                        model="gemini-2.5-pro", 
                         temperature=request.temperature,
                         google_api_key=settings.GOOGLE_GEMINI_API_KEY,
                         convert_system_message_to_human=True
