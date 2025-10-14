@@ -37,7 +37,6 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
             "address": f"{destination}, Sri Lanka"
         },
         "travelMode": api_mode,
-        "routingPreference": "TRAFFIC_AWARE",
         "computeAlternativeRoutes": False,
         "routeModifiers": {
             "avoidTolls": False,
@@ -47,6 +46,10 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
         "languageCode": "en-US",
         "units": "IMPERIAL"
     }
+    
+    # Only add routing preference for non-transit modes
+    if api_mode != "TRANSIT":
+        request_payload["routingPreference"] = "TRAFFIC_AWARE"
 
     # Add departure time if provided
     if departure_time:

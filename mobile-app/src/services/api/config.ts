@@ -10,7 +10,7 @@ export const API_CONFIG = {
   BASE_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'http://localhost:8000'  // Web development
-      : 'http://10.226.68.83:8000'  // Expo Go - use actual computer IP
+      : 'http://10.0.2.2:8000'  // Expo Go - use actual computer IP
     : 'https://your-production-domain.com',  // Production
   
   // API Version
@@ -30,7 +30,7 @@ export const API_CONFIG = {
   WS_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'ws://localhost:8000/api/v1/ws/realtime'
-      : 'ws://10.226.68.83:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL
+      : 'ws://10.0.2.2:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL
     : 'wss://your-production-domain.com/api/v1/ws/realtime',
 };
 

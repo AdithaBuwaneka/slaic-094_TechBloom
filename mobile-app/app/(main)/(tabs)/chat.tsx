@@ -2,31 +2,34 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { chatbotService } from '../../../src/services/api/chatbotService';
+import { travelService } from '../../../src/services/api/travelService';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { useLanguage } from '../../../src/contexts/LanguageContext';
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  isTyping?: boolean;
-}
+import { useAuth, useApp } from '../../../src/contexts/AppContext';
+import { ChatMessage, ChatIntent, ChatActionData } from '../../../src/types';
+import IntentActionCard from '../../components/IntentActionCard';
+import MultiAgentAnimation from '../../components/MultiAgentAnimation';
 
 export default function Chat() {
   const { theme, isDark } = useTheme();
   const { t } = useLanguage();
-  const [messages, setMessages] = useState<Message[]>([
+  const { user } = useAuth();
+  const { addToRouteHistory, setCurrentRoute } = useApp();
+  const router = useRouter();
+  
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       text: "Hi! I'm your AI travel assistant for Sri Lankan transport. I can help you with:\n\n🚌 Bus schedules and routes\n🚂 Train information\n🛺 Tuk-tuk options\n💰 Fare calculations\n🗺️ Route planning\n\nWhat would you like to know?",
-      isUser: false,
+      is_user: false,
       timestamp: new Date(),
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isProcessingRoute, setIsProcessingRoute] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const quickQuestions = [
@@ -50,10 +53,10 @@ export default function Chat() {
   const sendMessage = async (text: string = inputText) => {
     if (!text.trim()) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
       text: text.trim(),
-      isUser: true,
+      is_user: true,
       timestamp: new Date(),
     };
 
@@ -62,38 +65,193 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      // Call the actual backend chatbot service
+      // Call the actual backend chatbot service with user_id for intent detection
       const response = await chatbotService.askQuestion({
         question: text.trim(),
-        temperature: 0.7
+        temperature: 0.7,
+        user_id: user?.user_id || undefined
       });
 
       let responseText = '';
+      let intent: ChatIntent | undefined;
+      let actionData: ChatActionData | undefined;
+      let requiresAction = false;
+      
       if (response.success && response.data) {
         responseText = response.data.answer;
+        intent = response.data.intent_type as ChatIntent;
+        actionData = response.data.action_data;
+        requiresAction = response.data.requires_action;
+        
+        console.log('Chatbot response data:', JSON.stringify(response.data, null, 2));
+        console.log('Intent detected:', intent);
+        console.log('Action data:', actionData);
+        console.log('Requires action:', requiresAction);
+        
+        // If it's route planning, show the processing animation
+        if (intent === ChatIntent.ROUTE_PLANNING && requiresAction) {
+          setIsProcessingRoute(true);
+        }
       } else {
         responseText = response.error?.message || 'Sorry, I encountered an error. Please try again.';
+        console.log('Chatbot response error:', response.error);
       }
       
-      const aiResponse: Message = {
+      const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         text: responseText,
-        isUser: false,
+        is_user: false,
         timestamp: new Date(),
+        intent,
+        action_data: actionData,
+        requires_action: requiresAction,
       };
 
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage: Message = {
+      const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         text: "Sorry, I'm having trouble connecting to the AI service. Please check your internet connection and try again.",
-        isUser: false,
+        is_user: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
+      setIsProcessingRoute(false);
+    }
+  };
+
+  const handleActionPress = async (intent: ChatIntent, actionData?: ChatActionData) => {
+    switch (intent) {
+      case ChatIntent.ROUTE_PLANNING:
+        if (actionData?.route_result) {
+          // Store the route in context and navigate to Routes tab
+          const routeData = actionData.route_result;
+          console.log('Route data structure:', JSON.stringify(routeData, null, 2));
+          
+          // Handle different possible response structures
+          let routes = [];
+          if (routeData.response?.recommended_routes) {
+            routes = routeData.response.recommended_routes;
+          } else if (routeData.response?.all_routes) {
+            routes = routeData.response.all_routes;
+          } else if (routeData.response?.routes) {
+            routes = routeData.response.routes;
+          }
+          
+          console.log('Found routes:', routes.length);
+          
+          if (routes.length > 0) {
+            const route = routes[0];
+            console.log('Using route from API:', route);
+            // ensure a stable id
+            const routeToSave = { ...route };
+            routeToSave.route_id = routeToSave.route_id || `route-${Date.now()}`;
+
+            // save locally and backend (await both)
+            setCurrentRoute(routeToSave);
+            await addToRouteHistory(routeToSave);
+
+            // also force backend save to be explicit and fail-fast
+            if (user?.user_id) {
+              await travelService.saveRouteToBackend(routeToSave, user.user_id);
+            }
+
+            // navigate only after save completes
+            router.push('/(main)/(tabs)/routes');
+            console.log('Route added to history successfully');
+          } else {
+            // If no routes found, create a fallback route entry
+            console.log('No routes found, creating fallback route');
+            const fallbackRoute = {
+              route_id: `fallback-${Date.now()}`,
+              id: `fallback-${Date.now()}`,
+              title: `${actionData.source || 'Unknown'} → ${actionData.destination || 'Unknown'}`,
+              source: actionData.source || 'Unknown',
+              destination: actionData.destination || 'Unknown',
+              mode: actionData.mode || 'transit',
+              modes: [actionData.mode || 'transit'],
+              duration: 'Route not found',
+              fare: 'N/A',
+              carbonFootprint: 'N/A',
+              aiRecommendation: 'Route planning completed but no specific routes found. Please try different travel modes or check the Routes tab for alternative options.',
+              agentsUsed: ['route_planner'],
+              summary: {
+                duration_minutes: 0,
+                distance_km: 0,
+                estimated_fare: 0,
+                transit_modes: ['transit'],
+                transfers: 0,
+                walking_distance: 0,
+                carbon_footprint: 0
+              },
+              steps: [],
+              fare_breakdown: { total_fare: 0, currency: 'LKR', breakdown: [], savings_vs_alternatives: 0, optimization_applied: false },
+              agent_analysis: { user_preference_score: 0, fare_optimization_score: 0, disruption_risk_score: 0, comfort_score: 0, recommendations: [] },
+              disruptions: [],
+              alternatives: []
+            };
+            console.log('Created fallback route:', fallbackRoute);
+            setCurrentRoute(fallbackRoute);
+            console.log('Adding fallback route to history...');
+            await addToRouteHistory(fallbackRoute);
+            console.log('Fallback route added to history successfully');
+          }
+        } else {
+          // If no route_result at all, still create a basic route entry
+          console.log('No route_result in actionData, creating basic route');
+          const basicRoute = {
+            route_id: `basic-${Date.now()}`,
+            id: `basic-${Date.now()}`,
+            title: `${actionData?.source || 'Colombo'} → ${actionData?.destination || 'Badulla'}`,
+            source: actionData?.source || 'Colombo',
+            destination: actionData?.destination || 'Badulla',
+            mode: actionData?.mode || 'transit',
+            modes: [actionData?.mode || 'transit'],
+            duration: 'Processing...',
+            fare: 'Calculating...',
+            carbonFootprint: 'Calculating...',
+            aiRecommendation: 'Route planning is being processed. Check back in a moment.',
+            agentsUsed: ['route_planner'],
+            summary: {
+              duration_minutes: 0,
+              distance_km: 0,
+              estimated_fare: 0,
+              transit_modes: ['transit'],
+              transfers: 0,
+              walking_distance: 0,
+              carbon_footprint: 0
+            },
+            steps: [],
+            fare_breakdown: { total_fare: 0, currency: 'LKR', breakdown: [], savings_vs_alternatives: 0, optimization_applied: false },
+            agent_analysis: { user_preference_score: 0, fare_optimization_score: 0, disruption_risk_score: 0, comfort_score: 0, recommendations: [] },
+            disruptions: [],
+            alternatives: []
+          };
+          console.log('Created basic route:', basicRoute);
+          setCurrentRoute(basicRoute);
+          console.log('Adding basic route to history...');
+          await addToRouteHistory(basicRoute);
+          console.log('Basic route added to history successfully');
+        }
+        // Small delay to ensure route is saved before navigation
+        setTimeout(() => {
+          router.push('/(main)/(tabs)/routes');
+        }, 500);
+        break;
+        
+      case ChatIntent.SAVED_ROUTES:
+        router.push('/(main)/(tabs)/routes');
+        break;
+        
+      case ChatIntent.DISRUPTIONS:
+        router.push('/(main)/(tabs)/community');
+        break;
+        
+      default:
+        break;
     }
   };
 
@@ -156,47 +314,74 @@ export default function Chat() {
           showsVerticalScrollIndicator={false}
         >
           {messages.map((message) => (
-            <View
-              key={message.id}
-              className={`mb-4 ${message.isUser ? 'items-end' : 'items-start'}`}
-            >
+            <View key={message.id}>
               <View
-                className={`max-w-[80%] px-4 py-3 rounded-xl ${
-                  message.isUser
-                    ? 'rounded-br-md'
-                    : 'rounded-bl-md'
-                }`}
-                style={{
-                  backgroundColor: message.isUser ? theme.primary : theme.surface
-                }}
+                className={`mb-4 ${message.is_user ? 'items-end' : 'items-start'}`}
               >
-                <Text
-                  className="text-base"
+                <View
+                  className={`max-w-[80%] px-4 py-3 rounded-xl ${
+                    message.is_user
+                      ? 'rounded-br-md'
+                      : 'rounded-bl-md'
+                  }`}
                   style={{
-                    color: message.isUser ? 'white' : theme.text
+                    backgroundColor: message.is_user ? theme.primary : theme.surface
                   }}
                 >
-                  {message.text}
+                  <Text
+                    className="text-base"
+                    style={{
+                      color: message.is_user ? 'white' : theme.text
+                    }}
+                  >
+                    {message.text}
+                  </Text>
+                </View>
+                <Text className="text-xs mt-1 px-2" style={{ color: theme.textSecondary }}>
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
-              <Text className="text-xs mt-1 px-2" style={{ color: theme.textSecondary }}>
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
+              
+              {/* Show action card if message requires action */}
+              {!message.is_user && message.requires_action && message.intent && (
+                <IntentActionCard
+                  intent={message.intent}
+                  actionData={message.action_data}
+                  onActionPress={handleActionPress}
+                  theme={theme}
+                />
+              )}
             </View>
           ))}
 
           {isTyping && (
             <View className="items-start mb-4">
-              <View className="px-4 py-3 rounded-xl rounded-bl-md" style={{ backgroundColor: theme.surface }}>
-                <View className="flex-row items-center">
-                  <View className="flex-row space-x-1">
-                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
-                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
-                    <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
-                  </View>
-                  <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>{t('chat.thinking')}</Text>
+              {isProcessingRoute ? (
+                // Show multi-agent animation for route planning
+                <View className="px-4 py-3 rounded-xl rounded-bl-md w-full" style={{ backgroundColor: theme.surface }}>
+                  <MultiAgentAnimation 
+                    visible={true}
+                    onComplete={() => {}}
+                    onClose={() => {}}
+                    requestData={{ source: '', destination: '', mode: 'transit' }}
+                  />
+                  <Text className="text-sm mt-2 text-center" style={{ color: theme.textSecondary }}>
+                    AI agents are planning your route...
+                  </Text>
                 </View>
-              </View>
+              ) : (
+                // Regular typing indicator
+                <View className="px-4 py-3 rounded-xl rounded-bl-md" style={{ backgroundColor: theme.surface }}>
+                  <View className="flex-row items-center">
+                    <View className="flex-row space-x-1">
+                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                    </View>
+                    <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>{t('chat.thinking')}</Text>
+                  </View>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>

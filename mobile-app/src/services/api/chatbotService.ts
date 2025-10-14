@@ -25,13 +25,13 @@ class ChatbotService {
       const chatRequest = {
         question: request.question,
         temperature: request.temperature || 0.7,
-        context: request.context || {}
+        user_id: request.user_id || null
       };
 
       const response = await apiClient.post<ChatbotResponse>(
         ENDPOINTS.CHATBOT.ASK, 
         chatRequest,
-        { timeout: 45000 } // 45 seconds for AI processing
+        { timeout: 60000 } // 60 seconds for AI processing (including route planning)
       );
 
       if (response.success && response.data) {

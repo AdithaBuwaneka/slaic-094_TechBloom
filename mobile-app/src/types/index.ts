@@ -401,6 +401,13 @@ export interface CommunityReportRequest {
 // CHATBOT & RAG TYPES
 // =============================================================================
 
+export enum ChatIntent {
+  ROUTE_PLANNING = 'route_planning',
+  SAVED_ROUTES = 'saved_routes',
+  DISRUPTIONS = 'disruptions',
+  GENERAL_INFO = 'general_info'
+}
+
 export interface ChatMessage {
   id: string;
   text: string;
@@ -408,6 +415,9 @@ export interface ChatMessage {
   timestamp: Date;
   is_typing?: boolean;
   attachments?: ChatAttachment[];
+  intent?: ChatIntent;
+  action_data?: ChatActionData;
+  requires_action?: boolean;
 }
 
 export interface ChatAttachment {
@@ -419,13 +429,33 @@ export interface ChatbotRequest {
   question: string;
   temperature?: number;
   context?: ChatContext;
+  user_id?: string;
 }
 
 export interface ChatbotResponse {
   question: string;
   answer: string;
+  intent_type: string;
+  action_data?: ChatActionData;
+  requires_action: boolean;
   context?: ChatContext;
   suggestions?: string[];
+}
+
+export interface ChatActionData {
+  action?: string;
+  route_result?: any;
+  source?: string;
+  destination?: string;
+  mode?: string;
+  [key: string]: any;
+}
+
+export interface ChatActionButton {
+  text: string;
+  action: string;
+  intent: ChatIntent;
+  data?: any;
 }
 
 export interface ChatContext {
