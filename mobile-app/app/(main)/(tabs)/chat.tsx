@@ -374,9 +374,9 @@ export default function Chat() {
                 <View className="px-4 py-3 rounded-xl rounded-bl-md" style={{ backgroundColor: theme.surface }}>
                   <View className="flex-row items-center">
                     <View className="flex-row space-x-1">
-                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
-                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
-                      <View className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.textSecondary }} />
+                      <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.textSecondary, opacity: 0.6 }} />
+                      <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.textSecondary, opacity: 0.4 }} />
+                      <View className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.textSecondary, opacity: 0.6 }} />
                     </View>
                     <Text className="text-sm ml-2" style={{ color: theme.textSecondary }}>{t('chat.thinking')}</Text>
                   </View>

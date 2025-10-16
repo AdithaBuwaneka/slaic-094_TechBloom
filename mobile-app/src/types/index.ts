@@ -115,9 +115,14 @@ export interface TravelResponseData {
   local_insights: LocalInsight[];
   
   // Backend response structure properties
-  best_route?: RouteOption;
-  all_routes?: RouteOption[];
+  best_route?: any; // Backend route object
+  all_routes?: any[]; // All route options from backend
   total_routes_found?: number;
+  
+  // AI-generated insights from backend
+  ai_disruption_analysis?: any;
+  destination_summary?: string | null;
+  active_disruptions?: any[];
 }
 
 export interface RouteOption {
@@ -139,11 +144,83 @@ export interface RouteOption {
   aiRecommendation: string;
   agentsUsed: string[];
   
-  // Backend saved fields
+  // Backend saved fields from route history
   source?: string;
   destination?: string;
   origin?: string; // Alternative field for source
-  route_data?: RouteOption;
+  created_at?: string;
+  saved_at?: string;
+  metadata?: {
+    agent_count?: number;
+    processing_time?: number;
+    auto_saved?: boolean;
+    mode?: string;
+    [key: string]: any;
+  };
+  route_data?: {
+    // Nested route data structure from backend
+    duration_text?: string;
+    distance_text?: string;
+    estimated_cost?: number | null;
+    cost_currency?: string;
+    recommendation_score?: number;
+    score_breakdown?: {
+      time?: number;
+      cost?: number;
+      comfort?: number;
+      convenience?: number;
+      reliability?: number;
+      [key: string]: number | undefined;
+    };
+    origin?: string;
+    destination?: string;
+    route_source?: string;
+    start_time?: string;
+    end_time?: string;
+    is_recommended?: boolean;
+    steps?: any[];
+    // Allow any additional backend fields
+    [key: string]: any;
+  };
+  
+  // AI disruption analysis data
+  ai_disruption_analysis?: {
+    analysis_timestamp?: string;
+    model_used?: string;
+    confidence_score?: number;
+    summary?: string;
+    reasoning?: string;
+    disruption_impact?: {
+      level?: string;
+      [key: string]: any;
+    };
+    recommendations_count?: number;
+    [key: string]: any;
+  } | null;
+  
+  // Destination insights from LLM
+  destination_summary?: string | null;
+  
+  // All routes data for reference
+  all_routes_data?: any[];
+  all_routes?: any[]; // All route options from backend
+  total_routes_found?: number; // Total number of routes found
+  
+  // Active disruptions
+  active_disruptions?: any[];
+  
+  // Travel request metadata
+  request_timestamp?: string;
+  processing_time?: number;
+  agents_count?: number;
+  
+  // Additional technical details
+  request_id?: string;
+  mode?: string;
+  preferred_transit?: string;
+  status?: string;
+  trace_id?: string | null;
+  agents_used_list?: string[];
 }
 
 export interface RouteSummary {

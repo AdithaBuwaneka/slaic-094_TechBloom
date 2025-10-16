@@ -304,7 +304,7 @@ export default function SriLankanModeSelector({
       {isLoading && (
         <View className="absolute inset-0 bg-white bg-opacity-80 items-center justify-center rounded-2xl">
           <View className="flex-row items-center">
-            <View className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
+            <View className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mr-3" />
             <Text className="text-blue-700 font-medium">
               {language === 'si' ? 'ප්‍රසාරණය...' :
                language === 'ta' ? 'செயல்படுத்துகிறது...' :

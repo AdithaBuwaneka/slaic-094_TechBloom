@@ -56,15 +56,19 @@ class GoogleMapsAPITool(BaseTool):
             # Convert to expected format for multi-agent system
             routes = []
             if result:
+                # Use raw numeric values instead of parsing formatted strings
+                duration_seconds = result.get("duration_seconds", 0)
+                distance_meters = result.get("distance_meters", 0)
+
                 routes.append({
                     "legs": [{
-                        "duration": {"value": int(result.get("duration_text", "0").split()[0]) * 60 if "hour" not in result.get("duration_text", "") else int(result.get("duration_text", "0").split()[0]) * 3600},
-                        "distance": {"value": int(float(result.get("distance_text", "0").split()[0]) * 1000)},
+                        "duration": {"value": duration_seconds},  # Already in seconds
+                        "distance": {"value": distance_meters},  # Already in meters
                         "steps": result.get("steps", [])
                     }],
                     "overview_polyline": {"points": ""}
                 })
-            
+
             return {
                 "status": "success",
                 "routes": routes,

@@ -324,9 +324,9 @@ export default function MultiAgentAnimation({
                   </View>
                 </View>
               ) : (
-                <View className="space-y-3">
+                <View>
                   {agents.map((agent, index) => (
-                    <View key={agent.id}>
+                    <View key={agent.id} style={{ marginBottom: 12 }}>
                       <View className={`p-3 rounded-lg border ${
                         agent.status === 'completed' ? 'bg-green-50 border-green-200' :
                         agent.status === 'processing' ? 'bg-blue-50 border-blue-200' :
@@ -361,7 +361,7 @@ export default function MultiAgentAnimation({
                               <Text className="text-green-600 text-lg">✓</Text>
                             )}
                             {agent.status === 'processing' && (
-                              <View className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                              <View className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
                             )}
                             {agent.status === 'pending' && (
                               <Text className="text-gray-400 text-lg">⏳</Text>
@@ -373,8 +373,8 @@ export default function MultiAgentAnimation({
                         {agent.status === 'processing' && (
                           <View className="mt-2">
                             <View className="bg-blue-200 h-1 rounded-full overflow-hidden">
-                              <View 
-                                className="bg-blue-600 h-full transition-all duration-100"
+                              <View
+                                className="bg-blue-600 h-full"
                                 style={{ width: `${agent.progress}%` }}
                               />
                             </View>

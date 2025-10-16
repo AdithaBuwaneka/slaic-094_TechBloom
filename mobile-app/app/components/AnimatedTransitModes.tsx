@@ -183,9 +183,9 @@ export default function AnimatedTransitModes({
       </View>
 
       {/* Selected Mode Info */}
-      <Animated.View className="mt-3 px-2">
+      <View className="mt-3 px-2">
         <ModeDescription mode={selectedMode} />
-      </Animated.View>
+      </View>
     </View>
   );
 }
