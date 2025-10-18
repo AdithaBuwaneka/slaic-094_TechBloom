@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { 
   LayoutDashboard, 
   Users, 
@@ -23,12 +25,7 @@ const navigation = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-interface SidebarProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
-
-export default function Sidebar({ open, setOpen }: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname();
 
   const handleLogout = () => {
@@ -38,74 +35,46 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
   };
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      {open && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-        ${open ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:flex-shrink-0
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <LayoutDashboard className="h-5 w-5 text-white" />
-              </div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">
-                Transit Admin
-              </span>
-            </div>
+    <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+            <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`
-                    group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
-                    ${isActive 
-                      ? 'bg-blue-100 text-blue-700 border-r-4 border-blue-700' 
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }
-                  `}
-                >
-                  <item.icon 
-                    className={`
-                      mr-3 h-5 w-5 transition-colors
-                      ${isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-500'}
-                    `}
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="group flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-red-500" />
-              Sign out
-            </button>
-          </div>
-        </div>
+          <span>Transit Admin</span>
+        </Link>
       </div>
-    </>
+      <div className="flex-1">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 space-y-1">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                data-active={isActive}
+                className={cn(
+                  "sidebar-link group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                  isActive && "text-primary bg-muted"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="mt-auto p-4 border-t">
+         <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="w-full justify-start text-muted-foreground hover:text-destructive"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          Sign out
+        </Button>
+      </div>
+    </div>
   );
 }
