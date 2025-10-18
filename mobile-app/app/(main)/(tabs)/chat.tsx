@@ -228,43 +228,38 @@ export default function Chat() {
 
   const handleActionPress = async (intent: ChatIntent, actionData?: ChatActionData) => {
     switch (intent) {
+      // New, corrected section
       case ChatIntent.ROUTE_PLANNING:
-        if (actionData?.route_result) {
-          // Store the route in context and navigate to Routes tab
-          const routeData = actionData.route_result;
-          console.log('Route data structure:', JSON.stringify(routeData, null, 2));
-          
-          // Handle different possible response structures
-          let routes = [];
-          if (routeData.response?.recommended_routes) {
-            routes = routeData.response.recommended_routes;
-          } else if (routeData.response?.all_routes) {
-            routes = routeData.response.all_routes;
-          } else if (routeData.response?.routes) {
-            routes = routeData.response.routes;
+        // 1. Look for 'result' instead of 'route_result'
+        if (actionData?.result) {
+          const routeData = actionData.result;
+          const responseData = routeData.response ?? routeData;
+
+          let routes: any[] = [];
+          if (responseData?.recommended_routes) {
+            routes = responseData.recommended_routes;
+          } else if (responseData?.all_routes) {
+            routes = responseData.all_routes;
+          } else if (responseData?.routes) {
+            routes = responseData.routes;
           }
-          
-          console.log('Found routes:', routes.length);
-          
+
           if (routes.length > 0) {
-            const route = routes[0];
-            console.log('Using route from API:', route);
-            // ensure a stable id
-            const routeToSave = { ...route };
-            routeToSave.route_id = routeToSave.route_id || `route-${Date.now()}`;
+            const routeForDisplay = routes[0];
+            setCurrentRoute(routeForDisplay);
 
-            // save locally and backend (await both)
-            setCurrentRoute(routeToSave);
-            await addToRouteHistory(routeToSave);
+            // 2. Add the correctly structured object to the history state
+            // The routeForDisplay object is a full RouteOption.
+            await addToRouteHistory(routeForDisplay);
 
-            // also force backend save to be explicit and fail-fast
+            // The saveRouteToBackend call might be redundant, but if needed,
+            // it should also save the properly structured 'routeForDisplay'.
             if (user?.user_id) {
-              await travelService.saveRouteToBackend(routeToSave, user.user_id);
+              // await travelService.saveRouteToBackend(routeForDisplay, user.user_id);
             }
-
-            // navigate only after save completes
+            
             router.push('/(main)/(tabs)/routes');
-            console.log('Route added to history successfully');
+            console.log('Route added to local history with consistent structure.');
           } else {
             // If no routes found, create a fallback route entry
             console.log('No routes found, creating fallback route');

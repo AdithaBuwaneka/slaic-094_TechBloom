@@ -838,18 +838,51 @@ async def get_travel_requests(
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     """
-    Get user's travel requests from the database (with full agent-generated data).
+    Get user's travel history from the database. This endpoint now correctly
+    prioritizes the 'route_history' collection, which contains the clean,
+    displayable route data from all sources (chatbot and main planner).
     """
     try:
-        # Query travel_requests collection (contains complete agent results)
-        cursor = db.database.travel_requests.find(
+        # 1. Prioritize the route_history collection as the source of truth.
+        print(f"Fetching routes from primary 'route_history' collection for user {user_id}")
+        route_history_cursor = db.database.route_history.find(
             {"user_id": user_id}
-        ).sort("request_timestamp", -1).skip(offset).limit(limit)
+        ).sort("created_at", -1).skip(offset).limit(limit)
         
-        requests = await cursor.to_list(length=limit)
-        total_count = await db.database.travel_requests.count_documents({"user_id": user_id})
+        route_history_items = await route_history_cursor.to_list(length=limit)
+        total_count = await db.database.route_history.count_documents({"user_id": user_id})
         
-        # Convert ObjectId to string for JSON serialization
+        requests = []
+        # 2. Transform the clean history data into the format the mobile app expects.
+        # This logic already existed but was in the wrong place.
+        for item in route_history_items:
+            travel_request = {
+                "_id": item.get("_id"),
+                "user_id": item.get("user_id"),
+                "source": item.get("source"),
+                "destination": item.get("destination"),
+                "mode": item.get("metadata", {}).get("mode", "transit"),
+                "preferred_transit": None,
+                "departure_time": None,
+                "request_timestamp": item.get("created_at"),
+                "result": {
+                    "status": "success",
+                    "response": {
+                        # Ensure all necessary fields from the agent response are mapped
+                        "best_route": item.get("route_data"),
+                        "all_routes": item.get("all_routes", [item.get("route_data")]),
+                        "ai_disruption_analysis": item.get("ai_disruption_analysis"),
+                        "destination_summary": item.get("destination_summary"),
+                        "active_disruptions": item.get("active_disruptions", []),
+                        "total_routes_found": item.get("total_routes_found", 1)
+                    }
+                }
+            }
+            requests.append(travel_request)
+        
+        print(f"Found and formatted {len(requests)} routes for user {user_id}")
+        
+        # 3. Convert ObjectId to string for JSON serialization
         for request in requests:
             if "_id" in request:
                 request["_id"] = str(request["_id"])

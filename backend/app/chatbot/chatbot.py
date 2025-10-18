@@ -198,12 +198,29 @@ async def handle_route_planning_intent(request: QuestionRequest, extracted_param
                         "metadata": {"saved_via": "chatbot_auto", "mode": mode, "request_id": request_id},
                         "saved_at": datetime.utcnow()
                     }
+                    
+                    # Save to route_history collection (existing behavior)
                     await db.database.route_history.insert_one(route_document)
                     await db.database.user_preferences.update_one(
                         {"user_id": request.user_id},
                         {"$push": {"route_history": {"$each": [route_document], "$slice": -50}}, "$set": {"updated_at": datetime.utcnow()}},
                         upsert=True
                     )
+                    
+                    # FIX: Also save to travel_requests collection so mobile app can find it
+                    travel_request_document = {
+                        "user_id": request.user_id,
+                        "source": source,
+                        "destination": destination,
+                        "mode": mode,
+                        "preferred_transit": None,
+                        "departure_time": None,
+                        "request_timestamp": datetime.utcnow(),
+                        "result": route_result  # Store the complete result from the travel agent
+                    }
+                    await db.database.travel_requests.insert_one(travel_request_document)
+                    print(f"Chatbot: Saved route to both route_history and travel_requests collections")
+                    
             except Exception as save_err:
                 print(f"Error auto-saving route: {save_err}")
 
@@ -211,7 +228,8 @@ async def handle_route_planning_intent(request: QuestionRequest, extracted_param
                 question=request.question,
                 answer=f"🚀 I've planned your route from {source} to {destination}! The AI agents found the best options for you.",
                 intent_type="route_planning",
-                action_data={"route_result": route_result["response"], "source": source, "destination": destination, "mode": mode},
+                # FIX: send the full result so mobile can read .response.*
+                action_data={"result": route_result, "source": source, "destination": destination, "mode": mode},
                 requires_action=True
             )
         else:
