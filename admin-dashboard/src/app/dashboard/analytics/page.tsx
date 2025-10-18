@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
@@ -30,6 +30,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     loadAnalyticsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 
   const loadAnalyticsData = async () => {
@@ -103,7 +104,7 @@ export default function AnalyticsPage() {
           <CardHeader><CardTitle>User Growth Trend</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={userGrowth?.daily_growth || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} /><YAxis tick={{ fontSize: 12 }} /><Tooltip labelFormatter={(value) => new Date(value).toLocaleDateString()} formatter={(value: any) => [value, 'New Users']} /><Legend /><Line type="monotone" dataKey="new_users" stroke="#3B82F6" strokeWidth={2} name="New Users" /></LineChart>
+              <LineChart data={userGrowth?.daily_growth || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="date" tick={{ fontSize: 12 }} tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} /><YAxis tick={{ fontSize: 12 }} /><Tooltip labelFormatter={(value) => new Date(value).toLocaleDateString()} formatter={(value: number | string) => [value, 'New Users']} /><Legend /><Line type="monotone" dataKey="new_users" stroke="#3B82F6" strokeWidth={2} name="New Users" /></LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -111,7 +112,7 @@ export default function AnalyticsPage() {
           <CardHeader><CardTitle>Travel Mode Preferences</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart><Pie data={travelModes?.travel_mode_preferences || []} cx="50%" cy="50%" labelLine={false} label={({ mode, percent }) => `${mode} (${(percent * 100).toFixed(0)}%)`} outerRadius={80} fill="#8884d8" dataKey="user_count">{travelModes?.travel_mode_preferences?.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /></PieChart>
+              <PieChart><Pie data={travelModes?.travel_mode_preferences || []} cx="50%" cy="50%" labelLine={false} label outerRadius={80} fill="#8884d8" dataKey="user_count">{travelModes?.travel_mode_preferences?.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /></PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -119,7 +120,7 @@ export default function AnalyticsPage() {
           <CardHeader><CardTitle>API Usage by Transport Mode</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={apiUsage?.mode_usage || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="mode" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip formatter={(value: any) => [value, 'Requests']} /><Legend /><Bar dataKey="requests" fill="#10B981" name="API Requests" /></BarChart>
+              <BarChart data={apiUsage?.mode_usage || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="mode" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} /><Tooltip formatter={(value: number | string) => [value, 'Requests']} /><Legend /><Bar dataKey="requests" fill="#10B981" name="API Requests" /></BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
