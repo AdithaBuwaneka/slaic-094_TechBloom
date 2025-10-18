@@ -17,6 +17,7 @@ from app.api.v1.user_preferences_routes import router as user_preferences_router
 from app.api.v1.admin_routes import router as admin_router  # NEW: Admin dashboard
 from app.api.v1.mobile_routes import router as mobile_router  # NEW: Mobile app endpoints
 from app.api.v1.websocket_routes import router as websocket_router  # NEW: WebSocket real-time features
+from app.api.v1.voice_routes import router as voice_router  # NEW: Voice streaming STT/TTS
 
 router = APIRouter()
 
@@ -138,3 +139,6 @@ router.include_router(mobile_router, prefix="/mobile", tags=["Mobile App"])
 
 # Include the WebSocket routes
 router.include_router(websocket_router, prefix="/ws", tags=["Real-time WebSocket"])
+
+# Include the Voice WebSocket route
+router.include_router(voice_router, prefix="/ws", tags=["Voice Streaming"])

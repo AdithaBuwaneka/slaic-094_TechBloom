@@ -1,11 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useLanguage } from '../../../src/contexts/LanguageContext';
 
-export default function TabLayout() {
-  const { t } = useLanguage();
-  
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
@@ -29,7 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: t('nav.home'),
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
@@ -38,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="routes"
         options={{
-          title: t('nav.routes'),
+          title: 'Routes',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map" size={size} color={color} />
           ),
@@ -47,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: t('nav.chat'),
+          title: 'Chat',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubble-ellipses" size={size} color={color} />
           ),
@@ -56,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="community"
         options={{
-          title: t('nav.community'),
+          title: 'Community',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
           ),
@@ -65,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('nav.profile'),
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
@@ -74,3 +71,5 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+

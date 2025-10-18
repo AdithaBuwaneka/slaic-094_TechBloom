@@ -10,7 +10,7 @@ import Animated, {
   withTiming, 
   withSpring 
 } from 'react-native-reanimated';
-import { SriLankanTravelMode } from '../../src/types';
+import { SriLankanTravelMode } from '../src/types';
 
 const { width: screenWidth } = Dimensions.get('window');
 

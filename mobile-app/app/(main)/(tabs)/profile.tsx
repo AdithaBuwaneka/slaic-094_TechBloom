@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useTheme } from '../../../src/contexts/ThemeContext';
+import ThemeToggle, { ThemePreview } from '../../../components/ThemeToggle';
+import { useTheme, ThemeMode } from '../../../src/contexts/ThemeContext';
 import { useAuth } from '../../../src/contexts/AppContext';
 import { authService } from '../../../src/services/api/authService';
-import { useLanguage } from '../../../src/contexts/LanguageContext';
+import { useLanguage, type SupportedLanguage } from '../../../src/contexts/LanguageContext';
 
 export default function Profile() {
   const { theme, mode, setTheme, isDark } = useTheme();
@@ -115,7 +116,7 @@ export default function Profile() {
     }
   };
 
-  const languageOptions = [
+  const languageOptions: { code: SupportedLanguage; label: string; flag: string }[] = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
     { code: 'si', label: 'සිංහල', flag: '🇱🇰' },
     { code: 'ta', label: 'தமிழ்', flag: '🇱🇰' }
@@ -141,13 +142,13 @@ export default function Profile() {
     }));
   };
 
-  const handleLanguageChange = async (languageCode: string) => {
+  const handleLanguageChange = async (languageCode: SupportedLanguage) => {
     try {
       const selectedLang = languageOptions.find(l => l.code === languageCode);
       if (!selectedLang) return;
       
       // Update language in context (immediate effect)
-      await setLanguage(languageCode as any);
+      await setLanguage(languageCode);
       
       // Also update user profile via API
       try {

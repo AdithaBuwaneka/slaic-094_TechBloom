@@ -3,8 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MultiAgentAnimation from '../../components/MultiAgentAnimation';
-import SriLankanModeSelector from '../../components/SriLankanModeSelector';
+import MultiAgentAnimation from '../../../components/MultiAgentAnimation';
+import SriLankanModeSelector from '../../../components/SriLankanModeSelector';
 import { SriLankanTravelMode, RouteRequest as RouteRequestType } from '../../../src/types';
 import { useApp, useAuth } from '../../../src/contexts/AppContext';
 import { useTheme } from '../../../src/contexts/ThemeContext';

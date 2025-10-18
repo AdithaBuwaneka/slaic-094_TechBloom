@@ -4,13 +4,54 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { chatbotService } from '../../../src/services/api/chatbotService';
+import { VoiceClient } from '../../../src/services/websocket/voiceClient';
+import { PCMRecorder } from '../../../src/services/audio/pcmRecorder';
 import { travelService } from '../../../src/services/api/travelService';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { useLanguage } from '../../../src/contexts/LanguageContext';
 import { useAuth, useApp } from '../../../src/contexts/AppContext';
 import { ChatMessage, ChatIntent, ChatActionData } from '../../../src/types';
-import IntentActionCard from '../../components/IntentActionCard';
-import MultiAgentAnimation from '../../components/MultiAgentAnimation';
+import IntentActionCard from '../../../components/IntentActionCard';
+import MultiAgentAnimation from '../../../components/MultiAgentAnimation';
+import * as FileSystem from 'expo-file-system/legacy'; // 👈 Import FileSystem legacy API
+import { apiClient } from '../../../src/services/api/client'; // 👈 Import apiClient for token
+import { Audio } from 'expo-av'; // 👈 Make sure Audio is imported from expo-av
+
+// A simple WebSocket hook for managing the connection
+function useVoiceSocket(onMessage: (data: any) => void) {
+  const ws = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    const connect = async () => {
+      const token = await apiClient.getStoredToken();
+      if (!token) return;
+
+      // Construct the WebSocket URL directly
+      const wsUrl = `ws://10.0.2.2:8000/api/v1/ws/voice?token=${token}`;
+      
+      const socket = new WebSocket(wsUrl);
+      socket.onopen = () => console.log('🎤 Voice WebSocket connected');
+      socket.onmessage = (event) => onMessage(JSON.parse(event.data));
+      socket.onerror = (error) => console.error('Voice WebSocket error:', error);
+      socket.onclose = () => console.log('🎤 Voice WebSocket disconnected');
+      ws.current = socket;
+    };
+
+    connect();
+
+    return () => {
+      ws.current?.close();
+    };
+  }, []);
+
+  const sendMessage = (data: any) => {
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(data));
+    }
+  };
+  
+  return sendMessage;
+}
 
 export default function Chat() {
   const { theme, isDark } = useTheme();
@@ -30,6 +71,10 @@ export default function Chat() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isProcessingRoute, setIsProcessingRoute] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const voiceClientRef = useRef<VoiceClient | null>(null);
+  const recorderRef = useRef<PCMRecorder | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const quickQuestions = [
@@ -40,9 +85,67 @@ export default function Chat() {
     "Train schedule to Anuradhapura"
   ];
 
+  // Handle incoming WebSocket messages
+  const handleSocketMessage = (data: any) => {
+    if (data.type === 'final') {
+      // Send the transcript to the chatbot for an answer (this will add the user message)
+      sendMessage(data.text);
+    } else if (data.type === 'error') {
+      console.error('Received error from voice service:', data.message);
+    }
+  };
+
+  const sendSocketMessage = useVoiceSocket(handleSocketMessage);
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    recorderRef.current = new PCMRecorder();
+    recorderRef.current.init();
+  }, []);
+
+  const startVoice = async () => {
+    if (isRecording || !recorderRef.current) return;
+    try {
+      setInterimTranscript('Listening...');
+      await recorderRef.current.start();
+      setIsRecording(true);
+    } catch (e) {
+      console.warn('Failed to start voice recording', e);
+      setInterimTranscript('');
+    }
+  };
+
+  const stopVoice = async () => {
+    if (!isRecording || !recorderRef.current) return;
+    
+    try {
+      const audioUri = await recorderRef.current.stop();
+      setIsRecording(false);
+      setInterimTranscript('Processing...');
+
+      if (audioUri) {
+        console.log('Reading audio file from:', audioUri);
+        // Read the audio file as a Base64 string
+        const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+          encoding: 'base64',
+        });
+
+        // Send the audio data to the backend
+        sendSocketMessage({
+          type: 'audio_chunk',
+          data: audioBase64,
+        });
+        
+        setInterimTranscript(''); // Clear transcript after sending
+      } else {
+        console.warn('No audio file was created.');
+        setInterimTranscript('');
+      }
+    } catch (e) {
+      console.error('Failed to process voice recording:', e);
+      setIsRecording(false);
+      setInterimTranscript('');
+    }
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -413,6 +516,13 @@ export default function Chat() {
         {/* Input Area */}
         <View className="border-t px-4 py-3" style={{ borderColor: theme.border, backgroundColor: theme.surface }}>
           <View className="flex-row items-center space-x-3">
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ backgroundColor: isRecording ? '#ef4444' : theme.primary }}
+              onPress={async () => (isRecording ? await stopVoice() : await startVoice())}
+            >
+              <Ionicons name={isRecording ? 'stop' : 'mic'} size={18} color={'white'} />
+            </TouchableOpacity>
             <View className="flex-1 flex-row items-center rounded-full px-4 py-2" style={{ backgroundColor: theme.background }}>
               <TextInput
                 className="flex-1 text-base"
@@ -424,6 +534,11 @@ export default function Chat() {
                 multiline={false}
                 onSubmitEditing={() => sendMessage()}
               />
+              {interimTranscript.length > 0 && (
+                <Text className="text-xs ml-2" style={{ color: theme.textSecondary }}>
+                  {interimTranscript}
+                </Text>
+              )}
               {inputText.length > 0 && (
                 <TouchableOpacity
                   onPress={() => setInputText('')}
