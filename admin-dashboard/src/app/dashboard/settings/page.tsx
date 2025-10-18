@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Settings, Save, RefreshCw, AlertTriangle, Loader2, Server, Bell, Shield, Sliders
+  Save, RefreshCw, AlertTriangle, Loader2, Server, Bell, Shield, Sliders
 } from 'lucide-react';
 
 // Interface remains the same
@@ -44,7 +44,7 @@ export default function AdminSettingsPage() {
       setSaving(true); setMessage('');
       await settingsAPI.updateSettings(settings);
       setMessageType('default'); setMessage('Settings saved successfully!');
-    } catch (error) {
+    } catch {
       setMessageType('destructive'); setMessage('Error saving settings. Please try again.');
     } finally {
       setSaving(false);
@@ -58,7 +58,7 @@ export default function AdminSettingsPage() {
         setSaving(true); const data = await settingsAPI.resetSettings();
         setSettings(data.settings);
         setMessageType('default'); setMessage('Settings reset to defaults successfully!');
-      } catch (error) {
+      } catch {
         setMessageType('destructive'); setMessage('Error resetting settings.');
       } finally {
         setSaving(false);
@@ -67,7 +67,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const updateSetting = (section: keyof AdminSettings, key: string, value: any) => {
+  const updateSetting = (section: keyof AdminSettings, key: string, value: string | number | boolean) => {
     setSettings(prev => prev ? { ...prev, [section]: { ...prev[section], [key]: value } } : null);
   };
 
