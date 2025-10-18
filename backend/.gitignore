@@ -136,3 +136,6 @@ Thumbs.db
 # Logs
 *.log
 server.log
+
+# Google App Credentials
+googleAppCredentials.json
