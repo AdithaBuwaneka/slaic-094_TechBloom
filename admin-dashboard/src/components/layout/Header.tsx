@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Menu, Bell, Search, User as UserIcon, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,7 +60,7 @@ export default function Header() {
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs p-0">
           {/* We will render the actual Sidebar component inside the sheet */}
-          <Sidebar open={false} setOpen={() => {}} />
+          <Sidebar />
         </SheetContent>
       </Sheet>
 
