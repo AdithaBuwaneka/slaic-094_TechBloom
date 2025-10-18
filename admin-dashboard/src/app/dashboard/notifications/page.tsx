@@ -49,8 +49,11 @@ export default function NotificationsPage() {
       );
       setSuccess('Notification sent successfully!');
       setNotification({ title: '', body: '', data: {}, userIds: [] });
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to send notification');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail 
+        : 'Failed to send notification';
+      setError(errorMessage || 'Failed to send notification');
     } finally {
       setSending(false);
     }

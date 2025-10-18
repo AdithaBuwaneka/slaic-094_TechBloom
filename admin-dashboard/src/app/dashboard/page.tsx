@@ -40,7 +40,7 @@ export default function DashboardPage() {
       setError('');
       const data = await dashboardAPI.getOverview();
       setOverview(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError('Failed to load dashboard data');
       console.error('Dashboard error:', error);
     } finally {
