@@ -42,12 +42,19 @@ export const API_CONFIG = {
   // Cache settings
   CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
   
-  // WebSocket URL
-  WS_URL: __DEV__ 
+  // WebSocket URLs
+  WS_URL: __DEV__
     ? Platform.OS === 'web'
       ? 'ws://localhost:8000/api/v1/ws/realtime'
       : `${WS_PROTOCOL}://${API_HOST}:${API_PORT}/api/v1/ws/realtime`  // Mobile: configurable via .env
     : `wss://${PRODUCTION_API_URL.replace(/^https?:\/\//, '')}/api/v1/ws/realtime`,
+
+  // Voice WebSocket URL (for speech-to-text)
+  VOICE_WS_URL: __DEV__
+    ? Platform.OS === 'web'
+      ? 'ws://localhost:8000/api/v1/ws/voice'
+      : `${WS_PROTOCOL}://${API_HOST}:${API_PORT}/api/v1/ws/voice`  // Mobile: configurable via .env
+    : `wss://${PRODUCTION_API_URL.replace(/^https?:\/\//, '')}/api/v1/ws/voice`,
 };
 
 // Fallback backend URLs for connection testing

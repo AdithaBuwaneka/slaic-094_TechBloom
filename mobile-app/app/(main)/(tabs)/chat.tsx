@@ -17,39 +17,109 @@ import * as FileSystem from 'expo-file-system/legacy'; // 👈 Import FileSystem
 import { apiClient } from '../../../src/services/api/client'; // 👈 Import apiClient for token
 import { Audio } from 'expo-av'; // 👈 Make sure Audio is imported from expo-av
 
-// A simple WebSocket hook for managing the connection
+// Voice WebSocket hook with improved error handling and dynamic URL
 function useVoiceSocket(onMessage: (data: any) => void) {
   const ws = useRef<WebSocket | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 3;
+  const shouldReconnect = useRef(true);
 
   useEffect(() => {
     const connect = async () => {
-      const token = await apiClient.getStoredToken();
-      if (!token) return;
+      // Don't reconnect if we've given up or unmounted
+      if (!shouldReconnect.current) return;
 
-      // Construct the WebSocket URL directly
-      const wsUrl = `ws://10.0.2.2:8000/api/v1/ws/voice?token=${token}`;
-      
-      const socket = new WebSocket(wsUrl);
-      socket.onopen = () => console.log('🎤 Voice WebSocket connected');
-      socket.onmessage = (event) => onMessage(JSON.parse(event.data));
-      socket.onerror = (error) => console.error('Voice WebSocket error:', error);
-      socket.onclose = () => console.log('🎤 Voice WebSocket disconnected');
-      ws.current = socket;
+      try {
+        const token = await apiClient.getStoredToken();
+        if (!token) {
+          console.log('⚠️ No auth token available for voice WebSocket');
+          return;
+        }
+
+        // Use API_CONFIG for dynamic URL (works with both emulator and physical device)
+        const { API_CONFIG } = await import('../../../src/services/api/config');
+        const wsUrl = `${API_CONFIG.VOICE_WS_URL}?token=${encodeURIComponent(token)}`;
+
+        console.log('🎤 Connecting to Voice WebSocket:', wsUrl);
+        const socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log('✅ Voice WebSocket connected');
+          reconnectAttempts.current = 0; // Reset on successful connection
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            onMessage(data);
+          } catch (err) {
+            console.error('❌ Error parsing voice WebSocket message:', err);
+          }
+        };
+
+        socket.onerror = (error) => {
+          // Log error without displaying to user (voice is optional feature)
+          console.warn('⚠️ Voice WebSocket error (voice features unavailable)');
+        };
+
+        socket.onclose = (event) => {
+          console.log('🎤 Voice WebSocket disconnected. Code:', event.code);
+
+          // Attempt to reconnect if connection was lost unexpectedly
+          if (
+            shouldReconnect.current &&
+            event.code !== 1000 &&
+            reconnectAttempts.current < maxReconnectAttempts
+          ) {
+            reconnectAttempts.current++;
+            const delay = Math.min(2000 * reconnectAttempts.current, 6000);
+            console.log(
+              `🔄 Reconnecting voice WebSocket (${reconnectAttempts.current}/${maxReconnectAttempts}) in ${delay / 1000}s...`
+            );
+
+            setTimeout(() => {
+              connect();
+            }, delay);
+          } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+            console.log('⚠️ Voice WebSocket: Max reconnection attempts reached. Voice features disabled.');
+          }
+        };
+
+        ws.current = socket;
+      } catch (error) {
+        console.error('❌ Error connecting to voice WebSocket:', error);
+      }
     };
 
     connect();
 
     return () => {
-      ws.current?.close();
+      shouldReconnect.current = false;
+      if (ws.current) {
+        try {
+          ws.current.close(1000, 'Component unmount');
+        } catch (e) {
+          // Ignore close errors
+        }
+      }
     };
   }, []);
 
   const sendMessage = (data: any) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(data));
+      try {
+        ws.current.send(JSON.stringify(data));
+        return true;
+      } catch (error) {
+        console.error('❌ Error sending voice WebSocket message:', error);
+        return false;
+      }
+    } else {
+      console.warn('⚠️ Voice WebSocket not connected, cannot send message');
+      return false;
     }
   };
-  
+
   return sendMessage;
 }
 
