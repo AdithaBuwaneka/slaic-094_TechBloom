@@ -3,6 +3,22 @@
 // =============================================================================
 
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+// Get environment variables with fallback defaults
+const getEnvVar = (key: string, defaultValue: string): string => {
+  return Constants.expoConfig?.extra?.[key] || defaultValue;
+};
+
+// Environment-based configuration
+const API_PROTOCOL = getEnvVar('EXPO_PUBLIC_API_PROTOCOL', 'http');
+const API_HOST = getEnvVar('EXPO_PUBLIC_API_HOST', '10.0.2.2'); // Android Emulator default
+const API_PORT = getEnvVar('EXPO_PUBLIC_API_PORT', '8000');
+const WS_PROTOCOL = getEnvVar('EXPO_PUBLIC_WS_PROTOCOL', 'ws');
+const PRODUCTION_API_URL = getEnvVar('EXPO_PUBLIC_PRODUCTION_API_URL', 'https://your-production-domain.com');
+
+// Construct development URL
+const DEVELOPMENT_URL = `${API_PROTOCOL}://${API_HOST}:${API_PORT}`;
 
 // Backend Configuration
 export const API_CONFIG = {
@@ -10,8 +26,8 @@ export const API_CONFIG = {
   BASE_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'http://localhost:8000'  // Web development
-      : 'http://10.47.78.83:8000'  // Expo Go - use actual computer IP for mobile phone
-    : 'https://your-production-domain.com',  // Production
+      : DEVELOPMENT_URL  // Mobile: configurable via .env (default: 10.0.2.2 for Android Emulator)
+    : PRODUCTION_API_URL,  // Production
   
   // API Version
   API_VERSION: '/api/v1',
@@ -30,24 +46,25 @@ export const API_CONFIG = {
   WS_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'ws://localhost:8000/api/v1/ws/realtime'
-      : 'ws://10.47.78.83:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL for mobile phone
-    : 'wss://your-production-domain.com/api/v1/ws/realtime',
+      : `${WS_PROTOCOL}://${API_HOST}:${API_PORT}/api/v1/ws/realtime`  // Mobile: configurable via .env
+    : `wss://${PRODUCTION_API_URL.replace(/^https?:\/\//, '')}/api/v1/ws/realtime`,
 };
 
 // Fallback backend URLs for connection testing
 export const FALLBACK_URLS = [
   'http://localhost:8000',
   'http://127.0.0.1:8000',
-  'http://10.47.78.83:8000',
-  'http://192.168.1.100:8000', // Add your actual local IP if different
+  'http://10.0.2.2:8000',      // Android Emulator
+  DEVELOPMENT_URL,              // Configured URL from .env
+  'http://192.168.1.100:8000', // Example: local network IP
 ];
 
 // Backend URLs collection for easy reference
 export const BACKEND_URLS = {
   LOCAL: 'http://localhost:8000',
-  LOCAL_IP: 'http://10.47.78.83:8000',
-  DEVELOPMENT: 'http://127.0.0.1:8000',
-  PRODUCTION: 'https://your-production-domain.com',
+  ANDROID_EMULATOR: 'http://10.0.2.2:8000',
+  DEVELOPMENT: DEVELOPMENT_URL,
+  PRODUCTION: PRODUCTION_API_URL,
 };
 
 // API Endpoints
