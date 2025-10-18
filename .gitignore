@@ -30,5 +30,8 @@ __pycache__/
 # Logs
 *.log
 
-# SQLite for ChromaDB
+# ChromaDB vector database files
 *.sqlite3
+*.bin
+backend/app/chatbot/db/
+*.chroma

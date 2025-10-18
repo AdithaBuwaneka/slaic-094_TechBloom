@@ -45,7 +45,7 @@ qa_chain = None
 
 class QuestionRequest(BaseModel):
     question: str
-    temperature: Optional[float] = 0.2
+    temperature: Optional[float] = 0.5  # Default to more conversational, friendly responses
     user_id: Optional[str] = None
 
 class IntentResponse(BaseModel):
@@ -92,18 +92,54 @@ def initialize_rag_system():
             vectordb = Chroma.from_documents(chunks, embedding=embeddings, persist_directory=str(db_path))
             print("Created new vector database")
         
-        system_prompt = """You are Smart Transit Companion, an AI assistant specialized in Sri Lankan public transportation. Your role is to help users navigate buses, trains, and other transport modes efficiently and safely. Provide concise, practical advice, including route numbers and landmarks when possible. Always be friendly and helpful."""
+        system_prompt = """You are Smart Transit Companion, a friendly AI travel buddy helping people in Sri Lanka get around easily!
+
+Your personality:
+- Warm, friendly, and conversational (like chatting with a helpful friend)
+- Use simple, everyday language (avoid technical jargon)
+- Keep responses short and easy to read (2-4 sentences max)
+- Use emojis occasionally to be friendly (but don't overdo it)
+- Sound excited to help people travel better
+
+Guidelines:
+- Speak directly to the user ("you" and "your" instead of formal language)
+- Break information into easy-to-read points when listing things
+- Give practical, real-world advice that's easy to follow
+- Be encouraging and positive
+- If you don't know something, admit it honestly and suggest what you CAN help with
+
+Remember: You're helping everyday people, not tech experts. Make travel easy and stress-free!"""
 
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp", 
-            temperature=0.2,
-            google_api_key=settings.GOOGLE_GEMINI_API_KEY,
-            convert_system_message_to_human=True,
-            system_message=system_prompt
+            model="gemini-2.0-flash-exp",
+            temperature=0.5,  # Higher temperature for more natural,friendly conversational responses
+            google_api_key=settings.GOOGLE_GEMINI_API_KEY
         )
-        
+
+        # Create custom prompt template for user-friendly responses
+        from langchain.prompts import PromptTemplate
+
+        friendly_template = """You are Smart Transit Companion, a friendly AI travel buddy helping people in Sri Lanka get around easily! 🚍
+
+Keep your answers simple, warm, and helpful - like you're chatting with a friend. Use everyday language and be encouraging!
+
+Context from our knowledge base:
+{context}
+
+Question: {question}
+
+Your friendly answer (keep it short and clear, 2-4 sentences):"""
+
+        FRIENDLY_PROMPT = PromptTemplate(
+            template=friendly_template, input_variables=["context", "question"]
+        )
+
         retriever = vectordb.as_retriever(search_kwargs={"k": 3})
-        qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+        qa_chain = RetrievalQA.from_chain_type(
+            llm,
+            retriever=retriever,
+            chain_type_kwargs={"prompt": FRIENDLY_PROMPT}
+        )
         
         print("RAG system initialized successfully!")
         
@@ -275,10 +311,36 @@ async def handle_general_info_intent(request: QuestionRequest, qa_chain, tracer,
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                if request.temperature != 0.2:
-                    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", temperature=request.temperature, google_api_key=settings.GOOGLE_GEMINI_API_KEY, convert_system_message_to_human=True)
-                    retriever = vectordb.as_retriever(search_kwargs={"k": 1})
-                    qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+                if request.temperature != 0.5:
+                    # Create new QA chain with custom temperature and friendly prompt
+                    from langchain.prompts import PromptTemplate
+
+                    friendly_template = """You are Smart Transit Companion, a friendly AI travel buddy helping people in Sri Lanka get around easily! 🚍
+
+Keep your answers simple, warm, and helpful - like you're chatting with a friend. Use everyday language and be encouraging!
+
+Context from our knowledge base:
+{context}
+
+Question: {question}
+
+Your friendly answer (keep it short and clear, 2-4 sentences):"""
+
+                    FRIENDLY_PROMPT = PromptTemplate(
+                        template=friendly_template, input_variables=["context", "question"]
+                    )
+
+                    llm = ChatGoogleGenerativeAI(
+                        model="gemini-2.0-flash-exp",
+                        temperature=request.temperature,
+                        google_api_key=settings.GOOGLE_GEMINI_API_KEY
+                    )
+                    retriever = vectordb.as_retriever(search_kwargs={"k": 3})
+                    qa_chain = RetrievalQA.from_chain_type(
+                        llm,
+                        retriever=retriever,
+                        chain_type_kwargs={"prompt": FRIENDLY_PROMPT}
+                    )
                 
                 # ✅ Use 'ainvoke' for non-blocking call
                 if tracer:
@@ -317,6 +379,8 @@ async def handle_general_info_intent(request: QuestionRequest, qa_chain, tracer,
         
     except Exception as e:
         print(f"Error in general info intent: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return IntentResponse(question=request.question, answer="I'm having trouble processing your question. Please try rephrasing it.", intent_type="general_info", requires_action=False)
 
 @router.get("/health")
