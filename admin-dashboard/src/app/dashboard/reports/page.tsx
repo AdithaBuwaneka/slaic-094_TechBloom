@@ -28,17 +28,8 @@ import {
   Clock, 
   CheckCircle,
   Filter,
-  Eye,
-  Calendar,
-  MapPin,
-  MoreHorizontal
+  Eye
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 
 export default function CommunityReportsPage() {
   const [reports, setReports] = useState<CommunityReport[]>([]);
@@ -51,6 +42,7 @@ export default function CommunityReportsPage() {
 
   useEffect(() => {
     loadReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, filterType]);
 
   const loadReports = async () => {
