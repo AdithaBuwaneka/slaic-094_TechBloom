@@ -13,7 +13,7 @@ import { useAuth, useApp } from '../../../src/contexts/AppContext';
 import { ChatMessage, ChatIntent, ChatActionData } from '../../../src/types';
 import IntentActionCard from '../../../components/IntentActionCard';
 import MultiAgentAnimation from '../../../components/MultiAgentAnimation';
-import * as FileSystem from 'expo-file-system'; // 👈 Import FileSystem
+import * as FileSystem from 'expo-file-system/legacy'; // 👈 Import FileSystem legacy API
 import { apiClient } from '../../../src/services/api/client'; // 👈 Import apiClient for token
 import { Audio } from 'expo-av'; // 👈 Make sure Audio is imported from expo-av
 
@@ -88,15 +88,7 @@ export default function Chat() {
   // Handle incoming WebSocket messages
   const handleSocketMessage = (data: any) => {
     if (data.type === 'final') {
-      // Create a new message with the final transcript from the server
-      const transcriptMessage: ChatMessage = {
-        id: Date.now().toString(),
-        text: data.text,
-        is_user: true,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, transcriptMessage]);
-      // Now, send this transcript to the chatbot for an answer
+      // Send the transcript to the chatbot for an answer (this will add the user message)
       sendMessage(data.text);
     } else if (data.type === 'error') {
       console.error('Received error from voice service:', data.message);
@@ -134,7 +126,7 @@ export default function Chat() {
         console.log('Reading audio file from:', audioUri);
         // Read the audio file as a Base64 string
         const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-          encoding: FileSystem.EncodingType.Base64,
+          encoding: 'base64',
         });
 
         // Send the audio data to the backend

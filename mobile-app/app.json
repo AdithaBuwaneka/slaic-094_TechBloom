@@ -8,7 +8,6 @@
     "scheme": "transit-companion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "projectId": "e1a4f41f-5aac-4cb8-8fea-360e6850b164",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.transitcompanion"
