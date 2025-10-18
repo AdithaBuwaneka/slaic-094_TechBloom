@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -101,6 +101,25 @@ export default function Chat() {
     recorderRef.current = new PCMRecorder();
     recorderRef.current.init();
   }, []);
+
+  // Scroll to bottom when keyboard opens
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        scrollToBottom();
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const startVoice = async () => {
     if (isRecording || !recorderRef.current) return;
@@ -381,10 +400,10 @@ export default function Chat() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.background }}>
-      <KeyboardAvoidingView 
-        className="flex-1" 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header */}
         <View className="px-4 py-3 border-b" style={{ backgroundColor: theme.primary, borderColor: theme.primaryDark }}>
@@ -405,11 +424,13 @@ export default function Chat() {
         </View>
 
         {/* Messages */}
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
           className="flex-1 px-4 py-4"
           style={{ backgroundColor: theme.background }}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollToBottom()}
+          keyboardShouldPersistTaps="handled"
         >
           {messages.map((message) => (
             <View key={message.id}>
