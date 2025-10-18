@@ -53,6 +53,7 @@
     "@react-native-community/cli": "^20.0.2",
     "@types/react": "~19.1.10",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^16.0.3",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "postcss": "^8.5.6",
