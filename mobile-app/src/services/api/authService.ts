@@ -10,7 +10,8 @@ import {
   RegisterRequest, 
   User, 
   TravelPreferences,
-  APIResponse 
+  APIResponse,
+  UserProfile
 } from '../../types';
 import * as SecureStore from 'expo-secure-store';
 
@@ -111,7 +112,9 @@ class AuthService {
     return apiClient.get<User>(ENDPOINTS.AUTH.PROFILE);
   }
 
-  async updateProfile(profileData: Partial<User>): Promise<APIResponse<{ message: string; user: User }>> {
+  async updateProfile(
+    profileData: Partial<User> & { preferred_language?: UserProfile['preferred_language'] }
+  ): Promise<APIResponse<{ message: string; user: User }>> {
     return apiClient.put<{ message: string; user: User }>(ENDPOINTS.AUTH.PROFILE, profileData);
   }
 

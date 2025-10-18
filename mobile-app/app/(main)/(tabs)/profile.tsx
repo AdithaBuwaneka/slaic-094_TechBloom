@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import ThemeToggle, { ThemePreview } from '../../components/ThemeToggle';
+import ThemeToggle, { ThemePreview } from '../../../components/ThemeToggle';
 import { useTheme, ThemeMode } from '../../../src/contexts/ThemeContext';
 import { useAuth } from '../../../src/contexts/AppContext';
 import { authService } from '../../../src/services/api/authService';
-import { useLanguage } from '../../../src/contexts/LanguageContext';
+import { useLanguage, type SupportedLanguage } from '../../../src/contexts/LanguageContext';
 
 export default function Profile() {
   const { theme, mode, setTheme, isDark } = useTheme();
@@ -49,13 +49,7 @@ export default function Profile() {
   
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Load user statistics and preferences on component mount
-  useEffect(() => {
-    loadUserStats();
-    loadUserPreferences();
-  }, []);
-
-  const loadUserStats = async () => {
+  const loadUserStats = useCallback(async () => {
     try {
       setStatsLoading(true);
       
@@ -88,7 +82,7 @@ export default function Profile() {
             userRating: community_stats.user_rating || 0
           });
         }
-      } catch (apiError) {
+      } catch {
         console.log('API stats not available, using local data');
       }
       
@@ -98,7 +92,13 @@ export default function Profile() {
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, [authUser]);
+
+  // Load user statistics and preferences on component mount
+  useEffect(() => {
+    loadUserStats();
+    loadUserPreferences();
+  }, [loadUserStats]);
 
   const loadUserPreferences = async () => {
     try {
@@ -116,7 +116,7 @@ export default function Profile() {
     }
   };
 
-  const languageOptions = [
+  const languageOptions: { code: SupportedLanguage; label: string; flag: string }[] = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
     { code: 'si', label: 'සිංහල', flag: '🇱🇰' },
     { code: 'ta', label: 'தமிழ்', flag: '🇱🇰' }
@@ -142,19 +142,20 @@ export default function Profile() {
     }));
   };
 
-  const handleLanguageChange = async (languageCode: string) => {
+  const handleLanguageChange = async (languageCode: SupportedLanguage) => {
     try {
       const selectedLang = languageOptions.find(l => l.code === languageCode);
       if (!selectedLang) return;
       
       // Update language in context (immediate effect)
-      await setLanguage(languageCode as any);
+      await setLanguage(languageCode);
       
       // Also update user profile via API
       try {
-        await authService.updateProfile({ 
-          preferred_language: languageCode 
-        });
+        const profileUpdate: any = { 
+          language: languageCode 
+        };
+        await authService.updateProfile(profileUpdate);
       } catch (error) {
         console.error('Failed to update profile, but language changed locally:', error);
       }

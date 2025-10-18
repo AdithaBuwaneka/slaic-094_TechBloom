@@ -37,7 +37,6 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
             "address": f"{destination}, Sri Lanka"
         },
         "travelMode": api_mode,
-        "routingPreference": "TRAFFIC_AWARE",
         "computeAlternativeRoutes": False,
         "routeModifiers": {
             "avoidTolls": False,
@@ -47,6 +46,10 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
         "languageCode": "en-US",
         "units": "IMPERIAL"
     }
+    
+    # Only add routing preference for non-transit modes
+    if api_mode != "TRANSIT":
+        request_payload["routingPreference"] = "TRAFFIC_AWARE"
 
     # Add departure time if provided
     if departure_time:
@@ -74,7 +77,7 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
     headers = {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.legs.steps.navigationInstruction,routes.legs.steps.localizedValues,routes.legs.steps.transitDetails'
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline,routes.legs,routes.legs.steps,routes.legs.steps.navigationInstruction,routes.legs.steps.localizedValues,routes.legs.steps.transitDetails,routes.legs.steps.travelMode'
     }
 
     try:
@@ -113,14 +116,28 @@ def get_optimized_route(origin: str, destination: str, mode: str, departure_time
                     steps.append(step_data)
 
             # Calculate basic route info
-            distance_km = route.get('distanceMeters', 0) / 1000
-            duration_text = route.get('duration', '0s').replace('s', ' seconds')
-            
+            distance_meters = route.get('distanceMeters', 0)
+            distance_km = distance_meters / 1000
+
+            # Parse duration from "8432s" format to seconds as integer
+            duration_str = route.get('duration', '0s')
+            duration_seconds = int(duration_str.replace('s', '')) if duration_str.endswith('s') else 0
+
+            # Format duration for display
+            hours = duration_seconds // 3600
+            minutes = (duration_seconds % 3600) // 60
+            if hours > 0:
+                duration_text = f"{hours} hour{'s' if hours > 1 else ''} {minutes} min{'s' if minutes != 1 else ''}"
+            else:
+                duration_text = f"{minutes} min{'s' if minutes != 1 else ''}"
+
             result = {
                 "origin": f"{origin}, Sri Lanka",
-                "destination": f"{destination}, Sri Lanka", 
+                "destination": f"{destination}, Sri Lanka",
                 "distance_text": f"{distance_km:.1f} km",
+                "distance_meters": distance_meters,  # Raw numeric value
                 "duration_text": duration_text,
+                "duration_seconds": duration_seconds,  # Raw numeric value
                 "start_time": None,
                 "end_time": None,
                 "steps": steps

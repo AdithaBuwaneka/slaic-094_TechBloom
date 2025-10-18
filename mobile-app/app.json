@@ -8,16 +8,17 @@
     "scheme": "transit-companion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "projectId": "e1a4f41f-5aac-4cb8-8fea-360e6850b164",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.transitcompanion"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.transitcompanion"
     },
     "web": {
       "bundler": "metro",

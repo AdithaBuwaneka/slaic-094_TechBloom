@@ -10,7 +10,7 @@ export const API_CONFIG = {
   BASE_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'http://localhost:8000'  // Web development
-      : 'http://10.226.68.83:8000'  // Expo Go - use actual computer IP
+      : 'http://10.47.78.83:8000'  // Expo Go - use actual computer IP for mobile phone
     : 'https://your-production-domain.com',  // Production
   
   // API Version
@@ -30,8 +30,24 @@ export const API_CONFIG = {
   WS_URL: __DEV__ 
     ? Platform.OS === 'web'
       ? 'ws://localhost:8000/api/v1/ws/realtime'
-      : 'ws://10.226.68.83:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL
+      : 'ws://10.47.78.83:8000/api/v1/ws/realtime'  // Use same IP as BASE_URL for mobile phone
     : 'wss://your-production-domain.com/api/v1/ws/realtime',
+};
+
+// Fallback backend URLs for connection testing
+export const FALLBACK_URLS = [
+  'http://localhost:8000',
+  'http://127.0.0.1:8000',
+  'http://10.47.78.83:8000',
+  'http://192.168.1.100:8000', // Add your actual local IP if different
+];
+
+// Backend URLs collection for easy reference
+export const BACKEND_URLS = {
+  LOCAL: 'http://localhost:8000',
+  LOCAL_IP: 'http://10.47.78.83:8000',
+  DEVELOPMENT: 'http://127.0.0.1:8000',
+  PRODUCTION: 'https://your-production-domain.com',
 };
 
 // API Endpoints
@@ -59,7 +75,7 @@ export const ENDPOINTS = {
     TEST_SEARCH: '/travel/test-search',
     TEST_LLM: '/travel/test-llm-summarizer',
     SEARCH_ROUTE_INFO: '/travel/search-route-info',
-    ROUTE_HISTORY: '/travel/route-history',
+    TRAVEL_REQUESTS: '/travel/requests',  // Changed from route-history to travel requests
     SAVE_ROUTE: '/travel/save-route',
     DELETE_ROUTE: '/travel/delete-route',
   },

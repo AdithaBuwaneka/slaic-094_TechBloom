@@ -244,17 +244,22 @@ IMPORTANT:
         """Format routes for the prompt"""
         if not routes:
             return "No routes available."
-        
+
         formatted = []
         for route in routes:
+            # Handle None values safely
+            cost_lkr = route['estimated_cost_lkr'] if route['estimated_cost_lkr'] is not None else 0
+            distance_km = route['distance_km'] if route['distance_km'] is not None else 0
+            walking_distance_km = route['walking_distance_km'] if route['walking_distance_km'] is not None else 0
+
             formatted.append(f"""
 - Route ID: {route['route_id']}
   Duration: {route['duration_minutes']} minutes
-  Distance: {route['distance_km']:.1f} km
+  Distance: {distance_km:.1f} km
   Transit Modes: {', '.join(route['transit_modes']) if route['transit_modes'] else 'None'}
   Transfers: {route['transfers']}
-  Walking Distance: {route['walking_distance_km']:.1f} km
-  Estimated Cost: {route['estimated_cost_lkr']:.0f} LKR
+  Walking Distance: {walking_distance_km:.1f} km
+  Estimated Cost: {cost_lkr:.0f} LKR
   Steps: {route['steps_count']}
   Category: {route['category']}
 """)

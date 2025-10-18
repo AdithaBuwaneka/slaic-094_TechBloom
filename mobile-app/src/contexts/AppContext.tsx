@@ -48,7 +48,7 @@ interface AppActions {
   setCurrentRoute: (route: RouteOption) => void;
   addToRouteHistory: (route: RouteOption) => Promise<void>;
   clearRouteHistory: () => void;
-  loadRouteHistoryFromBackend: () => Promise<RouteOption[]>;
+  loadTravelRequestsFromBackend: () => Promise<RouteOption[]>;
   
   // Real-time updates
   updateDisruptions: (disruptions: DisruptionAlert[]) => void;
@@ -348,23 +348,24 @@ export function AppProvider({ children }: AppProviderProps) {
     setState(prev => ({ ...prev, routeHistory: [] }));
   };
 
-  const loadRouteHistoryFromBackend = async (): Promise<RouteOption[]> => {
+  const loadTravelRequestsFromBackend = async (): Promise<RouteOption[]> => {
     if (!state.user?.user_id) {
-      console.warn('No user logged in, cannot fetch backend route history');
+      console.warn('No user logged in, cannot fetch backend travel requests');
       return [];
     }
 
     try {
-      const response = await travelService.getRouteHistoryFromBackend(state.user.user_id, 10);
+      const response = await travelService.getTravelRequestsFromBackend(state.user.user_id, 10);
       if (response.success && response.data) {
-        console.log('Loaded route history from backend:', response.data.length, 'routes');
+        console.log('Travel requests loaded from backend:', response.data.length, 'requests');
+        console.log('Sample travel request:', response.data[0]);
         return response.data;
       } else {
-        console.warn('Failed to load route history from backend:', response.error?.message);
+        console.warn('Failed to load travel requests from backend:', response.error?.message);
         return [];
       }
     } catch (error) {
-      console.error('Error loading route history from backend:', error);
+      console.error('Error loading travel requests from backend:', error);
       return [];
     }
   };
@@ -448,7 +449,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setCurrentRoute,
     addToRouteHistory,
     clearRouteHistory,
-    loadRouteHistoryFromBackend,
+    loadTravelRequestsFromBackend,
     updateDisruptions,
     updateCommunityReports,
     setLanguage,
@@ -488,7 +489,7 @@ export function useRoutes() {
     setCurrentRoute, 
     addToRouteHistory, 
     clearRouteHistory,
-    loadRouteHistoryFromBackend
+    loadTravelRequestsFromBackend
   } = useApp();
   
   return {
@@ -497,7 +498,7 @@ export function useRoutes() {
     setCurrentRoute,
     addToRouteHistory,
     clearRouteHistory,
-    loadRouteHistoryFromBackend,
+    loadTravelRequestsFromBackend,
   };
 }
 

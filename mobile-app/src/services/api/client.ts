@@ -2,7 +2,7 @@
 // API CLIENT - Transit Companion Mobile App
 // =============================================================================
 
-import { API_CONFIG, DEFAULT_HEADERS, ERROR_CODES, HTTP_STATUS } from './config';
+import { API_CONFIG, DEFAULT_HEADERS, ERROR_CODES, HTTP_STATUS, FALLBACK_URLS } from './config';
 import { APIResponse, APIError } from '../../types';
 import * as SecureStore from 'expo-secure-store';
 
@@ -11,10 +11,63 @@ class APIClient {
   private defaultHeaders: Record<string, string>;
   private requestInterceptors: ((config: RequestConfig) => RequestConfig)[] = [];
   private responseInterceptors: ((response: any) => any)[] = [];
+  private fallbackURLs: string[] = [];
+  private urlTested: boolean = false;
 
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL + API_CONFIG.API_VERSION;
     this.defaultHeaders = { ...DEFAULT_HEADERS };
+    this.fallbackURLs = FALLBACK_URLS;
+  }
+
+  // =============================================================================
+  // URL FALLBACK LOGIC
+  // =============================================================================
+
+  private async testConnection(baseURL: string): Promise<boolean> {
+    try {
+      console.log('Testing connection to:', baseURL);
+      const response = await fetch(`${baseURL}/api/v1/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined,
+      });
+      const isConnected = response.ok;
+      console.log(isConnected ? '✅ Connection successful' : '❌ Connection failed', baseURL);
+      return isConnected;
+    } catch (error: any) {
+      console.log('❌ Connection failed:', baseURL, error?.message || 'Unknown error');
+      return false;
+    }
+  }
+
+  private async findWorkingURL(): Promise<void> {
+    if (this.urlTested) return;
+
+    // Test current base URL first
+    const currentBase = this.baseURL.replace(API_CONFIG.API_VERSION, '');
+    console.log('Testing connection to:', currentBase);
+
+    if (await this.testConnection(currentBase)) {
+      console.log('✓ Connected to:', currentBase);
+      this.urlTested = true;
+      return;
+    }
+
+    // Try fallback URLs
+    for (const fallbackURL of this.fallbackURLs) {
+      console.log('Trying fallback URL:', fallbackURL);
+      if (await this.testConnection(fallbackURL)) {
+        console.log('✓ Connected to fallback:', fallbackURL);
+        this.baseURL = fallbackURL + API_CONFIG.API_VERSION;
+        this.urlTested = true;
+        return;
+      }
+    }
+
+    console.warn('⚠ Could not connect to any backend URL. Using default.');
+    this.urlTested = true;
   }
 
   // =============================================================================
@@ -103,6 +156,9 @@ class APIClient {
   // =============================================================================
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<APIResponse<T>> {
+    // Auto-detect working URL on first request
+    await this.findWorkingURL();
+
     let attempt = 0;
     const maxAttempts = options.retries || API_CONFIG.MAX_RETRY_ATTEMPTS;
 
@@ -113,14 +169,14 @@ class APIClient {
         
         // Create AbortController for timeout (compatible with older environments)
         let controller: AbortController | null = null;
-        let timeoutId: NodeJS.Timeout | null = null;
+        let timeoutId: any = null;
         
         try {
           if (typeof AbortController !== 'undefined') {
             controller = new AbortController();
             timeoutId = setTimeout(() => controller?.abort(), config.timeout);
           }
-        } catch (e) {
+        } catch {
           // AbortController not supported, continue without timeout
           console.warn('AbortController not supported, requests will not have timeout');
         }
@@ -197,7 +253,7 @@ class APIClient {
       if (responseText) {
         try {
           data = JSON.parse(responseText);
-        } catch (parseError) {
+        } catch {
           // If JSON parsing fails, treat as text response
           data = { message: responseText };
         }

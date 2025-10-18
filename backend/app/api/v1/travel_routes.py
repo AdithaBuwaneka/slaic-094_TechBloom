@@ -100,7 +100,7 @@ async def plan_travel_route(
         print(f"Route handler: Processing request for {request.source} to {request.destination} ({request.mode})")
         
         # Run the travel agent workflow
-        result = run_travel_agent(
+        result = await run_travel_agent(
             source=request.source,
             destination=request.destination,
             mode=request.mode,
@@ -126,6 +126,47 @@ async def plan_travel_route(
             "request_timestamp": datetime.now(),
             "result": result
         })
+        
+        # Auto-save successful routes to history
+        if result.get('status') == 'success' and result.get('response', {}).get('best_route'):
+            try:
+                best_route = result['response']['best_route']
+                response_data = result.get('response', {})
+                
+                # Create comprehensive route history document with ALL agent data
+                route_document = {
+                    "user_id": request.user_id,
+                    "route_id": best_route.get('route_id', f"auto_{datetime.now().strftime('%Y%m%d_%H%M%S')}"),
+                    "source": request.source,
+                    "destination": request.destination,
+                    "route_data": best_route,
+                    "created_at": datetime.utcnow(),
+                    "saved_at": datetime.utcnow(),
+                    "metadata": {
+                        "agent_count": len(result.get('agents_used', [])),
+                        "processing_time": result.get('processing_time', 0.0),
+                        "auto_saved": True,
+                        "mode": request.mode
+                    },
+                    # FIX: Save AI disruption analysis
+                    "ai_disruption_analysis": response_data.get('ai_disruption_analysis'),
+                    # FIX: Save destination insights
+                    "destination_summary": response_data.get('destination_summary'),
+                    # FIX: Save all routes for reference
+                    "all_routes": response_data.get('all_routes', []),
+                    # FIX: Save total routes found
+                    "total_routes_found": response_data.get('total_routes_found', 0),
+                    # FIX: Save any active disruptions
+                    "active_disruptions": response_data.get('active_disruptions', [])
+                }
+                
+                # Insert into route_history collection
+                await db.database.route_history.insert_one(route_document)
+                print(f"Route handler: Auto-saved route {best_route.get('route_id')} to history")
+                
+            except Exception as save_error:
+                print(f"Route handler: Failed to auto-save route: {save_error}")
+                # Don't fail the main request if auto-save fails
         
         return TravelResponse(
             request_id=result.get("response", {}).get("request_id", "unknown"),
@@ -789,6 +830,54 @@ async def save_route_to_history(
             detail=f"Failed to save route: {str(e)}"
         )
 
+@router.get("/requests")
+async def get_travel_requests(
+    user_id: str,
+    limit: int = 10,
+    offset: int = 0,
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
+    """
+    Get user's travel requests from the database (with full agent-generated data).
+    """
+    try:
+        # Query travel_requests collection (contains complete agent results)
+        cursor = db.database.travel_requests.find(
+            {"user_id": user_id}
+        ).sort("request_timestamp", -1).skip(offset).limit(limit)
+        
+        requests = await cursor.to_list(length=limit)
+        total_count = await db.database.travel_requests.count_documents({"user_id": user_id})
+        
+        # Convert ObjectId to string for JSON serialization
+        for request in requests:
+            if "_id" in request:
+                request["_id"] = str(request["_id"])
+        
+        return {
+            "requests": requests,
+            "total_count": total_count,
+            "user_id": user_id,
+            "limit": limit,
+            "offset": offset,
+            "has_more": offset + len(requests) < total_count,
+            "timestamp": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        # Log the error
+        await db.database.error_logs.insert_one({
+            "timestamp": datetime.utcnow(),
+            "user_id": user_id,
+            "endpoint": "/requests",
+            "error": str(e)
+        })
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get travel requests: {str(e)}"
+        )
+
 @router.get("/route-history", response_model=RouteHistoryResponse)
 async def get_route_history(
     user_id: str,
@@ -797,7 +886,7 @@ async def get_route_history(
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     """
-    Get user's route history from the database.
+    Get user's route history from the database (saved routes only).
     """
     try:
         # Query route history collection

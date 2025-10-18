@@ -429,19 +429,148 @@ class TravelService {
     }
   }
 
-  async getRouteHistoryFromBackend(userId: string, limit: number = 10): Promise<APIResponse<RouteOption[]>> {
+  async getTravelRequestsFromBackend(userId: string, limit: number = 10): Promise<APIResponse<RouteOption[]>> {
     try {
-      console.log('Fetching route history from backend for user:', userId);
+      console.log('Fetching travel requests from backend for user:', userId);
       
-      const response = await apiClient.get<{ routes: RouteOption[] }>(
-        `${ENDPOINTS.TRAVEL.ROUTE_HISTORY}?user_id=${userId}&limit=${limit}`
+      const response = await apiClient.get<{ requests: any[] }>(
+        `${ENDPOINTS.TRAVEL.TRAVEL_REQUESTS}?user_id=${userId}&limit=${limit}`
       );
 
       if (response.success && response.data) {
-        console.log('Route history fetched from backend:', response.data.routes.length, 'routes');
+        console.log('Travel requests fetched from backend:', response.data.requests.length, 'requests');
+        
+        // Transform travel requests to RouteOption format
+        const transformedRoutes = response.data.requests.map((request: any) => {
+          const result = request.result || {};
+          const responseData = result.response || {};
+          const bestRoute = responseData.best_route || {};
+
+          // ENHANCED DEBUG: Log complete data structure for debugging
+          console.log('📦 Transforming travel request:', {
+            request_id: request._id,
+            source: request.source,
+            destination: request.destination,
+            bestRoute_keys: Object.keys(bestRoute),
+            bestRoute_sample: {
+              route_id: bestRoute.route_id,
+              duration_text: bestRoute.duration_text,
+              distance_text: bestRoute.distance_text,
+              estimated_cost: bestRoute.estimated_cost,
+              cost_currency: bestRoute.cost_currency,
+              // Check for alternate field names
+              duration: bestRoute.duration,
+              distance: bestRoute.distance,
+              cost: bestRoute.cost,
+              fare: bestRoute.fare,
+              // Log ALL fields to find the right ones
+              all_fields: JSON.stringify(bestRoute).substring(0, 500)
+            }
+          });
+
+          const transformedRoute: RouteOption = {
+            // Basic route identification
+            route_id: request._id || request.request_id || 'unknown',
+            source: request.source || 'Unknown',
+            destination: request.destination || 'Unknown',
+
+            // Display compatibility fields (for UI) - FIXED: Use correct backend fields
+            id: request._id || request.request_id || 'unknown',
+            title: `${request.source || 'Unknown'} → ${request.destination || 'Unknown'}`,
+            duration: bestRoute.duration_text || 'Duration not available',
+            fare: bestRoute.estimated_cost ?
+              `${bestRoute.cost_currency || 'LKR'} ${bestRoute.estimated_cost}` :
+              'Fare not available',
+            modes: bestRoute.transit_modes || [request.mode || 'transit'],
+            distance: bestRoute.distance_text || 'Distance not available',  // FIX: Changed from carbonFootprint to distance
+            carbonFootprint: 'Carbon data not available',  // Carbon footprint is not provided by backend
+            aiRecommendation: bestRoute.is_recommended ? 'AI Recommended' : 'Alternative route',
+            agentsUsed: [], // Cleaned - no longer show technical agent details
+            
+            // NEW: Include all routes for alternatives display
+            all_routes: responseData.all_routes || [],
+            total_routes_found: responseData.total_routes_found || 0,
+            
+            // NEW: Include AI disruption analysis
+            ai_disruption_analysis: responseData.ai_disruption_analysis || null,
+            
+            // Essential route data only - FIXED: Pass all critical data
+            route_data: {
+              route_id: bestRoute.route_id,
+              origin: request.source,
+              destination: request.destination,
+              duration_text: bestRoute.duration_text,
+              distance_text: bestRoute.distance_text,
+              estimated_cost: bestRoute.estimated_cost,
+              cost_currency: bestRoute.cost_currency,
+              recommendation_score: bestRoute.recommendation_score,
+              score_breakdown: bestRoute.score_breakdown,
+              is_recommended: bestRoute.is_recommended,
+              transit_modes: bestRoute.transit_modes,
+              transfers: bestRoute.transfers,
+              walking_distance: bestRoute.walking_distance,
+              start_time: bestRoute.start_time,
+              end_time: bestRoute.end_time,
+              route_source: bestRoute.route_source,
+              fare_optimization: bestRoute.fare_optimization,
+              mode_details: bestRoute.mode_details,
+              steps: bestRoute.steps || []
+            },
+            
+            // Simplified summary
+            summary: {
+              duration_minutes: 0,
+              distance_km: 0,
+              estimated_fare: bestRoute.estimated_cost || 0,
+              transit_modes: bestRoute.transit_modes || [request.mode || 'transit'],
+              transfers: 0,
+              walking_distance: 0,
+              carbon_footprint: 0
+            },
+            steps: bestRoute.steps || [],
+            fare_breakdown: {
+              total_fare: bestRoute.estimated_cost || 0,
+              currency: bestRoute.cost_currency || 'LKR',
+              breakdown: [],
+              savings_vs_alternatives: 0,
+              optimization_applied: false
+            },
+            agent_analysis: {
+              user_preference_score: bestRoute.recommendation_score || 0.7,
+              fare_optimization_score: 0.8,
+              disruption_risk_score: 0.2,
+              comfort_score: 0.7,
+              recommendations: [bestRoute.is_recommended ? 'AI Recommended' : 'Alternative route']
+            },
+            
+            // Only essential disruption data
+            disruptions: responseData.active_disruptions || [],
+            alternatives: [],
+            
+            // Only show destination insights (user-valuable content)
+            destination_summary: responseData.destination_summary || null,
+            
+            // Enhanced metadata - all available info
+            request_timestamp: request.request_timestamp,
+            processing_time: result.processing_time || 0,
+            agents_count: result.agents_used?.length || 0,
+            
+            // NEW: Additional technical details
+            request_id: responseData.request_id,
+            mode: request.mode,
+            preferred_transit: request.preferred_transit,
+            status: result.status,
+            trace_id: result.trace_id,
+            agents_used_list: result.agents_used || []
+          };
+          
+          return transformedRoute;
+        });
+        
         return {
-          ...response,
-          data: response.data.routes
+          success: true,
+          data: transformedRoutes,
+          timestamp: new Date().toISOString()
         };
       }
 
@@ -449,19 +578,19 @@ class TravelService {
         success: false,
         error: {
           error_code: 'NO_DATA',
-          message: 'No route history data received',
+          message: 'No travel requests data received',
           details: {},
           timestamp: new Date().toISOString()
         },
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error fetching route history from backend:', error);
+      console.error('Error fetching travel requests from backend:', error);
       return {
         success: false,
         error: {
-          error_code: 'FETCH_HISTORY_ERROR',
-          message: 'Failed to fetch route history from backend',
+          error_code: 'FETCH_REQUESTS_ERROR',
+          message: 'Failed to fetch travel requests from backend',
           details: { originalError: error },
           timestamp: new Date().toISOString()
         },
