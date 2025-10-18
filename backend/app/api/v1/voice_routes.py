@@ -6,24 +6,36 @@ import base64
 import asyncio
 from io import BytesIO
 
-from google.cloud import speech_v1p1beta1 as speech
-from google.api_core import exceptions as google_exceptions
-from pydub import AudioSegment
+try:
+    from google.cloud import speech
+    from google.api_core import exceptions as google_exceptions
+    SPEECH_AVAILABLE = True
+except ImportError:
+    SPEECH_AVAILABLE = False
+    print("⚠️ WARNING: google-cloud-speech not installed. Voice features will be disabled.")
 
-# --- ✅ Add this line ---
-# Explicitly set the path to your ffmpeg installation.
-# Replace the path with the output from the 'which ffmpeg' command.
-AudioSegment.converter = "/opt/homebrew/bin/ffmpeg"
+from pydub import AudioSegment
+import platform
+
+# Set ffmpeg path based on platform
+if platform.system() == "Darwin":  # macOS
+    AudioSegment.converter = "/opt/homebrew/bin/ffmpeg"
+# For Windows and Linux, pydub will auto-detect ffmpeg if it's in PATH
 
 router = APIRouter()
 
 # --- Global, Reusable Speech Client ---
-try:
-    speech_client = speech.SpeechClient()
-    print("✅ Google Cloud Speech client initialized successfully.")
-except google_exceptions.DefaultCredentialsError:
-    speech_client = None
-    print("🔴 FATAL ERROR: Google Cloud credentials not found.")
+speech_client = None
+if SPEECH_AVAILABLE:
+    try:
+        speech_client = speech.SpeechClient()
+        print("✅ Google Cloud Speech client initialized successfully.")
+    except Exception as e:
+        speech_client = None
+        print(f"⚠️ WARNING: Could not initialize Google Cloud Speech client: {e}")
+        print("Voice transcription features will be disabled.")
+else:
+    print("⚠️ Voice transcription disabled - google-cloud-speech not available.")
 # ------------------------------------
 
 async def transcribe_audio_file(audio_bytes: bytes) -> str:
@@ -85,6 +97,15 @@ async def transcribe_audio_file(audio_bytes: bytes) -> str:
 async def voice_websocket(websocket: WebSocket, token: str = ""):
     await websocket.accept()
     print("Voice WebSocket connection accepted.")
+
+    # Check if speech client is available
+    if not speech_client:
+        await websocket.send_text(json.dumps({
+            "type": "error",
+            "message": "Voice transcription service is not available. Please ensure google-cloud-speech is installed and configured."
+        }))
+        await websocket.close()
+        return
 
     try:
         while True:
