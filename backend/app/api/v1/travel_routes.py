@@ -100,7 +100,7 @@ async def plan_travel_route(
         print(f"Route handler: Processing request for {request.source} to {request.destination} ({request.mode})")
         
         # Run the travel agent workflow
-        result = run_travel_agent(
+        result = await run_travel_agent(
             source=request.source,
             destination=request.destination,
             mode=request.mode,
