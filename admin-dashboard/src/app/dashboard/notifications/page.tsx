@@ -2,13 +2,21 @@
 
 import { useState } from 'react';
 import { notificationAPI } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   Bell, 
   Send, 
-  Users, 
   MessageSquare,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Loader2,
+  Lightbulb
 } from 'lucide-react';
 
 export default function NotificationsPage() {
@@ -25,16 +33,13 @@ export default function NotificationsPage() {
 
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!notification.title || !notification.body) {
-      setError('Please fill in both title and message fields');
+      setError('Please fill in both title and message fields.');
       return;
     }
-
     setSending(true);
     setError('');
     setSuccess('');
-
     try {
       await notificationAPI.sendBroadcast(
         notification.title,
@@ -42,272 +47,87 @@ export default function NotificationsPage() {
         notification.data,
         notificationType === 'specific' ? notification.userIds : undefined
       );
-
       setSuccess('Notification sent successfully!');
-      setNotification({
-        title: '',
-        body: '',
-        data: {},
-        userIds: []
-      });
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to send notification');
+      setNotification({ title: '', body: '', data: {}, userIds: [] });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail 
+        : 'Failed to send notification';
+      setError(errorMessage || 'Failed to send notification');
     } finally {
       setSending(false);
     }
   };
 
   const predefinedMessages = [
-    {
-      title: 'System Maintenance',
-      body: 'The Sri Lankan Transit system will undergo maintenance on Sunday, 2 AM - 4 AM. Some features may be temporarily unavailable.',
-      data: { type: 'maintenance' }
-    },
-    {
-      title: 'Weather Alert',
-      body: 'Heavy rainfall expected in Colombo region. Plan your commute accordingly and stay safe!',
-      data: { type: 'weather', region: 'colombo' }
-    },
-    {
-      title: 'New Feature Available',
-      body: 'Check out our new fare optimization feature! Save more on your daily commute.',
-      data: { type: 'feature', feature: 'fare_optimization' }
-    },
-    {
-      title: 'Traffic Update',
-      body: 'Major traffic congestion reported on Galle Road. Consider alternative routes.',
-      data: { type: 'traffic', location: 'galle_road' }
-    }
+    { title: 'System Maintenance', body: 'The system will undergo maintenance soon. Some features may be temporarily unavailable.', data: { type: 'maintenance' } },
+    { title: 'Weather Alert', body: 'Heavy rainfall is expected. Plan your commute accordingly and stay safe!', data: { type: 'weather' } },
+    { title: 'New Feature Available', body: 'Check out our new fare optimization feature to save more on your commute.', data: { type: 'feature' } }
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Push Notifications</h1>
-          <p className="text-gray-600">Send notifications to app users</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Push Notifications</h1>
+        <p className="text-muted-foreground">Send notifications to all or specific app users.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <Bell className="h-8 w-8 text-blue-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-lg font-bold text-gray-900">9</p>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Users who can receive notifications
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <Send className="h-8 w-8 text-green-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Delivery Rate</p>
-              <p className="text-lg font-bold text-gray-900">98.5%</p>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Successful notification delivery
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <MessageSquare className="h-8 w-8 text-purple-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Engagement</p>
-              <p className="text-lg font-bold text-gray-900">12.3%</p>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Average open rate
-          </div>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Active Users</CardTitle><Bell className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">9</div><p className="text-xs text-muted-foreground">Users who can receive notifications</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Delivery Rate</CardTitle><Send className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">98.5%</div><p className="text-xs text-muted-foreground">Successful notification delivery</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Engagement</CardTitle><MessageSquare className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">12.3%</div><p className="text-xs text-muted-foreground">Average open rate</p></CardContent></Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Send Notification Form */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <Send className="h-5 w-5 mr-2" />
-              Send Notification
-            </h2>
-          </div>
-          
-          <form onSubmit={handleSendNotification} className="p-6 space-y-4">
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {success}
+        <Card>
+          <CardHeader>
+            <CardTitle>Compose Notification</CardTitle>
+            <CardDescription>Craft and send a message to your users.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSendNotification} className="space-y-6">
+              {success && <Alert><CheckCircle className="h-4 w-4" /><AlertTitle>Success!</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
+              {error && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+              
+              <div className="space-y-2">
+                <Label>Send to</Label>
+                <RadioGroup defaultValue="all" value={notificationType} onValueChange={(value: 'all' | 'specific') => setNotificationType(value)} className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="all" id="r1" /><Label htmlFor="r1">All Users</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="specific" id="r2" disabled /><Label htmlFor="r2" className="text-muted-foreground">Specific Users (Coming Soon)</Label></div>
+                </RadioGroup>
               </div>
-            )}
-            
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                {error}
+              <div className="space-y-2"><Label htmlFor="title">Title *</Label><Input id="title" required value={notification.title} onChange={(e) => setNotification(p => ({ ...p, title: e.target.value }))} placeholder="Enter notification title" /></div>
+              <div className="space-y-2"><Label htmlFor="body">Message *</Label><Textarea id="body" required rows={4} value={notification.body} onChange={(e) => setNotification(p => ({ ...p, body: e.target.value }))} placeholder="Enter notification message" /><p className="text-xs text-muted-foreground">Keep it concise and actionable.</p></div>
+              <Button type="submit" disabled={sending} className="w-full">
+                {sending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : <><Send className="mr-2 h-4 w-4" /> Send Notification</>}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Templates</CardTitle>
+            <CardDescription>Use a predefined template to send messages faster.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {predefinedMessages.map((template, index) => (
+              <div key={index} className="border rounded-lg p-4 hover:bg-muted cursor-pointer" onClick={() => setNotification({ title: template.title, body: template.body, data: template.data, userIds: [] })}>
+                <h3 className="font-medium mb-1">{template.title}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2">{template.body}</p>
               </div>
-            )}
-
-            {/* Notification Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Send to
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="all"
-                    checked={notificationType === 'all'}
-                    onChange={(e) => setNotificationType(e.target.value as 'all' | 'specific')}
-                    className="mr-2"
-                  />
-                  All Users
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="specific"
-                    checked={notificationType === 'specific'}
-                    onChange={(e) => setNotificationType(e.target.value as 'all' | 'specific')}
-                    className="mr-2"
-                  />
-                  Specific Users
-                </label>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                id="title"
-                required
-                value={notification.title}
-                onChange={(e) => setNotification(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter notification title"
-              />
-            </div>
-
-            {/* Message */}
-            <div>
-              <label htmlFor="body" className="block text-sm font-medium text-gray-700 mb-2">
-                Message *
-              </label>
-              <textarea
-                id="body"
-                required
-                rows={4}
-                value={notification.body}
-                onChange={(e) => setNotification(prev => ({ ...prev, body: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter notification message"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Keep it concise and actionable
-              </p>
-            </div>
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={sending}
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Sending...
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Notification
-                </div>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Predefined Messages */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Quick Templates
-            </h2>
-          </div>
-          
-          <div className="p-6">
-            <div className="space-y-4">
-              {predefinedMessages.map((template, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                     onClick={() => setNotification({
-                       title: template.title,
-                       body: template.body,
-                       data: template.data,
-                       userIds: []
-                     })}>
-                  <h3 className="font-medium text-gray-900 mb-2">{template.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{template.body}</p>
-                  <div className="mt-2">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {template.data.type}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Best Practices */}
-      <div className="bg-blue-50 rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-          <div className="h-5 w-5 mr-2">💡</div>
-          Notification Best Practices
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">✅ Do's</h3>
-            <ul className="space-y-1 text-sm text-gray-700">
-              <li>• Keep titles under 50 characters</li>
-              <li>• Make messages actionable and clear</li>
-              <li>• Send during appropriate hours (6 AM - 10 PM)</li>
-              <li>• Personalize when possible</li>
-              <li>• Test before sending to all users</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">❌ Don'ts</h3>
-            <ul className="space-y-1 text-sm text-gray-700">
-              <li>• Send too many notifications per day</li>
-              <li>• Use ALL CAPS or excessive punctuation</li>
-              <li>• Send promotional content frequently</li>
-              <li>• Ignore user notification preferences</li>
-              <li>• Send notifications during night hours</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      
+      <Alert>
+        <Lightbulb className="h-4 w-4" />
+        <AlertTitle>Notification Best Practices</AlertTitle>
+        <AlertDescription>
+          Keep titles under 50 characters and messages clear. Avoid sending too many notifications or sending during late hours.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
