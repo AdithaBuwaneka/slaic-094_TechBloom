@@ -20,7 +20,7 @@ The **Smart Transit Companion** revolutionizes how Sri Lankans navigate their da
 - ✅ **Community Data** - Crowdsourced reporting and verification platform
 - ✅ **Real-time Intelligence** - Live updates and predictive analytics
 - ✅ **Multilingual Support** - English, Sinhala, Tamil with cultural context
-- ✅ **Production Ready** - Enterprise-grade architecture and security
+- ✅ **Production Ready** - Enterprise-grade. architecture and security
 
 ---
 
