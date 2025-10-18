@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { SriLankanTravelMode } from '../../src/types';
+import { SriLankanTravelMode } from '../src/types';
 
 const { width: screenWidth } = Dimensions.get('window');
 

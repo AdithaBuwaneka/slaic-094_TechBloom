@@ -23,7 +23,7 @@ export default function Login() {
       const success = await login(email, password);
       
       if (success) {
-        router.replace('/(main)/(tabs)/home');
+        router.replace('/(main)');
       } else {
         Alert.alert('Error', 'Invalid credentials. Please try again.');
       }

@@ -1,5 +1,7 @@
+import 'react-native-reanimated';
+import 'react-native-gesture-handler';
 import React from 'react';
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { AppProvider } from '../src/contexts/AppContext';

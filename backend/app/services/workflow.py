@@ -84,7 +84,7 @@ def create_travel_agent_workflow():
     return compiled_workflow
 
 # Utility function to run the workflow
-def run_travel_agent(source: str, destination: str, mode: str, 
+async def run_travel_agent(source: str, destination: str, mode: str, 
                     user_id: str, preferred_transit: str = None) -> Dict:
     """
     Run the complete travel agent workflow with Langfuse tracing
@@ -120,7 +120,7 @@ def run_travel_agent(source: str, destination: str, mode: str,
     try:
         # Execute the workflow
         print(f"Starting workflow execution for {source} to {destination} ({mode})")
-        final_state = workflow.invoke(initial_state)
+        final_state = await workflow.ainvoke(initial_state)
         # Handle final state - could be dict or TravelState object
         if hasattr(final_state, 'current_step'):
             current_step = final_state.current_step

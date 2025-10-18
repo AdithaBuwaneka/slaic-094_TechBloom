@@ -5,7 +5,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme, ThemeMode } from '../../src/contexts/ThemeContext';
+import { useTheme, ThemeMode } from '../src/contexts/ThemeContext';
 
 interface Props {
   variant?: 'switch' | 'button' | 'segmented';
