@@ -29,8 +29,11 @@ export default function LoginPage() {
         localStorage.setItem('admin_user', JSON.stringify(response.user));
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail 
+        : 'Login failed. Please check your credentials.';
+      setError(errorMessage || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
