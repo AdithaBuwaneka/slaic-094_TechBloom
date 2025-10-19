@@ -85,7 +85,7 @@ class MobileService {
     status: string;
     message: string;
   }>> {
-    return apiClient.patch(`${ENDPOINTS.MOBILE.NOTIFICATIONS}/${notificationId}/read`);
+    return apiClient.put(`${ENDPOINTS.MOBILE.NOTIFICATIONS}/${notificationId}/read`, {});
   }
 
   async markAllNotificationsAsRead(): Promise<APIResponse<{
@@ -93,7 +93,7 @@ class MobileService {
     message: string;
     marked_count: number;
   }>> {
-    return apiClient.patch(`${ENDPOINTS.MOBILE.NOTIFICATIONS}/read-all`);
+    return apiClient.put(`${ENDPOINTS.MOBILE.NOTIFICATIONS}/read-all`, {});
   }
 
   // =============================================================================

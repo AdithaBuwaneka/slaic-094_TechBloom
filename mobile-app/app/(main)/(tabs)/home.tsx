@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Animated, Platform } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MultiAgentAnimation from '../../../components/MultiAgentAnimation';
@@ -10,6 +10,25 @@ import { useApp, useAuth } from '../../../src/contexts/AppContext';
 import { useTheme } from '../../../src/contexts/ThemeContext';
 import { useLanguage } from '../../../src/contexts/LanguageContext';
 import { travelService } from '../../../src/services/api/travelService';
+import { mobileService } from '../../../src/services/api/mobileService';
+
+// Try to import notifications, but don't fail if not available (Expo Go limitation)
+let Notifications: any = null;
+try {
+  Notifications = require('expo-notifications');
+  // Configure notification handler only if available
+  if (Notifications && Notifications.setNotificationHandler) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  }
+} catch (error) {
+  console.log('Push notifications not available (Expo Go limitation). Using polling instead.');
+}
 
 
 export default function Home() {
@@ -18,7 +37,7 @@ export default function Home() {
   const { t } = useLanguage();
   const { setCurrentRoute, addToRouteHistory } = useApp();
   const router = useRouter();
-  
+
   const [routeRequest, setRouteRequest] = useState<RouteRequestType>({
     user_id: user?.user_id || '',
     source: '',
@@ -27,11 +46,105 @@ export default function Home() {
   });
 
   // Update user_id when user changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (user?.user_id && routeRequest.user_id !== user.user_id) {
       setRouteRequest(prev => ({ ...prev, user_id: user.user_id }));
     }
   }, [user?.user_id, routeRequest.user_id]);
+
+  // Load unread notification count
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const badgeScale = useRef(new Animated.Value(1)).current;
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+
+  // Animate badge when count changes
+  useEffect(() => {
+    if (unreadNotifications > 0) {
+      Animated.sequence([
+        Animated.spring(badgeScale, {
+          toValue: 1.3,
+          friction: 3,
+          useNativeDriver: true,
+        }),
+        Animated.spring(badgeScale, {
+          toValue: 1,
+          friction: 3,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [unreadNotifications]);
+
+  // Refresh count when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUnreadCount();
+    }, [])
+  );
+
+  useEffect(() => {
+    loadUnreadCount();
+
+    // Real-time notification listener (only if push notifications available)
+    if (Notifications && Notifications.addNotificationReceivedListener) {
+      try {
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+          console.log('📬 Notification received:', notification);
+          // Immediately reload count when notification is received
+          loadUnreadCount();
+        });
+
+        // Response listener (when user taps on notification)
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+          console.log('👆 Notification tapped:', response);
+          // Navigate to notifications page
+          router.push('/(main)/notifications');
+        });
+      } catch (error) {
+        console.log('Could not set up push notification listeners:', error);
+      }
+    }
+
+    // Polling fallback - refresh count every 15 seconds (more frequent for Expo Go)
+    const pollInterval = Notifications ? 30000 : 15000; // 30s with push, 15s without
+    const interval = setInterval(loadUnreadCount, pollInterval);
+
+    return () => {
+      if (Notifications && notificationListener.current) {
+        try {
+          Notifications.removeNotificationSubscription(notificationListener.current);
+        } catch (error) {
+          console.log('Error removing notification listener:', error);
+        }
+      }
+      if (Notifications && responseListener.current) {
+        try {
+          Notifications.removeNotificationSubscription(responseListener.current);
+        } catch (error) {
+          console.log('Error removing response listener:', error);
+        }
+      }
+      clearInterval(interval);
+    };
+  }, []);
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await mobileService.getNotificationHistory(50);
+      if (response.success && response.data) {
+        const notificationsList = Array.isArray(response.data) ? response.data : [];
+        const userId = user?.user_id;
+        const unreadCount = notificationsList.filter(
+          (n: any) => !n.read_by || !n.read_by.includes(userId || '')
+        ).length;
+        setUnreadNotifications(unreadCount);
+      }
+    } catch (error) {
+      console.log('Error loading unread count:', error);
+    }
+  };
+
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [selectedLanguage] = useState<'en' | 'si' | 'ta'>('en');
   const [isPlanning, setIsPlanning] = useState(false);
@@ -264,8 +377,34 @@ export default function Home() {
               </Text>
               <Text className="text-blue-100 text-base">{t('home.subtitle')}</Text>
             </View>
-            <TouchableOpacity className="p-2 bg-blue-500 rounded-full">
+            <TouchableOpacity
+              className="p-2 bg-blue-500 rounded-full relative"
+              onPress={() => {
+                router.push('/(main)/notifications');
+                // Animate badge scale down before navigation
+                Animated.timing(badgeScale, {
+                  toValue: 0,
+                  duration: 200,
+                  useNativeDriver: true,
+                }).start(() => {
+                  // Reset scale for next time
+                  badgeScale.setValue(1);
+                });
+              }}
+            >
               <Ionicons name="notifications" size={24} color="white" />
+              {unreadNotifications > 0 && (
+                <Animated.View
+                  className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[20px] h-5 items-center justify-center px-1"
+                  style={{
+                    transform: [{ scale: badgeScale }],
+                  }}
+                >
+                  <Text className="text-white text-xs font-bold">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </Text>
+                </Animated.View>
+              )}
             </TouchableOpacity>
           </View>
         </View>

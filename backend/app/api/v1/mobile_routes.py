@@ -170,13 +170,52 @@ async def mark_notification_read(
             notification_id=notification_id,
             user_id=current_user["user_id"]
         )
-        
+
         return result
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to mark notification as read: {str(e)}"
+        )
+
+@router.put("/notifications/read-all")
+async def mark_all_notifications_read(
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
+):
+    """
+    Mark all notifications as read for the current user
+    """
+    try:
+        # Get all user notifications
+        notifications = await push_notification_service.get_user_notifications(
+            user_id=current_user["user_id"],
+            limit=1000
+        )
+
+        marked_count = 0
+        for notification in notifications:
+            # Check if already read by this user
+            if notification.get("read_by") and current_user["user_id"] in notification.get("read_by", []):
+                continue
+
+            # Mark as read
+            await push_notification_service.mark_notification_read(
+                notification_id=notification["notification_id"],
+                user_id=current_user["user_id"]
+            )
+            marked_count += 1
+
+        return {
+            "status": "success",
+            "message": f"Marked {marked_count} notifications as read",
+            "marked_count": marked_count
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to mark all notifications as read: {str(e)}"
         )
 
 @router.post("/update-location")
