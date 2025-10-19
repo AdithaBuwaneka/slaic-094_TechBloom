@@ -243,27 +243,20 @@ class CommunityService {
     message: string;
   }>> {
     const report = {
-      ...reportData,
-      location_coords: {
+      type: reportData.type,
+      title: reportData.title,
+      description: reportData.description,
+      location: reportData.location,
+      severity: reportData.severity,
+      user_id: reportData.user_id,
+      coordinates: {
         latitude: 6.9271, // Default to Colombo
         longitude: 79.8612
-      },
-      metadata: {
-        submitted_via: 'mobile_app',
-        app_version: '1.0.0'
       }
     };
 
-    // Route to appropriate endpoint based on type
-    const endpointMap = {
-      'traffic': ENDPOINTS.COMMUNITY.TRAFFIC,
-      'delay': ENDPOINTS.COMMUNITY.DELAYS,
-      'fare': ENDPOINTS.COMMUNITY.FARES,
-      'accessibility': ENDPOINTS.COMMUNITY.ACCESSIBILITY,
-      'safety': ENDPOINTS.COMMUNITY.SAFETY
-    };
-
-    return apiClient.post(endpointMap[reportData.type], report);
+    // Use unified reports endpoint
+    return apiClient.post(ENDPOINTS.COMMUNITY.REPORTS, report);
   }
 
   async getAllReports(filters?: {

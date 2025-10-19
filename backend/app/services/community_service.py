@@ -93,7 +93,7 @@ class CommunityDataService:
                 "timestamp": datetime.utcnow().isoformat()
             }
     
-    async def submit_fare_update(self, route: str, mode: str, fare_amount: float, effective_date: str = None, source: str = "community", user_id: str = None) -> Dict[str, Any]:
+    async def submit_fare_update(self, route: str, mode: str, fare_amount: float, effective_date: str = None, source: str = "community", user_id: str = None, description: str = None) -> Dict[str, Any]:
         """Submit a fare update report to database"""
         try:
             report = {
@@ -105,6 +105,7 @@ class CommunityDataService:
                 "currency": "LKR",
                 "effective_date": effective_date or datetime.utcnow().date().isoformat(),
                 "source": source,
+                "description": description or f"Fare update for {route} ({mode}): LKR {fare_amount}",
                 "user_id": user_id,
                 "reported_at": datetime.utcnow(),
                 "status": "pending_verification",
@@ -151,26 +152,66 @@ class CommunityDataService:
                 "verified": False,
                 "impact_level": "medium"  # Default to medium, can be updated later
             }
-            
+
             # Save to database
             result = await db.database.community_reports.insert_one(report)
             report["_id"] = str(result.inserted_id)
-            
+
             return {
                 "status": "success",
-                "message": "Accessibility report submitted successfully", 
+                "message": "Accessibility report submitted successfully",
                 "report_id": report["report_id"],
                 "data": report,
                 "timestamp": datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             return {
                 "status": "error",
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
-    
+
+    async def submit_safety_report(self, location: str, issue_type: str, severity: str, description: str, coordinates: Dict = None, user_id: str = None) -> Dict[str, Any]:
+        """Submit a safety issue report to database"""
+        try:
+            report = {
+                "report_id": str(uuid.uuid4())[:8],
+                "type": "safety",
+                "location": location,
+                "issue_type": issue_type,
+                "severity": severity,
+                "description": description,
+                "coordinates": coordinates,
+                "user_id": user_id,
+                "reported_at": datetime.utcnow(),
+                "status": "active",
+                "priority": "high" if severity == "high" else "medium",
+                "votes": 1,
+                "reliability_score": 0.8,
+                "verified": False,
+                "requires_action": severity == "high"
+            }
+
+            # Save to database
+            result = await db.database.community_reports.insert_one(report)
+            report["_id"] = str(result.inserted_id)
+
+            return {
+                "status": "success",
+                "message": "Safety report submitted successfully",
+                "report_id": report["report_id"],
+                "data": report,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
     async def submit_report(self, report_data: Dict[str, Any]) -> Dict[str, Any]:
         """Submit any type of community report to database"""
         try:

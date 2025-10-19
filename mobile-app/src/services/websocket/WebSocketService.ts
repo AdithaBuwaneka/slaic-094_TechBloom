@@ -48,45 +48,50 @@ class WebSocketService {
     try {
       this.isConnecting = true;
       this.userId = userId || null;
-      
+
       // Get token from secure storage if not provided
       if (!token && userId) {
         const { apiClient } = await import('../api/client');
         token = await apiClient.getStoredToken() ?? undefined;
       }
-      
+
       if (!token) {
         throw new Error('Authentication token required for WebSocket connection');
       }
-      
+
       const wsUrl = `${API_CONFIG.WS_URL}?token=${encodeURIComponent(token)}`;
       console.log('Connecting to WebSocket:', wsUrl);
 
       // Use native WebSocket (React Native has built-in WebSocket support)
       this.ws = new WebSocket(wsUrl);
-      this.setupEventHandlers();
 
       // Wait for connection
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('WebSocket connection timeout'));
+          this.isConnecting = false;
+          console.warn('WebSocket connection timeout - continuing anyway');
+          resolve(false); // Don't reject, just return false
         }, 10000);
 
-        this.ws!.onopen = () => {
+        const onOpen = () => {
           clearTimeout(timeout);
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           this.startHeartbeat();
+          this.setupEventHandlers(); // Setup after connection
           console.log('WebSocket connected successfully');
           resolve(true);
         };
 
-        this.ws!.onerror = (error) => {
+        const onError = (error: any) => {
           clearTimeout(timeout);
           this.isConnecting = false;
           console.error('WebSocket connection error:', error);
-          reject(error);
+          resolve(false); // Don't reject, just return false to allow app to continue
         };
+
+        this.ws!.onopen = onOpen;
+        this.ws!.onerror = onError;
       });
     } catch (error) {
       this.isConnecting = false;
@@ -134,20 +139,27 @@ class WebSocketService {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
+      console.log('Max reconnection attempts reached - giving up');
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    const delay = this.reconnectInterval * this.reconnectAttempts;
+    console.log(`Will attempt to reconnect in ${delay / 1000}s (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
     setTimeout(async () => {
       try {
-        await this.connect(this.userId || undefined);
+        const connected = await this.connect(this.userId || undefined);
+        if (!connected) {
+          console.log('Reconnection attempt failed - will try again if needed');
+        } else {
+          console.log('Successfully reconnected!');
+        }
       } catch (error) {
-        console.error('Reconnection failed:', error);
+        console.log('Reconnection error (non-fatal):', error);
+        // Don't throw - let the retry mechanism handle it
       }
-    }, this.reconnectInterval * this.reconnectAttempts);
+    }, delay);
   }
 
   disconnect(): void {

@@ -37,6 +37,22 @@ class AccessibilityReportRequest(BaseModel):
     status: str = Field(..., description="Status: available, unavailable, needs_repair")
     description: Optional[str] = Field(None, description="Additional details")
 
+class SafetyReportRequest(BaseModel):
+    location: str = Field(..., description="Location of safety concern")
+    issue_type: str = Field(..., description="Type of safety issue")
+    severity: str = Field(..., description="Severity: low, medium, high")
+    description: str = Field(..., description="Detailed description")
+    coordinates: Optional[Dict[str, float]] = Field(None, description="GPS coordinates")
+
+class UnifiedReportRequest(BaseModel):
+    type: str = Field(..., description="Report type: traffic, delay, fare, accessibility, safety")
+    title: str = Field(..., description="Report title")
+    description: str = Field(..., description="Detailed description")
+    location: str = Field(..., description="Location of the issue")
+    severity: Optional[str] = Field("medium", description="Severity: low, medium, high")
+    user_id: Optional[str] = Field(None, description="User ID submitting the report")
+    coordinates: Optional[Dict[str, float]] = Field(None, description="GPS coordinates")
+
 @router.get("/")
 async def community_data_root():
     """Community Data Reporting API root endpoint"""
@@ -163,21 +179,123 @@ async def report_accessibility(
     try:
         if not multilingual_service.validate_language(lang):
             raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
-            
+
         result = await community_service.submit_accessibility_report(
             location=report.location,
             facility_type=report.facility_type,
             status=report.status,
             description=report.description
         )
-        
+
         if result["status"] == "error":
             raise HTTPException(status_code=500, detail=result["error"])
-            
+
         # Apply multilingual translation
         translated_result = multilingual_service.translate_response(result, lang)
         return translated_result
-        
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/safety")
+async def report_safety(
+    report: SafetyReportRequest,
+    lang: Optional[str] = "en"
+):
+    """
+    Report safety issues in transit areas
+    Community-contributed safety information
+    """
+    try:
+        if not multilingual_service.validate_language(lang):
+            raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+
+        result = await community_service.submit_safety_report(
+            location=report.location,
+            issue_type=report.issue_type,
+            severity=report.severity,
+            description=report.description,
+            coordinates=report.coordinates
+        )
+
+        if result["status"] == "error":
+            raise HTTPException(status_code=500, detail=result["error"])
+
+        # Apply multilingual translation
+        translated_result = multilingual_service.translate_response(result, lang)
+        return translated_result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/reports")
+async def submit_unified_report(
+    report: UnifiedReportRequest,
+    lang: Optional[str] = "en"
+):
+    """
+    Unified endpoint for submitting any type of community report
+    Supports: traffic, delay, fare, accessibility, safety
+    """
+    try:
+        if not multilingual_service.validate_language(lang):
+            raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+
+        # Route to appropriate service method based on type
+        if report.type == "traffic":
+            result = await community_service.submit_traffic_report(
+                location=report.location,
+                severity=report.severity,
+                description=report.description,
+                coordinates=report.coordinates,
+                user_id=report.user_id
+            )
+        elif report.type == "delay":
+            result = await community_service.submit_delay_report(
+                route=report.title or "Unknown Route",
+                mode="bus",  # Default, can be extracted from description
+                delay_minutes=0,  # Can be extracted from description
+                location=report.location,
+                description=report.description,
+                user_id=report.user_id
+            )
+        elif report.type == "fare":
+            result = await community_service.submit_fare_update(
+                route=report.title or "Unknown Route",
+                mode="bus",  # Default
+                fare_amount=0.0,  # Can be extracted from description later
+                description=report.description,
+                user_id=report.user_id
+            )
+        elif report.type == "accessibility":
+            result = await community_service.submit_accessibility_report(
+                location=report.location,
+                facility_type="general",  # Default
+                status="needs_review",
+                description=report.description,
+                user_id=report.user_id
+            )
+        elif report.type == "safety":
+            result = await community_service.submit_safety_report(
+                location=report.location,
+                issue_type="general",
+                severity=report.severity,
+                description=report.description,
+                coordinates=report.coordinates,
+                user_id=report.user_id
+            )
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid report type: {report.type}")
+
+        if result["status"] == "error":
+            raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+
+        # Apply multilingual translation
+        translated_result = multilingual_service.translate_response(result, lang)
+        return translated_result
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

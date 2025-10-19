@@ -982,3 +982,7 @@ async def reset_admin_settings(admin_user: Dict[str, Any] = Depends(get_admin_us
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reset admin settings: {str(e)}"
         )
+    
+
+
+    
