@@ -7,13 +7,9 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { mobileService } from '../../src/services/api/mobileService';
 import { useAuth } from '../../src/contexts/AppContext';
 
-// Try to import notifications, but don't fail if not available (Expo Go limitation)
-let Notifications: any = null;
-try {
-  Notifications = require('expo-notifications');
-} catch (error) {
-  console.log('Push notifications not available (Expo Go limitation).');
-}
+// Note: expo-notifications is NOT imported here to avoid SDK 53+ Expo Go errors
+// Notification functionality is handled through the NotificationService
+// which safely checks for Expo Go before loading the notifications module
 
 interface Notification {
   notification_id: string;
@@ -33,7 +29,6 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const notificationListener = useRef<any>();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // Refresh when screen comes into focus
@@ -46,31 +41,13 @@ export default function NotificationsPage() {
   useEffect(() => {
     loadNotifications();
 
-    // Real-time notification listener (only if available)
-    if (Notifications && Notifications.addNotificationReceivedListener) {
-      try {
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-          console.log('📬 New notification received on notifications page:', notification);
-          // Reload notifications immediately
-          loadNotifications();
-        });
-      } catch (error) {
-        console.log('Could not set up notification listener:', error);
-      }
-    }
-
-    // Polling fallback
-    const pollInterval = Notifications ? 30000 : 10000; // 30s with push, 10s without
+    // Polling - refresh notifications every 10 seconds
+    // Note: Push notifications are handled by NotificationService in AppContext
+    // We use polling here for compatibility with Expo Go (SDK 53+)
+    const pollInterval = 10000; // 10 seconds
     const interval = setInterval(loadNotifications, pollInterval);
 
     return () => {
-      if (Notifications && notificationListener.current) {
-        try {
-          Notifications.removeNotificationSubscription(notificationListener.current);
-        } catch (error) {
-          console.log('Error removing notification listener:', error);
-        }
-      }
       clearInterval(interval);
     };
   }, []);

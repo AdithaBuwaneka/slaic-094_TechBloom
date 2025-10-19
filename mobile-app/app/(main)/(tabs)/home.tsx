@@ -12,23 +12,9 @@ import { useLanguage } from '../../../src/contexts/LanguageContext';
 import { travelService } from '../../../src/services/api/travelService';
 import { mobileService } from '../../../src/services/api/mobileService';
 
-// Try to import notifications, but don't fail if not available (Expo Go limitation)
-let Notifications: any = null;
-try {
-  Notifications = require('expo-notifications');
-  // Configure notification handler only if available
-  if (Notifications && Notifications.setNotificationHandler) {
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
-    });
-  }
-} catch (error) {
-  console.log('Push notifications not available (Expo Go limitation). Using polling instead.');
-}
+// Note: expo-notifications is NOT imported here to avoid SDK 53+ Expo Go errors
+// Notification functionality is handled through the NotificationService
+// which safely checks for Expo Go before loading the notifications module
 
 
 export default function Home() {
@@ -55,8 +41,6 @@ export default function Home() {
   // Load unread notification count
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const badgeScale = useRef(new Animated.Value(1)).current;
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
 
   // Animate badge when count changes
   useEffect(() => {
@@ -86,45 +70,13 @@ export default function Home() {
   useEffect(() => {
     loadUnreadCount();
 
-    // Real-time notification listener (only if push notifications available)
-    if (Notifications && Notifications.addNotificationReceivedListener) {
-      try {
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-          console.log('📬 Notification received:', notification);
-          // Immediately reload count when notification is received
-          loadUnreadCount();
-        });
-
-        // Response listener (when user taps on notification)
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-          console.log('👆 Notification tapped:', response);
-          // Navigate to notifications page
-          router.push('/(main)/notifications');
-        });
-      } catch (error) {
-        console.log('Could not set up push notification listeners:', error);
-      }
-    }
-
-    // Polling fallback - refresh count every 15 seconds (more frequent for Expo Go)
-    const pollInterval = Notifications ? 30000 : 15000; // 30s with push, 15s without
+    // Polling - refresh count every 15 seconds
+    // Note: Push notifications are handled by NotificationService in AppContext
+    // We use polling here for compatibility with Expo Go (SDK 53+)
+    const pollInterval = 15000; // 15 seconds
     const interval = setInterval(loadUnreadCount, pollInterval);
 
     return () => {
-      if (Notifications && notificationListener.current) {
-        try {
-          Notifications.removeNotificationSubscription(notificationListener.current);
-        } catch (error) {
-          console.log('Error removing notification listener:', error);
-        }
-      }
-      if (Notifications && responseListener.current) {
-        try {
-          Notifications.removeNotificationSubscription(responseListener.current);
-        } catch (error) {
-          console.log('Error removing response listener:', error);
-        }
-      }
       clearInterval(interval);
     };
   }, []);

@@ -8,16 +8,22 @@ import { Platform } from 'react-native';
 import { mobileService } from '../api/mobileService';
 
 // Check if we're in Expo Go (which doesn't support notifications in SDK 53+)
-const isExpoGo = (Constants as any).appOwnership === 'expo';
+// Expo Go detection: check for expo ownership or if we're in development mode
+const isExpoGo =
+  (Constants as any).appOwnership === 'expo' ||
+  ((Constants as any).executionEnvironment === 'storeClient');
 
-// Conditionally import notifications only if not in Expo Go
+// DO NOT load expo-notifications module at all if in Expo Go
+// This prevents the initialization error in SDK 53+
 let Notifications: typeof import('expo-notifications') | null = null;
-if (!isExpoGo) {
+
+// Only attempt to load notifications in a production build or development build
+if (!isExpoGo && Device.isDevice) {
   try {
     Notifications = require('expo-notifications');
-    
+
     // Configure notification handling only if notifications are available
-    if (Notifications) {
+    if (Notifications && Notifications.setNotificationHandler) {
       Notifications.setNotificationHandler({
         handleNotification: async () => ({
           shouldShowAlert: true,
@@ -27,10 +33,14 @@ if (!isExpoGo) {
           shouldShowList: true,
         }),
       });
+      console.log('Expo Notifications loaded successfully');
     }
   } catch (error) {
-    console.log('Notifications not available in this environment');
+    console.log('Notifications not available in this environment:', error);
+    Notifications = null;
   }
+} else {
+  console.log('Notifications not supported in Expo Go (SDK 53+). Use development build instead.');
 }
 
 export interface NotificationData {
