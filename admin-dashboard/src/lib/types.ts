@@ -187,7 +187,7 @@ export interface AdminLoginResponse {
 }
 
 // API Response wrapper
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = any> {
   success?: boolean;
   data?: T;
   error?: {

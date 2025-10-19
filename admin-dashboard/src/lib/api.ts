@@ -4,14 +4,6 @@
 
 import axios from 'axios';
 
-// Settings type to match the settings page
-interface AdminSettings {
-  system: { maintenance_mode: boolean; api_rate_limit: number; session_timeout: number; max_concurrent_users: number; };
-  notifications: { email_notifications: boolean; push_notifications: boolean; system_alerts: boolean; user_registration_alerts: boolean; };
-  security: { password_min_length: number; require_email_verification: boolean; enable_two_factor: boolean; max_login_attempts: number; };
-  features: { user_registration: boolean; community_reports: boolean; agent_system: boolean; analytics_tracking: boolean; };
-}
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 // Create axios instance
@@ -115,7 +107,7 @@ export const agentAPI = {
 
 // Notifications
 export const notificationAPI = {
-  sendBroadcast: async (title: string, body: string, data?: Record<string, unknown>, userIds?: string[]) => {
+  sendBroadcast: async (title: string, body: string, data?: any, userIds?: string[]) => {
     const response = await apiClient.post('/admin/notifications/broadcast', {
       title,
       body,
@@ -133,7 +125,7 @@ export const settingsAPI = {
     return response.data;
   },
   
-  updateSettings: async (settings: AdminSettings) => {
+  updateSettings: async (settings: any) => {
     const response = await apiClient.put('/admin/settings', settings);
     return response.data;
   },
