@@ -365,7 +365,7 @@ export default function Routes() {
                     }
                     
                     // Show detailed connection info
-                    const backendUrl = 'http://10.47.78.83:8000/api/v1';
+                    const backendUrl = 'http://10.0.2.2:8000/api/v1';
                     const connectionInfo = `
 ✅ Backend Connection: SUCCESS
 📊 Travel Requests Found: ${testRequests.length}
@@ -390,7 +390,7 @@ ${testRequests.length > 0 ? `
                     // Show detailed error info
                     const errorInfo = `
 ❌ Backend Connection: FAILED
-🔗 Trying to connect to: http://10.47.78.83:8000/api/v1
+🔗 Trying to connect to: http://10.0.2.2:8000/api/v1
 👤 User ID: ${user?.user_id || 'Not available'}
 📧 User Email: ${user?.email || 'Not available'}
 🔑 Authenticated: ${isAuthenticated ? 'Yes' : 'No'}
