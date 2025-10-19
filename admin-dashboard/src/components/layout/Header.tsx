@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
-  const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<{ name?: string; email?: string } | null>(null);
 
   useEffect(() => {
     const user = localStorage.getItem('admin_user');

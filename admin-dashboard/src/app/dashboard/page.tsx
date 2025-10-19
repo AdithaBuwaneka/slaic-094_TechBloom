@@ -25,9 +25,18 @@ export default function DashboardPage() {
     try {
       const data = await dashboardAPI.getOverview();
       setOverview(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      interface ErrorResponse {
+        response?: {
+          data?: {
+            detail?: string;
+          };
+        };
+        message?: string;
+      }
+      const errorObj = error as ErrorResponse;
       setError('Failed to load dashboard data');
-      console.error('Dashboard error:', error);
+      console.error('Dashboard error:', errorObj);
     } finally {
       setLoading(false);
     }

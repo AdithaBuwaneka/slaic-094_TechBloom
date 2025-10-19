@@ -11,8 +11,6 @@ import {
   Database, 
   Globe, 
   Users, 
-  Mail,
-  Key,
   Server,
   Sliders,
   AlertTriangle
@@ -99,7 +97,7 @@ export default function AdminSettingsPage() {
       setSaving(true);
       setMessage('');
       
-      await settingsAPI.updateSettings(settings);
+      await settingsAPI.updateSettings(settings as unknown as Record<string, unknown>);
       
       setMessage('Settings saved successfully!');
       setTimeout(() => setMessage(''), 3000);
@@ -128,7 +126,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const updateSetting = (section: keyof AdminSettings, key: string, value: any) => {
+  const updateSetting = (section: keyof AdminSettings, key: string, value: string | number | boolean) => {
     setSettings(prev => ({
       ...prev,
       [section]: {

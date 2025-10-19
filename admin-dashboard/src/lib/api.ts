@@ -107,7 +107,7 @@ export const agentAPI = {
 
 // Notifications
 export const notificationAPI = {
-  sendBroadcast: async (title: string, body: string, data?: any, userIds?: string[]) => {
+  sendBroadcast: async (title: string, body: string, data?: Record<string, unknown>, userIds?: string[]) => {
     const response = await apiClient.post('/admin/notifications/broadcast', {
       title,
       body,
@@ -125,7 +125,7 @@ export const settingsAPI = {
     return response.data;
   },
   
-  updateSettings: async (settings: any) => {
+  updateSettings: async (settings: Record<string, unknown>) => {
     const response = await apiClient.put('/admin/settings', settings);
     return response.data;
   },

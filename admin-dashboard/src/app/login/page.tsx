@@ -26,8 +26,18 @@ export default function LoginPage() {
         localStorage.setItem('admin_user', JSON.stringify(response.user));
         router.push('/dashboard');
       }
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Login failed. Please check your credentials.');
+    } catch (error: unknown) {
+      interface ErrorResponse {
+        response?: {
+          data?: {
+            detail?: string;
+          };
+        };
+        message?: string;
+      }
+      const errorObj = error as ErrorResponse;
+      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
+      setError(errorObj.response?.data?.detail || errorMessage);
     } finally {
       setLoading(false);
     }

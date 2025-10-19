@@ -5,7 +5,6 @@ import { notificationAPI } from '@/lib/api';
 import { 
   Bell, 
   Send, 
-  Users, 
   MessageSquare,
   CheckCircle,
   AlertTriangle
@@ -50,8 +49,19 @@ export default function NotificationsPage() {
         data: {},
         userIds: []
       });
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to send notification');
+    } catch (error: unknown) {
+      interface ErrorResponse {
+        response?: {
+          data?: {
+            detail?: string;
+          };
+        };
+        message?: string;
+      }
+      const errorObj = error as ErrorResponse;
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send notification';
+      const response = errorObj.response?.data?.detail || errorMessage;
+      setError(response);
     } finally {
       setSending(false);
     }
@@ -286,7 +296,7 @@ export default function NotificationsPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h3 className="font-medium text-gray-900 mb-2">✅ Do's</h3>
+            <h3 className="font-medium text-gray-900 mb-2">✅ Do&apos;s</h3>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>• Keep titles under 50 characters</li>
               <li>• Make messages actionable and clear</li>
@@ -297,7 +307,7 @@ export default function NotificationsPage() {
           </div>
           
           <div>
-            <h3 className="font-medium text-gray-900 mb-2">❌ Don'ts</h3>
+            <h3 className="font-medium text-gray-900 mb-2">❌ Don&apos;ts</h3>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>• Send too many notifications per day</li>
               <li>• Use ALL CAPS or excessive punctuation</li>

@@ -9,7 +9,6 @@ import {
   Clock, 
   MapPin,
   CheckCircle,
-  XCircle,
   Filter,
   Eye,
   Calendar
@@ -25,26 +24,25 @@ export default function CommunityReportsPage() {
   const reportsPerPage = 10;
 
   useEffect(() => {
+    const loadReports = async () => {
+      try {
+        setLoading(true);
+        const response = await communityAPI.getReports({
+          skip: (currentPage - 1) * reportsPerPage,
+          limit: reportsPerPage,
+          report_type: filterType || undefined
+        });
+        
+        setReports(response.reports || []);
+        setTotalReports(response.total_reports || 0);
+      } catch (error) {
+        console.error('Error loading reports:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadReports();
   }, [currentPage, filterType]);
-
-  const loadReports = async () => {
-    try {
-      setLoading(true);
-      const response = await communityAPI.getReports({
-        skip: (currentPage - 1) * reportsPerPage,
-        limit: reportsPerPage,
-        report_type: filterType || undefined
-      });
-      
-      setReports(response.reports || []);
-      setTotalReports(response.total_reports || 0);
-    } catch (error) {
-      console.error('Error loading reports:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getReportTypeIcon = (type: string) => {
     switch (type) {

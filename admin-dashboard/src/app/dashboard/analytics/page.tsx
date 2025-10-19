@@ -37,27 +37,26 @@ export default function AnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState(30);
 
   useEffect(() => {
+    const loadAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        const [growthData, modesData, usageData] = await Promise.all([
+          analyticsAPI.getUserGrowth(selectedPeriod),
+          analyticsAPI.getTravelModes(),
+          analyticsAPI.getApiUsage(7)
+        ]);
+        
+        setUserGrowth(growthData);
+        setTravelModes(modesData);
+        setApiUsage(usageData);
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadAnalyticsData();
   }, [selectedPeriod]);
-
-  const loadAnalyticsData = async () => {
-    try {
-      setLoading(true);
-      const [growthData, modesData, usageData] = await Promise.all([
-        analyticsAPI.getUserGrowth(selectedPeriod),
-        analyticsAPI.getTravelModes(),
-        analyticsAPI.getApiUsage(7)
-      ]);
-      
-      setUserGrowth(growthData);
-      setTravelModes(modesData);
-      setApiUsage(usageData);
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -184,8 +183,8 @@ export default function AnalyticsPage() {
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
-                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                  formatter={(value: any) => [value, 'New Users']}
+                  labelFormatter={(value: string | number) => new Date(value).toLocaleDateString()}
+                  formatter={(value: number) => [value, 'New Users']}
                 />
                 <Legend />
                 <Line 
@@ -217,7 +216,8 @@ export default function AnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ mode, percent }) => `${mode} (${(percent * 100).toFixed(0)}%)`}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  label={(entry: any) => `${entry.mode || 'Mode'} (${((entry.percent || 0) * 100).toFixed(0)}%)`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="user_count"
@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="mode" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: any) => [value, 'Requests']} />
+                <Tooltip formatter={(value: number) => [value, 'Requests']} />
                 <Legend />
                 <Bar dataKey="requests" fill="#10B981" name="API Requests" />
               </BarChart>

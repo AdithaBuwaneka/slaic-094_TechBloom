@@ -6,8 +6,7 @@ import { User } from '@/lib/types';
 import { 
   Users, 
   Search, 
-  Filter, 
-  MoreVertical,
+  Filter,
   CheckCircle,
   XCircle,
   Eye,
@@ -25,33 +24,33 @@ export default function UsersPage() {
   const usersPerPage = 10;
 
   useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await userAPI.getUsers({
+          skip: (currentPage - 1) * usersPerPage,
+          limit: usersPerPage,
+          search: searchTerm || undefined
+        });
+        
+        setUsers(response.users || []);
+        setTotalUsers(response.total_count || 0);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadUsers();
   }, [currentPage, searchTerm]);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await userAPI.getUsers({
-        skip: (currentPage - 1) * usersPerPage,
-        limit: usersPerPage,
-        search: searchTerm || undefined
-      });
-      
-      setUsers(response.users || []);
-      setTotalUsers(response.total_count || 0);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUserStatusToggle = async (userId: string, currentStatus: boolean) => {
     try {
       await userAPI.updateUserStatus(userId, !currentStatus, 
         !currentStatus ? 'Account activated by admin' : 'Account deactivated by admin'
       );
-      loadUsers(); // Reload the list
+      // Reload the list by setting currentPage to 1
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error updating user status:', error);
     }
