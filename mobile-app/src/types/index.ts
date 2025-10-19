@@ -517,6 +517,11 @@ export interface ChatbotResponse {
   requires_action: boolean;
   context?: ChatContext;
   suggestions?: string[];
+  // RAG metadata
+  rag_used?: boolean;
+  documents_retrieved?: number;
+  knowledge_source?: string;
+  from_cache?: boolean;
 }
 
 export interface ChatActionData {
@@ -525,6 +530,11 @@ export interface ChatActionData {
   source?: string;
   destination?: string;
   mode?: string;
+  // RAG metadata can also be in action_data
+  rag_used?: boolean;
+  documents_retrieved?: number;
+  knowledge_source?: string;
+  from_cache?: boolean;
   [key: string]: any;
 }
 

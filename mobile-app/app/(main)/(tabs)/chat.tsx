@@ -275,10 +275,18 @@ export default function Chat() {
         actionData = response.data.action_data;
         requiresAction = response.data.requires_action;
         
+        // ✅ Log RAG usage information
+        const ragUsed = response.data.action_data?.rag_used || false;
+        const docsRetrieved = response.data.action_data?.documents_retrieved || 0;
+        const fromCache = response.data.action_data?.from_cache || false;
+        
         console.log('Chatbot response data:', JSON.stringify(response.data, null, 2));
         console.log('Intent detected:', intent);
         console.log('Action data:', actionData);
         console.log('Requires action:', requiresAction);
+        console.log('📚 RAG Used:', ragUsed);
+        console.log('📄 Documents Retrieved:', docsRetrieved);
+        console.log('💾 From Cache:', fromCache);
         
         // If it's route planning, show the processing animation
         if (intent === ChatIntent.ROUTE_PLANNING && requiresAction) {
@@ -525,6 +533,29 @@ export default function Chat() {
                   >
                     {message.text}
                   </Text>
+                  
+                  {/* ✅ Show RAG indicator for AI responses */}
+                  {!message.is_user && message.action_data?.rag_used && (
+                    <View className="flex-row items-center mt-2 pt-2 border-t" style={{ borderColor: theme.border }}>
+                      <Ionicons name="book" size={12} color={theme.primary} />
+                      <Text className="text-xs ml-1" style={{ color: theme.primary }}>
+                        📚 From Knowledge Base
+                        {message.action_data.documents_retrieved && message.action_data.documents_retrieved > 0 && 
+                          ` • ${message.action_data.documents_retrieved} sources`}
+                        {message.action_data.from_cache && ' • Cached'}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {/* ✅ Show when answer is direct LLM (not RAG) */}
+                  {!message.is_user && message.action_data && !message.action_data.rag_used && message.intent !== 'route_planning' && (
+                    <View className="flex-row items-center mt-2 pt-2 border-t" style={{ borderColor: theme.border }}>
+                      <Ionicons name="sparkles" size={12} color="#9CA3AF" />
+                      <Text className="text-xs ml-1" style={{ color: '#9CA3AF' }}>
+                        🤖 AI-generated
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <Text className="text-xs mt-1 px-2" style={{ color: theme.textSecondary }}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
